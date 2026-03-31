@@ -1,0 +1,214 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum Goal {
+  relationship
+  communication
+  workout_partner
+}
+
+enum TrainingTimeSlot {
+  morning
+  day
+  evening
+  weekends
+}
+
+enum TrainingType {
+  strength
+  cardio
+  crossfit
+  yoga
+}
+
+enum ExternalProvider {
+  yandex
+  dgis
+  other
+}
+
+model User {
+  id                String             @id @default(cuid())
+  email             String             @unique
+  passwordHash      String
+  name              String
+  age               Int
+  gender            Gender
+  description       String?
+  photos            String[]
+  isVerified        Boolean            @default(false)
+  city              String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  memberships       UserGymMembership[]
+  likesSent         Like[]             @relation("LikesSent")
+  likesReceived     Like[]             @relation("LikesReceived")
+  matchesA          Match[]            @relation("MatchUserA")
+  matchesB          Match[]            @relation("MatchUserB")
+  messages          Message[]
+  goals             UserGoal[]
+  trainingSlots     UserTrainingSlot[]
+  trainingTypes     UserTrainingType[]
+  refreshSessions   RefreshSession[]
+  blocksInitiated   Block[]             @relation("Blocker")
+  blocksReceived    Block[]             @relation("Blocked")
+  reportsInitiated  Report[]            @relation("Reporter")
+  reportsReceived   Report[]            @relation("Reported")
+  isBanned          Boolean             @default(false)
+  banReason         String?
+}
+
+model Gym {
+  id                String             @id @default(cuid())
+  name              String
+  address           String
+  city              String
+  region            String?
+  latitude          Float?
+  longitude         Float?
+  externalProvider  ExternalProvider?
+  externalId        String?
+  chainName         String?
+  createdAt         DateTime           @default(now())
+  memberships       UserGymMembership[]
+  likes             Like[]
+  matches           Match[]
+
+  @@unique([externalProvider, externalId], map: "provider_external_unique")
+  @@index([city])
+}
+
+model UserGymMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  gymId     String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gym       Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, gymId])
+  @@index([gymId])
+}
+
+model UserGoal {
+  id     String @id @default(cuid())
+  userId String
+  goal   Goal
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, goal])
+}
+
+model UserTrainingSlot {
+  id     String           @id @default(cuid())
+  userId String
+  slot   TrainingTimeSlot
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slot])
+}
+
+model UserTrainingType {
+  id     String       @id @default(cuid())
+  userId String
+  type   TrainingType
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+}
+
+model Like {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  gymId      String
+  createdAt  DateTime @default(now())
+  fromUser   User     @relation("LikesSent", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser     User     @relation("LikesReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  gym        Gym      @relation(fields: [gymId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId, gymId])
+  @@index([toUserId, gymId])
+}
+
+model Match {
+  id        String    @id @default(cuid())
+  userAId   String
+  userBId   String
+  gymId     String
+  createdAt DateTime  @default(now())
+  userA     User      @relation("MatchUserA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB     User      @relation("MatchUserB", fields: [userBId], references: [id], onDelete: Cascade)
+  gym       Gym       @relation(fields: [gymId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@unique([userAId, userBId, gymId])
+  @@index([userAId])
+  @@index([userBId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  matchId   String
+  fromUserId String
+  text      String
+  createdAt DateTime @default(now())
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  fromUser  User     @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, createdAt])
+}
+
+model RefreshSession {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenHash    String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Block {
+  id          String   @id @default(cuid())
+  blockerId   String
+  blockedId   String
+  createdAt   DateTime @default(now())
+  blocker     User     @relation("Blocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked     User     @relation("Blocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+model Report {
+  id          String   @id @default(cuid())
+  reporterId  String
+  reportedId  String
+  reason      String
+  details     String?
+  status      String   @default("open")
+  createdAt   DateTime @default(now())
+  reviewedAt  DateTime?
+  reporter    User     @relation("Reporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported    User     @relation("Reported", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@index([reportedId, status])
+}
