@@ -38,7 +38,11 @@ export function RegisterPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
-        <h1>Регистрация</h1>
+        <h1>Создать аккаунт</h1>
+        <p className="auth-lede">
+          Шаг в <strong>райский сад Edem</strong>: анкета привязана к твоему фитнес-центру — так проще
+          встретиться вживую после совпадения.
+        </p>
         <form onSubmit={onSubmit} className="grid">
           <input
             placeholder="Имя"

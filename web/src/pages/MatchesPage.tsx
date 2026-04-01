@@ -60,7 +60,8 @@ export function MatchesPage() {
   return (
     <div className="match-layout">
       <aside className="card">
-        <h3>Матчи</h3>
+        <h3 className="page-title page-title--sm">Совпадения</h3>
+        <p className="page-sub">Те, с кем вы оба сказали «да» в одном саду.</p>
         <div className="list">
           {matches.map((m) => (
             <button

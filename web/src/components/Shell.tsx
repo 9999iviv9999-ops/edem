@@ -1,6 +1,10 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
+
+function navClass({ isActive }: { isActive: boolean }) {
+  return isActive ? "nav-link nav-link--active" : "nav-link";
+}
 
 type Props = {
   children: React.ReactNode;
@@ -26,11 +30,20 @@ export function Shell({ children }: Props) {
   return (
     <div className="layout">
       <header className="topbar">
-        <div className="brand">EDEM</div>
+        <div className="brand-wrap">
+          <div className="brand">Edem</div>
+          <span className="brand-tagline">райский сад знакомств</span>
+        </div>
         <nav className="nav">
-          <Link to="/">Лента</Link>
-          <Link to="/matches">Матчи</Link>
-          <Link to="/profile">Профиль</Link>
+          <NavLink className={navClass} end to="/">
+            Лента
+          </NavLink>
+          <NavLink className={navClass} to="/matches">
+            Матчи
+          </NavLink>
+          <NavLink className={navClass} to="/profile">
+            Профиль
+          </NavLink>
         </nav>
         <button className="ghost-btn" onClick={onLogout}>
           Выйти

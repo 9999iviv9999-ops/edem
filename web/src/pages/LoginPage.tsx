@@ -25,7 +25,10 @@ export function LoginPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <h1>Добро пожаловать в Edem</h1>
-        <p>Знакомства в твоем фитнес-центре</p>
+        <p className="auth-lede">
+          <strong>Эдем</strong> — образ райского сада: спокойное место, где знакомства начинаются с общего
+          зала и схожих ценностей. Войди, чтобы найти своих людей рядом с тобой в зале.
+        </p>
         <form onSubmit={onSubmit} className="grid">
           <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <input

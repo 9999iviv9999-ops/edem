@@ -39,7 +39,11 @@ export function FeedPage() {
   return (
     <div className="grid">
       <div className="card">
-        <h2>Лента анкет</h2>
+        <h2 className="page-title">Лента</h2>
+        <p className="page-sub">
+          Люди в твоём зале — как тропинки в одном саду. Выбери зал и смотри анкеты тех, кто тренируется
+          рядом с тобой.
+        </p>
         <div className="row">
           <select
             value={gymId}
