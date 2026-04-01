@@ -577,6 +577,40 @@ label.field select:not(.multi) {
   color: var(--eden-gold-bright);
 }
 
+.gym-picker-maps {
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(139, 178, 150, 0.22);
+  display: grid;
+  gap: 10px;
+}
+
+.gym-picker-maps-title {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.05rem;
+  color: var(--eden-mint);
+}
+
+.gym-picker-maps-status,
+.gym-picker-legal {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--eden-text-muted);
+}
+
+.gym-picker-maps-btn {
+  width: fit-content;
+  max-width: 100%;
+}
+
+.gym-picker-legal code,
+.gym-picker-maps-status code {
+  font-size: 0.85em;
+  color: var(--eden-mist);
+}
+
 textarea {
   min-height: 100px;
   resize: vertical;

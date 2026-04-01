@@ -3,6 +3,11 @@ import { z } from "zod";
 
 dotenv.config();
 
+const optKey = z.preprocess(
+  (v) => (v === "" || v === null || v === undefined ? undefined : v),
+  z.string().min(1).optional()
+);
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(16),
@@ -15,7 +20,11 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   S3_PUBLIC_URL_BASE: z.string().optional(),
-  PORT: z.coerce.number().default(3000)
+  PORT: z.coerce.number().default(3000),
+  /** https://platform.2gis.ru — Places / Catalog API */
+  DGIS_API_KEY: optKey,
+  /** https://developer.tech.yandex.ru — Поиск по организациям (Geosearch) */
+  YANDEX_MAPS_API_KEY: optKey
 });
 
 export const env = envSchema.parse(process.env);

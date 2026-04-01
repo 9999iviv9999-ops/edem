@@ -7,6 +7,7 @@ type Profile = { id: string; name: string; age: number; description?: string; ph
 
 export function FeedPage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [userCity, setUserCity] = useState("");
   const [gymId, setGymId] = useState("");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [message, setMessage] = useState("");
@@ -18,6 +19,7 @@ export function FeedPage() {
   async function bootstrap() {
     const meRes = await api.get("/api/profiles/me");
     const city = meRes.data.city || "Москва";
+    setUserCity(city);
     const gymsRes = await api.get("/api/gyms", { params: { city } });
     setGyms(gymsRes.data);
     const main = meRes.data.memberships.find((m: any) => m.isPrimary)?.gymId;
@@ -50,12 +52,16 @@ export function FeedPage() {
         <div className="full">
           <GymPicker
             gyms={gyms}
+            city={userCity}
             value={gymId}
             onChange={async (id) => {
               setGymId(id);
               if (id) await loadProfiles(id);
               else setProfiles([]);
             }}
+            onImported={(g) =>
+              setGyms((prev) => (prev.some((x) => x.id === g.id) ? prev : [...prev, g]))
+            }
           />
         </div>
         {message && <div className="success">{message}</div>}
