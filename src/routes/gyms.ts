@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -47,34 +48,30 @@ gymsRouter.get("/", async (req, res, next) => {
     });
     const q = querySchema.parse(req.query);
 
+    const where: Prisma.GymWhereInput = {};
+
+    if (q.city?.trim()) {
+      where.city = { equals: q.city.trim(), mode: "insensitive" };
+    }
+    if (q.region?.trim()) {
+      where.region = { contains: q.region.trim(), mode: "insensitive" };
+    }
+    if (q.chainName?.trim()) {
+      where.chainName = { contains: q.chainName.trim(), mode: "insensitive" };
+    }
+    if (q.q?.trim()) {
+      where.OR = [
+        { name: { contains: q.q.trim(), mode: "insensitive" } },
+        { address: { contains: q.q.trim(), mode: "insensitive" } }
+      ];
+    }
+
+    const take = q.city?.trim() ? 400 : q.q?.trim() ? 150 : 120;
+
     const gyms = await prisma.gym.findMany({
-      where: {
-        city: q.city
-          ? {
-              contains: q.city,
-              mode: "insensitive"
-            }
-          : undefined,
-        region: q.region
-          ? {
-              contains: q.region,
-              mode: "insensitive"
-            }
-          : undefined,
-        chainName: q.chainName
-          ? {
-              contains: q.chainName,
-              mode: "insensitive"
-            }
-          : undefined,
-        OR: q.q
-          ? [
-              { name: { contains: q.q, mode: "insensitive" } },
-              { address: { contains: q.q, mode: "insensitive" } }
-            ]
-          : undefined
-      },
-      take: 100
+      where,
+      orderBy: [{ city: "asc" }, { name: "asc" }],
+      take
     });
 
     return res.json(gyms);

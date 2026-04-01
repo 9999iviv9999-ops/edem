@@ -9,3 +9,5 @@ web/.env
 coverage/
 .idea/
 .vscode/
+# Исходник городов для scripts/build-seed-data.mjs (генерация — npm run build:location-data)
+scripts/russia-cities-full.json

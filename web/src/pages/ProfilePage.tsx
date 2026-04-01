@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { CitySelect } from "../components/CitySelect";
 import { api } from "../lib/api";
 
 type Gym = { id: string; name: string; city: string };
@@ -25,14 +26,24 @@ export function ProfilePage() {
     void load();
   }, []);
 
-  async function load() {
-    const [gymsRes, meRes] = await Promise.all([
-      api.get("/api/gyms"),
-      api.get("/api/profiles/me")
-    ]);
-    setGyms(gymsRes.data);
+  async function onCityChange(city: string) {
+    if (!city || city === form.city) return;
+    const { data } = await api.get("/api/gyms", { params: { city } });
+    setGyms(data);
+    setForm((s) => ({
+      ...s,
+      city,
+      mainGymId: "",
+      extraGymIds: []
+    }));
+  }
 
+  async function load() {
+    const meRes = await api.get("/api/profiles/me");
     const me = meRes.data;
+    const city = me.city || "Москва";
+    const gymsRes = await api.get("/api/gyms", { params: { city } });
+    setGyms(gymsRes.data);
     const main = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
     const extra = me.memberships.filter((m: any) => !m.isPrimary).map((m: any) => m.gymId);
 
@@ -106,15 +117,9 @@ export function ProfilePage() {
                   <option value="other">Другое</option>
                 </select>
               </label>
-              <label className="field">
-                <span className="field-label">Город</span>
-                <input
-                  value={form.city}
-                  onChange={(e) => setForm((s) => ({ ...s, city: e.target.value }))}
-                  placeholder="Где живёшь"
-                  autoComplete="address-level2"
-                />
-              </label>
+              <div className="full">
+                <CitySelect value={form.city} onChange={(c) => void onCityChange(c)} />
+              </div>
             </div>
           </div>
 

@@ -536,6 +536,24 @@ label.field select:not(.multi) {
   font-size: clamp(1.15rem, 3vw, 1.35rem);
 }
 
+.city-select {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.city-select-hint,
+.city-select-empty {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--eden-text-muted);
+}
+
+.city-select-empty {
+  color: #e0a0a0;
+}
+
 textarea {
   min-height: 100px;
   resize: vertical;

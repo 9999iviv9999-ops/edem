@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { CitySelect } from "../components/CitySelect";
 import { EdemLogo } from "../components/EdemLogo";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
@@ -87,11 +88,7 @@ export function RegisterPage() {
             <option value="female">Женщина</option>
             <option value="other">Другое</option>
           </select>
-          <input
-            placeholder="Город"
-            value={form.city}
-            onChange={(e) => setForm((s) => ({ ...s, city: e.target.value }))}
-          />
+          <CitySelect value={form.city} onChange={(city) => setForm((s) => ({ ...s, city }))} />
           {error && <div className="error">{error}</div>}
           <button className="primary-btn">Создать аккаунт</button>
         </form>

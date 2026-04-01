@@ -15,7 +15,9 @@ export function FeedPage() {
   }, []);
 
   async function bootstrap() {
-    const [gymsRes, meRes] = await Promise.all([api.get("/api/gyms"), api.get("/api/profiles/me")]);
+    const meRes = await api.get("/api/profiles/me");
+    const city = meRes.data.city || "Москва";
+    const gymsRes = await api.get("/api/gyms", { params: { city } });
     setGyms(gymsRes.data);
     const main = meRes.data.memberships.find((m: any) => m.isPrimary)?.gymId;
     if (main) {
