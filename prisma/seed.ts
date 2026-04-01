@@ -19,7 +19,22 @@ const generatedGyms: GeneratedGym[] = JSON.parse(readFileSync(gymsPath, "utf8"))
 
 const CHUNK = 2500;
 
+/** После успешного сида в базе десятки тысяч строк с externalId вида seed-… */
+async function bulkGymsAlreadyLoaded(): Promise<boolean> {
+  const n = await prisma.gym.count({
+    where: { externalId: { startsWith: "seed-" } }
+  });
+  return n > 40_000;
+}
+
 async function main() {
+  if (process.env.FORCE_GYM_SEED !== "1" && (await bulkGymsAlreadyLoaded())) {
+    console.log(
+      "Gym seed skipped: bulk catalog already in DB. Set FORCE_GYM_SEED=1 to reload from gyms-generated.json."
+    );
+    return;
+  }
+
   const removed = await prisma.gym.deleteMany({ where: { externalId: null } });
   if (removed.count > 0) {
     console.log(`Removed ${removed.count} legacy gyms (no externalId) to avoid duplicates.`);
