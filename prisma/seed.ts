@@ -20,6 +20,10 @@ const generatedGyms: GeneratedGym[] = JSON.parse(readFileSync(gymsPath, "utf8"))
 const CHUNK = 1500;
 
 async function main() {
+  const removed = await prisma.gym.deleteMany({ where: { externalId: null } });
+  if (removed.count > 0) {
+    console.log(`Removed ${removed.count} legacy gyms (no externalId) to avoid duplicates.`);
+  }
   console.log(`Seeding ${generatedGyms.length} gyms from gyms-generated.json …`);
   for (let i = 0; i < generatedGyms.length; i += CHUNK) {
     const slice = generatedGyms.slice(i, i + CHUNK).map((g) => ({
