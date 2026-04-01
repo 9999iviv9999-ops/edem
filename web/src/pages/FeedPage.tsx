@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
-type Gym = { id: string; name: string; city: string };
+type Gym = { id: string; name: string; city: string; chainName?: string | null };
 type Profile = { id: string; name: string; age: number; description?: string; photos: string[] };
 
 export function FeedPage() {
@@ -46,22 +47,16 @@ export function FeedPage() {
           Люди в твоём зале — как тропинки в одном саду. Выбери зал и смотри анкеты тех, кто тренируется
           рядом с тобой.
         </p>
-        <div className="row">
-          <select
+        <div className="full">
+          <GymPicker
+            gyms={gyms}
             value={gymId}
-            onChange={async (e) => {
-              const id = e.target.value;
+            onChange={async (id) => {
               setGymId(id);
-              await loadProfiles(id);
+              if (id) await loadProfiles(id);
+              else setProfiles([]);
             }}
-          >
-            <option value="">Выбери зал</option>
-            {gyms.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.name} ({g.city})
-              </option>
-            ))}
-          </select>
+          />
         </div>
         {message && <div className="success">{message}</div>}
       </div>

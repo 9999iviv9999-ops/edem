@@ -1,8 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
 import { CitySelect } from "../components/CitySelect";
+import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
-type Gym = { id: string; name: string; city: string };
+type Gym = { id: string; name: string; city: string; chainName?: string | null };
 
 export function ProfilePage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
@@ -137,20 +138,13 @@ export function ProfilePage() {
 
           <div className="profile-section full">
             <h3 className="profile-section-title">Твой зал</h3>
-            <label className="field full">
-              <span className="field-label">Основной фитнес-центр</span>
-              <select
+            <div className="field full">
+              <GymPicker
+                gyms={gyms}
                 value={form.mainGymId}
-                onChange={(e) => setForm((s) => ({ ...s, mainGymId: e.target.value }))}
-              >
-                <option value="">Выбери основной зал</option>
-                {gyms.map((gym) => (
-                  <option key={gym.id} value={gym.id}>
-                    {gym.name} ({gym.city})
-                  </option>
-                ))}
-              </select>
-            </label>
+                onChange={(mainGymId) => setForm((s) => ({ ...s, mainGymId }))}
+              />
+            </div>
           </div>
 
           <div className="profile-section full">

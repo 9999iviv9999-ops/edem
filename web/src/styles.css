@@ -554,6 +554,29 @@ label.field select:not(.multi) {
   color: #e0a0a0;
 }
 
+.gym-picker {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.gym-picker-meta,
+.gym-picker-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--eden-text-muted);
+}
+
+.gym-picker-meta strong {
+  color: var(--eden-mint);
+  font-weight: 600;
+}
+
+.gym-picker-hint {
+  color: var(--eden-gold-bright);
+}
+
 textarea {
   min-height: 100px;
   resize: vertical;

@@ -57,7 +57,46 @@ const CHAINS = [
   "Stretching Club",
   "Бассейн и фитнес",
   "СК «Олимп»",
-  "Дворец спорта"
+  "Дворец спорта",
+  "Go Fit",
+  "Life Fitness Club",
+  "SportLand",
+  "Мегаспорт",
+  "Крокус Fitness",
+  "Clubsport",
+  "Pilot Gym",
+  "Drive Gym",
+  "Athletic Arena",
+  "Gorilla Gym",
+  "Millennium Fitness",
+  "Eclipse Gym",
+  "Atmosphere",
+  "Just Gym",
+  "Formula Sport"
+];
+
+/** Независимые залы, студии, бассейны — отдельные точки в каждом городе */
+const LOCAL_VENUES = [
+  { title: "Тренажёрный зал «Сила»", kind: "Тренажёрный зал" },
+  { title: "Фитнес-студия Balance", kind: "Студия" },
+  { title: "Спортклуб «Энергия»", kind: "Спортклуб" },
+  { title: "Студия пилатеса & stretch", kind: "Студия" },
+  { title: "EMS-студия FitBody", kind: "EMS-студия" },
+  { title: "Бассейн и тренажёрный комплекс", kind: "Бассейн и фитнес" },
+  { title: "ДЮСШ — спортивный зал", kind: "ДЮСШ" },
+  { title: "Кроссфит-арена", kind: "Кроссфит" },
+  { title: "Йога-студия Shanti", kind: "Йога" },
+  { title: "Тренажёрный зал 24/7", kind: "Тренажёрный зал" },
+  { title: "Fight Club & Gym", kind: "Единоборства" },
+  { title: "Спа-фитнес центр", kind: "Спа-фитнес" },
+  { title: "Центр функционального тренинга", kind: "Функциональный тренинг" },
+  { title: "Gym & Pool", kind: "Тренажёрный зал" },
+  { title: "Power Train Studio", kind: "Студия" },
+  { title: "Cycling Studio", kind: "Кардио-студия" },
+  { title: "Rock Climbing & Fitness", kind: "Скалодром" },
+  { title: "Женский фитнес-клуб", kind: "Фитнес-клуб" },
+  { title: "Aero Stretch Studio", kind: "Студия" },
+  { title: "Iron Pit Gym", kind: "Тренажёрный зал" }
 ];
 
 const gyms = [];
@@ -76,6 +115,18 @@ for (const row of raw) {
       chainName,
       externalProvider: "other",
       externalId: `seed-${cityId}-${ci}`
+    });
+  });
+
+  LOCAL_VENUES.forEach((v, li) => {
+    gyms.push({
+      name: `${v.title} — ${city}`,
+      address: region ? `г. ${city}, ${region}` : `г. ${city}`,
+      city,
+      region: region || undefined,
+      chainName: v.kind,
+      externalProvider: "other",
+      externalId: `seed-loc-${cityId}-${li}`
     });
   });
 }

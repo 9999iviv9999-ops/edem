@@ -44,7 +44,9 @@ gymsRouter.get("/", async (req, res, next) => {
       city: z.string().optional(),
       region: z.string().optional(),
       chainName: z.string().optional(),
-      q: z.string().optional()
+      q: z.string().optional(),
+      /** Макс. число строк (по умолчанию без лимита при фильтре по городу). */
+      limit: z.coerce.number().int().min(1).max(100000).optional()
     });
     const q = querySchema.parse(req.query);
 
@@ -66,12 +68,23 @@ gymsRouter.get("/", async (req, res, next) => {
       ];
     }
 
-    const take = q.city?.trim() ? 400 : q.q?.trim() ? 150 : 120;
+    const hasCity = Boolean(q.city?.trim());
+    const hasQ = Boolean(q.q?.trim());
+    let take: number | undefined;
+    if (q.limit != null) {
+      take = q.limit;
+    } else if (hasCity) {
+      take = undefined;
+    } else if (hasQ) {
+      take = 800;
+    } else {
+      take = 200;
+    }
 
     const gyms = await prisma.gym.findMany({
       where,
       orderBy: [{ city: "asc" }, { name: "asc" }],
-      take
+      ...(take !== undefined ? { take } : {})
     });
 
     return res.json(gyms);
