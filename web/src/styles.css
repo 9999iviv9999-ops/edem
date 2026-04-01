@@ -1,16 +1,26 @@
 :root {
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: #e6ecff;
-  background: radial-gradient(circle at top, #1d2f66, #0a1022 45%);
+  background: radial-gradient(circle at 50% 0%, #1d2f66 0%, #0a1022 55%);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
 }
 
 a {
@@ -24,9 +34,12 @@ button {
   font: inherit;
   border-radius: 12px;
   border: 1px solid #2c3b67;
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: #111a35;
   color: #ebf1ff;
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
 }
 
 button {
@@ -41,26 +54,48 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 22px;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  padding: 12px clamp(14px, 4vw, 22px);
   border-bottom: 1px solid #243059;
-  background: rgba(12, 18, 38, 0.8);
-  backdrop-filter: blur(8px);
+  background: rgba(12, 18, 38, 0.92);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 20;
 }
 
 .brand {
-  font-size: 24px;
+  font-size: clamp(1.1rem, 4vw, 1.5rem);
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
 }
 
 .nav {
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.nav a {
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 8px 4px;
+  white-space: nowrap;
 }
 
 .container {
-  width: min(1100px, 92%);
-  margin: 24px auto;
+  width: min(1100px, 100%);
+  max-width: 100%;
+  margin: 16px auto;
+  padding: 0 clamp(12px, 4vw, 20px);
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
 }
 
 .card {
@@ -85,7 +120,14 @@ button {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
+  align-items: stretch;
+}
+
+.row input {
+  flex: 1 1 140px;
+  min-width: 0;
 }
 
 .chips {
@@ -110,24 +152,35 @@ button {
   background: linear-gradient(135deg, #5f7fff, #8b49ff);
   border: none;
   font-weight: 600;
+  width: auto;
+  min-height: 48px;
+  padding: 12px 20px;
 }
 
 .ghost-btn {
   background: transparent;
+  width: auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  flex-shrink: 0;
 }
 
 .auth-wrap {
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
+  padding: 0 clamp(12px, 4vw, 20px);
+  box-sizing: border-box;
 }
 
 .auth-card {
-  width: min(460px, 92vw);
+  width: min(460px, 100%);
+  max-width: 100%;
   background: rgba(17, 26, 53, 0.93);
   border: 1px solid #304373;
   border-radius: 18px;
-  padding: 24px;
+  padding: clamp(18px, 5vw, 24px);
   display: grid;
   gap: 12px;
 }
@@ -212,9 +265,37 @@ button {
   background: #5132a8;
 }
 
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
 @media (max-width: 920px) {
   .two-col,
   .match-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .topbar {
+    justify-content: center;
+}
+
+  .brand {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    border-top: 1px solid #243059;
+    padding-top: 10px;
+  }
+
+  .ghost-btn {
+    order: 2;
   }
 }
