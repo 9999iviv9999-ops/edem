@@ -1,7 +1,10 @@
 import axios from "axios";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+// Пустой baseURL = запросы на тот же origin (/api/...).
+// Локально: Vite proxy (vite.config.ts). На Vercel: vercel.json rewrites -> api.edem.press.
+// Если задан VITE_API_URL — используем его (прямой вызов API).
+const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "";
 
 export const api = axios.create({
   baseURL: API_BASE_URL
@@ -41,7 +44,10 @@ api.interceptors.response.use(
     try {
       const refreshToken = getRefreshToken();
       if (!refreshToken) throw new Error("No refresh token");
-      const { data } = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+      const refreshUrl = API_BASE_URL
+        ? `${API_BASE_URL}/api/auth/refresh`
+        : "/api/auth/refresh";
+      const { data } = await axios.post(refreshUrl, {
         refreshToken
       });
       setTokens(data.accessToken, data.refreshToken);

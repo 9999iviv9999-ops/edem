@@ -25,8 +25,13 @@ export function RegisterPage() {
       });
       setTokens(data.accessToken, data.refreshToken);
       navigate("/profile");
-    } catch {
-      setError("Не удалось зарегистрироваться");
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } }; message?: string };
+      const msg =
+        ax.response?.data?.error ||
+        ax.message ||
+        "Не удалось зарегистрироваться";
+      setError(String(msg));
     }
   }
 
