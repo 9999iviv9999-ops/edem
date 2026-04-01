@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
+import { EdemLogo } from "./EdemLogo";
 
 function navClass({ isActive }: { isActive: boolean }) {
   return isActive ? "nav-link nav-link--active" : "nav-link";
@@ -30,9 +31,12 @@ export function Shell({ children }: Props) {
   return (
     <div className="layout">
       <header className="topbar">
-        <div className="brand-wrap">
-          <div className="brand">Edem</div>
-          <span className="brand-tagline">райский сад знакомств</span>
+        <div className="brand-lockup">
+          <EdemLogo size={40} className="brand-logo" />
+          <div className="brand-wrap">
+            <div className="brand">Edem</div>
+            <span className="brand-tagline">райский сад знакомств</span>
+          </div>
         </div>
         <nav className="nav">
           <NavLink className={navClass} end to="/">

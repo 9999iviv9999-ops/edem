@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { EdemLogo } from "../components/EdemLogo";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
 
@@ -38,6 +39,9 @@ export function RegisterPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
+        <div className="auth-brand">
+          <EdemLogo size={56} labeled />
+        </div>
         <h1>Создать аккаунт</h1>
         <p className="auth-lede">
           Шаг в <strong>райский сад Edem</strong>: анкета привязана к твоему фитнес-центру — так проще

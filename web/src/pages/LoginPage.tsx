@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { EdemLogo } from "../components/EdemLogo";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
 
@@ -24,6 +25,9 @@ export function LoginPage() {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
+        <div className="auth-brand">
+          <EdemLogo size={56} labeled />
+        </div>
         <h1>Добро пожаловать в Edem</h1>
         <p className="auth-lede">
           <strong>Эдем</strong> — образ райского сада: спокойное место, где знакомства начинаются с общего
