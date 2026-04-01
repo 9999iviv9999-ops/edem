@@ -17,7 +17,7 @@ type GeneratedGym = {
 const gymsPath = join(process.cwd(), "prisma", "gyms-generated.json");
 const generatedGyms: GeneratedGym[] = JSON.parse(readFileSync(gymsPath, "utf8"));
 
-const CHUNK = 1500;
+const CHUNK = 2500;
 
 async function main() {
   const removed = await prisma.gym.deleteMany({ where: { externalId: null } });
