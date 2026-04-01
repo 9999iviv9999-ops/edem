@@ -65,8 +65,18 @@ export function ProfilePage() {
         <input value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} />
         <input
           type="number"
-          value={form.age}
-          onChange={(e) => setForm((s) => ({ ...s, age: Number(e.target.value) }))}
+          inputMode="numeric"
+          placeholder="Возраст (18–80)"
+          value={form.age === 0 ? "" : form.age}
+          onChange={(e) => {
+            const raw = e.target.value;
+            if (raw === "") {
+              setForm((s) => ({ ...s, age: 0 }));
+              return;
+            }
+            const n = Number(raw);
+            if (!Number.isNaN(n)) setForm((s) => ({ ...s, age: n }));
+          }}
         />
         <select value={form.gender} onChange={(e) => setForm((s) => ({ ...s, gender: e.target.value }))}>
           <option value="male">Мужчина</option>
