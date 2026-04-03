@@ -50,6 +50,7 @@ model User {
   photos            String[]
   isVerified        Boolean            @default(false)
   city              String
+  district          String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   memberships       UserGymMembership[]
@@ -75,6 +76,7 @@ model Gym {
   name              String
   address           String
   city              String
+  district          String?
   region            String?
   latitude          Float?
   longitude         Float?
@@ -88,6 +90,7 @@ model Gym {
 
   @@unique([externalProvider, externalId], map: "provider_external_unique")
   @@index([city])
+  @@index([city, district])
 }
 
 model UserGymMembership {

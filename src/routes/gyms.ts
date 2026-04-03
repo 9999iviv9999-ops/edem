@@ -9,6 +9,7 @@ const createGymSchema = z.object({
   name: z.string().min(1),
   address: z.string().min(1),
   city: z.string().min(1),
+  district: z.string().optional(),
   region: z.string().optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -44,6 +45,7 @@ gymsRouter.get("/", async (req, res, next) => {
   try {
     const querySchema = z.object({
       city: z.string().optional(),
+      district: z.string().optional(),
       region: z.string().optional(),
       chainName: z.string().optional(),
       q: z.string().optional(),
@@ -56,6 +58,9 @@ gymsRouter.get("/", async (req, res, next) => {
 
     if (q.city?.trim()) {
       where.city = { equals: q.city.trim(), mode: "insensitive" };
+    }
+    if (q.district?.trim()) {
+      where.district = { contains: q.district.trim(), mode: "insensitive" };
     }
     if (q.region?.trim()) {
       where.region = { contains: q.region.trim(), mode: "insensitive" };
@@ -129,6 +134,7 @@ const importFromMapSchema = z.object({
   name: z.string().min(1),
   address: z.string().min(1),
   city: z.string().min(1),
+  district: z.string().optional(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   category: z.string().optional()
@@ -149,6 +155,7 @@ gymsRouter.post("/import-from-map", requireAuth, async (req, res, next) => {
         name: data.name,
         address: data.address,
         city: data.city,
+        district: data.district || null,
         region: null,
         latitude: data.latitude ?? null,
         longitude: data.longitude ?? null,

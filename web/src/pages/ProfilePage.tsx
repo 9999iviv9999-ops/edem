@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { AdminAreaSelect } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
@@ -12,6 +13,7 @@ export function ProfilePage() {
     age: 22,
     gender: "male",
     city: "Москва",
+    district: "",
     description: "",
     photos: [] as string[],
     mainGymId: "",
@@ -34,6 +36,20 @@ export function ProfilePage() {
     setForm((s) => ({
       ...s,
       city,
+      district: "",
+      mainGymId: "",
+      extraGymIds: []
+    }));
+  }
+
+  async function onDistrictChange(district: string) {
+    const { data } = await api.get("/api/gyms", {
+      params: { city: form.city, district: district || undefined }
+    });
+    setGyms(data);
+    setForm((s) => ({
+      ...s,
+      district,
       mainGymId: "",
       extraGymIds: []
     }));
@@ -43,7 +59,9 @@ export function ProfilePage() {
     const meRes = await api.get("/api/profiles/me");
     const me = meRes.data;
     const city = me.city || "Москва";
-    const gymsRes = await api.get("/api/gyms", { params: { city } });
+    const gymsRes = await api.get("/api/gyms", {
+      params: { city, district: me.district || undefined }
+    });
     setGyms(gymsRes.data);
     const main = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
     const extra = me.memberships.filter((m: any) => !m.isPrimary).map((m: any) => m.gymId);
@@ -53,6 +71,7 @@ export function ProfilePage() {
       age: me.age || 22,
       gender: me.gender || "male",
       city: me.city || "Москва",
+      district: me.district || "",
       description: me.description || "",
       photos: me.photos || [],
       mainGymId: main,
@@ -120,6 +139,13 @@ export function ProfilePage() {
               </label>
               <div className="full">
                 <CitySelect value={form.city} onChange={(c) => void onCityChange(c)} />
+              </div>
+              <div className="full">
+                <AdminAreaSelect
+                  city={form.city}
+                  value={form.district}
+                  onChange={(district) => void onDistrictChange(district)}
+                />
               </div>
             </div>
           </div>

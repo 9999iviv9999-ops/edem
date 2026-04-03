@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { AdminAreaSelect } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { EdemLogo } from "../components/EdemLogo";
 import { api } from "../lib/api";
@@ -13,7 +14,8 @@ export function RegisterPage() {
     password: "",
     age: 22,
     gender: "male",
-    city: "Москва"
+    city: "Москва",
+    district: ""
   });
   const [error, setError] = useState("");
 
@@ -88,7 +90,15 @@ export function RegisterPage() {
             <option value="female">Женщина</option>
             <option value="other">Другое</option>
           </select>
-          <CitySelect value={form.city} onChange={(city) => setForm((s) => ({ ...s, city }))} />
+          <CitySelect
+            value={form.city}
+            onChange={(city) => setForm((s) => ({ ...s, city, district: "" }))}
+          />
+          <AdminAreaSelect
+            city={form.city}
+            value={form.district}
+            onChange={(district) => setForm((s) => ({ ...s, district }))}
+          />
           {error && <div className="error">{error}</div>}
           <button className="primary-btn">Создать аккаунт</button>
         </form>
