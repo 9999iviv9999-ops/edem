@@ -439,8 +439,6 @@ label.field select:not(.multi) {
 }
 
 .feed-hero {
-  display: grid;
-  gap: 14px;
   background:
     radial-gradient(circle at 20% 10%, rgba(237, 137, 205, 0.14), transparent 35%),
     radial-gradient(circle at 80% 0%, rgba(172, 93, 255, 0.16), transparent 30%),
@@ -448,6 +446,7 @@ label.field select:not(.multi) {
 }
 
 .feed-hero-image-wrap {
+  position: relative;
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid rgba(212, 175, 55, 0.24);
@@ -457,26 +456,30 @@ label.field select:not(.multi) {
 .feed-hero-image {
   display: block;
   width: 100%;
-  max-height: 360px;
-  object-fit: cover;
+  max-height: none;
+  object-fit: contain;
 }
 
-.feed-hero-copy {
-  display: grid;
-  gap: 6px;
+.feed-hero-logo {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(8, 18, 25, 0.62);
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  backdrop-filter: blur(6px);
 }
 
-.feed-hero-title {
+.feed-hero-logo span {
   margin: 0;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
   color: #f3d8eb;
-  letter-spacing: 0.03em;
-}
-
-.feed-hero-sub {
-  margin: 0;
-  color: #c7b2d3;
-  line-height: 1.5;
+  font-weight: 700;
 }
 
 .profile-card {
@@ -702,6 +705,11 @@ textarea {
   }
 
   .feed-hero-image {
-    max-height: 250px;
+    max-height: none;
+  }
+
+  .feed-hero-logo {
+    left: 8px;
+    bottom: 8px;
   }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { EdemLogo } from "../components/EdemLogo";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
@@ -54,12 +55,10 @@ export function FeedPage() {
               e.currentTarget.style.display = "none";
             }}
           />
-        </div>
-        <div className="feed-hero-copy">
-          <h1 className="feed-hero-title">Мягкий сад знакомств</h1>
-          <p className="feed-hero-sub">
-            Совпадайте с теми, кто тренируется рядом: меньше случайностей, больше реальных встреч.
-          </p>
+          <div className="feed-hero-logo">
+            <EdemLogo size={26} />
+            <span>EDEM</span>
+          </div>
         </div>
       </section>
 
