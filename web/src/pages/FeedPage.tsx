@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { isSingleOkrugCity } from "../components/AdminAreaSelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
@@ -18,9 +19,12 @@ export function FeedPage() {
   async function bootstrap() {
     const meRes = await api.get("/api/profiles/me");
     const city = meRes.data.city || "Москва";
-    const gymsRes = await api.get("/api/gyms", {
-      params: { city, district: meRes.data.district || undefined }
-    });
+    const gymParams: Record<string, string | undefined> = {
+      city,
+      district: meRes.data.district || undefined
+    };
+    if (!isSingleOkrugCity(city) && meRes.data.okrug) gymParams.okrug = meRes.data.okrug;
+    const gymsRes = await api.get("/api/gyms", { params: gymParams });
     setGyms(gymsRes.data);
     const main = meRes.data.memberships.find((m: any) => m.isPrimary)?.gymId;
     if (main) {

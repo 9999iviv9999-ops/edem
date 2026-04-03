@@ -11,6 +11,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "prisma db seed",
     "build:location-data": "node scripts/build-seed-data.mjs",
+    "build:city-divisions": "node scripts/build-city-divisions.mjs",
     "import:gyms:file": "node scripts/import-gyms-file.mjs"
   },
   "prisma": {

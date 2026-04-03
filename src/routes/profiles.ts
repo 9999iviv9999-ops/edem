@@ -9,7 +9,8 @@ const updateProfileSchema = z.object({
   age: z.number().int().min(18).max(80),
   gender: z.enum(["male", "female", "other"]),
   city: z.string().min(1),
-  district: z.string().max(120).optional(),
+  okrug: z.string().max(200).optional(),
+  district: z.string().max(200).optional(),
   description: z.string().max(500).optional(),
   photos: z.array(z.string().url()).max(6),
   mainGymId: z.string().min(1),
@@ -65,6 +66,7 @@ profilesRouter.put("/me", requireAuth, async (req, res, next) => {
           age: data.age,
           gender: data.gender,
           city: data.city,
+          okrug: data.okrug,
           district: data.district,
           description: data.description,
           photos: data.photos

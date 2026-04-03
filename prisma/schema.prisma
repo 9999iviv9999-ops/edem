@@ -50,6 +50,9 @@ model User {
   photos            String[]
   isVerified        Boolean            @default(false)
   city              String
+  /** Административный округ (напр. ЦАО, САО) или субъект РФ для малых городов */
+  okrug             String?
+  /** Район города (напр. Тверской) или зона внутри города */
   district          String?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
@@ -76,6 +79,7 @@ model Gym {
   name              String
   address           String
   city              String
+  okrug             String?
   district          String?
   region            String?
   latitude          Float?
@@ -91,6 +95,7 @@ model Gym {
   @@unique([externalProvider, externalId], map: "provider_external_unique")
   @@index([city])
   @@index([city, district])
+  @@index([city, okrug, district])
 }
 
 model UserGymMembership {

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
-import { AdminAreaSelect } from "../components/AdminAreaSelect";
+import { AdminAreaSelect, isSingleOkrugCity } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
@@ -13,6 +13,7 @@ export function ProfilePage() {
     age: 22,
     gender: "male",
     city: "Москва",
+    okrug: "",
     district: "",
     description: "",
     photos: [] as string[],
@@ -36,6 +37,21 @@ export function ProfilePage() {
     setForm((s) => ({
       ...s,
       city,
+      okrug: "",
+      district: "",
+      mainGymId: "",
+      extraGymIds: []
+    }));
+  }
+
+  async function onOkrugChange(okrug: string) {
+    const { data } = await api.get("/api/gyms", {
+      params: { city: form.city, okrug: okrug || undefined }
+    });
+    setGyms(data);
+    setForm((s) => ({
+      ...s,
+      okrug,
       district: "",
       mainGymId: "",
       extraGymIds: []
@@ -43,9 +59,12 @@ export function ProfilePage() {
   }
 
   async function onDistrictChange(district: string) {
-    const { data } = await api.get("/api/gyms", {
-      params: { city: form.city, district: district || undefined }
-    });
+    const params: Record<string, string | undefined> = {
+      city: form.city,
+      district: district || undefined
+    };
+    if (!isSingleOkrugCity(form.city) && form.okrug) params.okrug = form.okrug;
+    const { data } = await api.get("/api/gyms", { params });
     setGyms(data);
     setForm((s) => ({
       ...s,
@@ -59,9 +78,12 @@ export function ProfilePage() {
     const meRes = await api.get("/api/profiles/me");
     const me = meRes.data;
     const city = me.city || "Москва";
-    const gymsRes = await api.get("/api/gyms", {
-      params: { city, district: me.district || undefined }
-    });
+    const gymParams: Record<string, string | undefined> = {
+      city,
+      district: me.district || undefined
+    };
+    if (!isSingleOkrugCity(city) && me.okrug) gymParams.okrug = me.okrug;
+    const gymsRes = await api.get("/api/gyms", { params: gymParams });
     setGyms(gymsRes.data);
     const main = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
     const extra = me.memberships.filter((m: any) => !m.isPrimary).map((m: any) => m.gymId);
@@ -71,6 +93,7 @@ export function ProfilePage() {
       age: me.age || 22,
       gender: me.gender || "male",
       city: me.city || "Москва",
+      okrug: me.okrug || "",
       district: me.district || "",
       description: me.description || "",
       photos: me.photos || [],
@@ -143,8 +166,10 @@ export function ProfilePage() {
               <div className="full">
                 <AdminAreaSelect
                   city={form.city}
-                  value={form.district}
-                  onChange={(district) => void onDistrictChange(district)}
+                  okrug={form.okrug}
+                  district={form.district}
+                  onOkrugChange={(okrug) => void onOkrugChange(okrug)}
+                  onDistrictChange={(district) => void onDistrictChange(district)}
                 />
               </div>
             </div>

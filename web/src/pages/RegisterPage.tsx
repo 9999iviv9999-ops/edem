@@ -15,6 +15,7 @@ export function RegisterPage() {
     age: 22,
     gender: "male",
     city: "Москва",
+    okrug: "",
     district: ""
   });
   const [error, setError] = useState("");
@@ -92,12 +93,21 @@ export function RegisterPage() {
           </select>
           <CitySelect
             value={form.city}
-            onChange={(city) => setForm((s) => ({ ...s, city, district: "" }))}
+            onChange={(city) =>
+              setForm((s) => ({
+                ...s,
+                city,
+                okrug: "",
+                district: ""
+              }))
+            }
           />
           <AdminAreaSelect
             city={form.city}
-            value={form.district}
-            onChange={(district) => setForm((s) => ({ ...s, district }))}
+            okrug={form.okrug}
+            district={form.district}
+            onOkrugChange={(okrug) => setForm((s) => ({ ...s, okrug }))}
+            onDistrictChange={(district) => setForm((s) => ({ ...s, district }))}
           />
           {error && <div className="error">{error}</div>}
           <button className="primary-btn">Создать аккаунт</button>

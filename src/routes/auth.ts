@@ -14,7 +14,8 @@ const registerSchema = z.object({
   age: z.number().int().min(18).max(80),
   gender: z.enum(["male", "female", "other"]),
   city: z.string().min(1),
-  district: z.string().max(120).optional()
+  okrug: z.string().max(200).optional(),
+  district: z.string().max(200).optional()
 });
 
 const loginSchema = z.object({
@@ -69,6 +70,7 @@ authRouter.post("/register", async (req, res, next) => {
         age: data.age,
         gender: data.gender,
         city: data.city,
+        okrug: data.okrug,
         district: data.district,
         photos: []
       }

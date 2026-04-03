@@ -6,7 +6,7 @@
  *   node scripts/import-gyms-file.mjs "C:/path/gyms.csv"
  *
  * Expected columns/keys:
- *   name,address,city,district,region,chainName,latitude,longitude
+ *   name,address,city,okrug,district,region,chainName,latitude,longitude
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -92,6 +92,7 @@ async function main() {
       name: String(r.name || "").trim(),
       address: String(r.address || "").trim(),
       city: String(r.city || "").trim(),
+      okrug: String(r.okrug || "").trim() || null,
       district: String(r.district || "").trim() || null,
       region: String(r.region || "").trim() || null,
       chainName: String(r.chainName || "").trim() || null,
