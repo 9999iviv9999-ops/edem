@@ -1,0 +1,247 @@
+/**
+ * Внутригородские районы/округа из OpenStreetMap (Overpass API).
+ * Сначала area[name][place=city], при пустом — around(lat,lon) по координатам из russia-cities-full.json.
+ *
+ * Usage: node scripts/fetch-city-rayons-overpass.mjs [--limit=N] [--offset=N]
+ * Выход: scripts/city-rayons-osm.json
+ */
+import fs from "node:fs";
+import path from "node:path";
+import https from "node:https";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const SKIP = new Set([
+  "Москва",
+  "Санкт-Петербург",
+  "Казань",
+  "Екатеринбург",
+  "Новосибирск",
+  "Нижний Новгород",
+  "Самара",
+  "Ростов-на-Дону",
+  "Уфа",
+  "Краснодар",
+  "Челябинск",
+  "Омск",
+  "Воронеж",
+  "Пермь",
+  "Волгоград",
+  "Калуга"
+]);
+
+const MIRRORS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter"
+];
+
+const SLEEP_MS = 900;
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function escapeOverpassString(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function isInnerDistrict(el) {
+  const t = el.tags || {};
+  if (el.type !== "relation" || t.boundary !== "administrative" || !t.name) return false;
+  const al = parseInt(t.admin_level, 10);
+  if (Number.isNaN(al) || al < 8 || al > 11) return false;
+  const n = t.name;
+  if (/область$/i.test(n) && n.includes(" ")) return false;
+  if (/^Республика\s/i.test(n)) return false;
+  if (al <= 6) return false;
+  if (/федеральный округ/i.test(n)) return false;
+  if (/городской округ/i.test(n) && al <= 7) return false;
+  return true;
+}
+
+/** Для around-запроса: отсекаем крупные регионы, оставляем типичные городские части */
+function isAroundCandidate(el) {
+  if (!isInnerDistrict(el)) return false;
+  const n = el.tags.name;
+  if (/область|Край$|Республика/i.test(n)) return false;
+  return true;
+}
+
+function parseNames(elements, mode) {
+  const names = new Set();
+  for (const el of elements || []) {
+    const ok = mode === "around" ? isAroundCandidate(el) : isInnerDistrict(el);
+    if (!ok) continue;
+    const n = el.tags?.name?.trim();
+    if (n) names.add(n);
+  }
+  return [...names].sort((a, b) => a.localeCompare(b, "ru"));
+}
+
+function postOverpass(query, mirrorIndex) {
+  const url = MIRRORS[mirrorIndex % MIRRORS.length];
+  return new Promise((resolve, reject) => {
+    const body = "data=" + encodeURIComponent(query);
+    const req = https.request(
+      url,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+          "Content-Length": Buffer.byteLength(body)
+        }
+      },
+      (res) => {
+        const chunks = [];
+        res.on("data", (c) => chunks.push(c));
+        res.on("end", () => {
+          const raw = Buffer.concat(chunks).toString("utf8");
+          if (raw.trimStart().startsWith("<")) {
+            reject(new Error("HTML/XML from " + url));
+            return;
+          }
+          try {
+            resolve(JSON.parse(raw));
+          } catch (e) {
+            reject(new Error("Bad JSON: " + raw.slice(0, 120)));
+          }
+        });
+      }
+    );
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+async function overpassWithRetry(query) {
+  let lastErr;
+  for (let m = 0; m < MIRRORS.length * 2; m++) {
+    try {
+      return await postOverpass(query, m);
+    } catch (e) {
+      lastErr = e;
+      await sleep(800 + m * 400);
+    }
+  }
+  throw lastErr;
+}
+
+function buildAreaQuery(city) {
+  const name = escapeOverpassString(city);
+  return `[out:json][timeout:55];
+area[name="${name}"][place="city"]->.a;
+(
+  relation["boundary"="administrative"](area.a);
+);
+out body;
+`;
+}
+
+function buildTownQuery(city) {
+  const name = escapeOverpassString(city);
+  return `[out:json][timeout:55];
+area[name="${name}"][place="town"]->.a;
+(
+  relation["boundary"="administrative"](area.a);
+);
+out body;
+`;
+}
+
+function buildAroundQuery(lat, lon, radiusM) {
+  return `[out:json][timeout:55];
+(
+  relation["boundary"="administrative"]["admin_level"~"^(8|9|10|11)$"](around:${radiusM},${lat},${lon});
+);
+out body;
+`;
+}
+
+async function fetchCity(city, coords) {
+  let data;
+  try {
+    data = await overpassWithRetry(buildAreaQuery(city));
+  } catch {
+    data = { elements: [] };
+  }
+  let list = parseNames(data.elements, "area");
+  if (list.length) return list;
+
+  try {
+    data = await overpassWithRetry(buildTownQuery(city));
+  } catch {
+    data = { elements: [] };
+  }
+  list = parseNames(data.elements, "area");
+  if (list.length) return list;
+
+  if (coords?.lat != null && coords?.lon != null) {
+    const lat = coords.lat;
+    const lon = coords.lon;
+    for (const r of [12000, 20000]) {
+      try {
+        data = await overpassWithRetry(buildAroundQuery(lat, lon, r));
+      } catch {
+        continue;
+      }
+      list = parseNames(data.elements, "around");
+      if (list.length) return list;
+      await sleep(300);
+    }
+  }
+
+  return [];
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  let limit = Infinity;
+  let offset = 0;
+  for (const a of args) {
+    if (a.startsWith("--limit=")) limit = parseInt(a.slice(8), 10) || Infinity;
+    if (a.startsWith("--offset=")) offset = parseInt(a.slice(9), 10) || 0;
+  }
+
+  const citiesPath = path.join(__dirname, "../web/src/data/russianCities.json");
+  const fullPath = path.join(__dirname, "russia-cities-full.json");
+  const cities = JSON.parse(fs.readFileSync(citiesPath, "utf8")).filter((c) => !SKIP.has(c));
+  const full = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+  const byName = new Map();
+  for (const x of full) byName.set(x.name, x);
+
+  const slice = cities.slice(offset, offset + limit);
+
+  const outPath = path.join(__dirname, "city-rayons-osm.json");
+  let existing = {};
+  if (fs.existsSync(outPath)) {
+    try {
+      existing = JSON.parse(fs.readFileSync(outPath, "utf8"));
+    } catch {
+      existing = {};
+    }
+  }
+
+  console.log("Cities to process:", slice.length, "cached:", Object.keys(existing).length);
+
+  let newCount = 0;
+  for (const city of slice) {
+    if (existing[city]?.length) continue;
+
+    process.stderr.write(`\r${city} …                    `);
+    const coords = byName.get(city)?.coords;
+    const rayons = await fetchCity(city, coords);
+    existing[city] = rayons.length ? rayons : [`Город «${city}» (целиком)`];
+    newCount++;
+    fs.writeFileSync(outPath, JSON.stringify(existing));
+    await sleep(SLEEP_MS);
+  }
+
+  console.log("\nWrote", outPath, "total cities", Object.keys(existing).length, "new:", newCount);
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
