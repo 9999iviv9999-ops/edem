@@ -43,6 +43,26 @@ export function FeedPage() {
 
   return (
     <div className="grid">
+      <section className="card feed-hero">
+        <div className="feed-hero-image-wrap">
+          <img
+            className="feed-hero-image"
+            src="/edem-hero.png"
+            alt="Edem — знакомства в зале"
+            loading="eager"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        </div>
+        <div className="feed-hero-copy">
+          <h1 className="feed-hero-title">Мягкий сад знакомств</h1>
+          <p className="feed-hero-sub">
+            Совпадайте с теми, кто тренируется рядом: меньше случайностей, больше реальных встреч.
+          </p>
+        </div>
+      </section>
+
       <div className="card">
         <h2 className="page-title">Лента</h2>
         <p className="page-sub">
