@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { EdemLogo } from "../components/EdemLogo";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
@@ -55,10 +54,6 @@ export function FeedPage() {
               e.currentTarget.style.display = "none";
             }}
           />
-          <div className="feed-hero-logo">
-            <EdemLogo size={26} />
-            <span>EDEM</span>
-          </div>
         </div>
       </section>
 
