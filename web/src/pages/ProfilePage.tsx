@@ -141,12 +141,8 @@ export function ProfilePage() {
             <div className="field full">
               <GymPicker
                 gyms={gyms}
-                city={form.city}
                 value={form.mainGymId}
                 onChange={(mainGymId) => setForm((s) => ({ ...s, mainGymId }))}
-                onImported={(g) =>
-                  setGyms((prev) => (prev.some((x) => x.id === g.id) ? prev : [...prev, g]))
-                }
               />
             </div>
           </div>
