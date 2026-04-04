@@ -13,6 +13,7 @@
     "build:location-data": "node scripts/build-seed-data.mjs",
     "build:city-divisions": "node scripts/build-city-divisions.mjs",
     "fetch:city-rayons": "node scripts/fetch-city-rayons-overpass.mjs",
+    "fetch:city-rayons:force": "node scripts/fetch-city-rayons-overpass.mjs --force",
     "import:gyms:file": "node scripts/import-gyms-file.mjs"
   },
   "prisma": {

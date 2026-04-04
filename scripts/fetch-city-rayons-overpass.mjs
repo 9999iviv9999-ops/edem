@@ -1,8 +1,10 @@
 /**
  * Внутригородские районы/округа из OpenStreetMap (Overpass API).
- * Сначала area[name][place=city], при пустом — around(lat,lon) по координатам из russia-cities-full.json.
+ * Сначала area[name][place=city], при пустом — place=town. Без around(): соседние мегаполисы давали ложные «районы».
  *
- * Usage: node scripts/fetch-city-rayons-overpass.mjs [--limit=N] [--offset=N]
+ * Usage: node scripts/fetch-city-rayons-overpass.mjs [--limit=N] [--offset=N] [--force]
+ * --force — при полном прогоне (offset=0, без limit) не читать city-rayons-osm.json.
+ *   При --offset/--limit всегда мержим с файлом на диске, иначе одна порция затрёт весь JSON.
  * Выход: scripts/city-rayons-osm.json
  */
 import fs from "node:fs";
@@ -36,7 +38,11 @@ const MIRRORS = [
   "https://overpass.kumi.systems/api/interpreter"
 ];
 
-const SLEEP_MS = 900;
+/** Пауза между городами (Overpass просит не ддосить) */
+const SLEEP_MS = 600;
+
+/** Ниже порога не дергаем Overpass (в OSM обычно нет районов; экономим ~800 запросов и часы работы). */
+const MIN_POPULATION_FOR_OVERPASS = 50_000;
 
 function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
@@ -60,19 +66,10 @@ function isInnerDistrict(el) {
   return true;
 }
 
-/** Для around-запроса: отсекаем крупные регионы, оставляем типичные городские части */
-function isAroundCandidate(el) {
-  if (!isInnerDistrict(el)) return false;
-  const n = el.tags.name;
-  if (/область|Край$|Республика/i.test(n)) return false;
-  return true;
-}
-
-function parseNames(elements, mode) {
+function parseNames(elements) {
   const names = new Set();
   for (const el of elements || []) {
-    const ok = mode === "around" ? isAroundCandidate(el) : isInnerDistrict(el);
-    if (!ok) continue;
+    if (!isInnerDistrict(el)) continue;
     const n = el.tags?.name?.trim();
     if (n) names.add(n);
   }
@@ -150,23 +147,14 @@ out body;
 `;
 }
 
-function buildAroundQuery(lat, lon, radiusM) {
-  return `[out:json][timeout:55];
-(
-  relation["boundary"="administrative"]["admin_level"~"^(8|9|10|11)$"](around:${radiusM},${lat},${lon});
-);
-out body;
-`;
-}
-
-async function fetchCity(city, coords) {
+async function fetchCity(city) {
   let data;
   try {
     data = await overpassWithRetry(buildAreaQuery(city));
   } catch {
     data = { elements: [] };
   }
-  let list = parseNames(data.elements, "area");
+  let list = parseNames(data.elements);
   if (list.length) return list;
 
   try {
@@ -174,23 +162,10 @@ async function fetchCity(city, coords) {
   } catch {
     data = { elements: [] };
   }
-  list = parseNames(data.elements, "area");
+  list = parseNames(data.elements);
   if (list.length) return list;
 
-  if (coords?.lat != null && coords?.lon != null) {
-    const lat = coords.lat;
-    const lon = coords.lon;
-    for (const r of [12000, 20000]) {
-      try {
-        data = await overpassWithRetry(buildAroundQuery(lat, lon, r));
-      } catch {
-        continue;
-      }
-      list = parseNames(data.elements, "around");
-      if (list.length) return list;
-      await sleep(300);
-    }
-  }
+  /** Не используем around(lat,lon): для пригородов подтягиваются границы соседних мегаполисов (напр. Москвы). */
 
   return [];
 }
@@ -199,9 +174,11 @@ async function main() {
   const args = process.argv.slice(2);
   let limit = Infinity;
   let offset = 0;
+  let force = false;
   for (const a of args) {
     if (a.startsWith("--limit=")) limit = parseInt(a.slice(8), 10) || Infinity;
     if (a.startsWith("--offset=")) offset = parseInt(a.slice(9), 10) || 0;
+    if (a === "--force") force = true;
   }
 
   const citiesPath = path.join(__dirname, "../web/src/data/russianCities.json");
@@ -212,6 +189,7 @@ async function main() {
   for (const x of full) byName.set(x.name, x);
 
   const slice = cities.slice(offset, offset + limit);
+  const isFullRun = offset === 0 && slice.length === cities.length;
 
   const outPath = path.join(__dirname, "city-rayons-osm.json");
   let existing = {};
@@ -222,23 +200,42 @@ async function main() {
       existing = {};
     }
   }
+  if (force && isFullRun) {
+    existing = {};
+  }
 
+  if (force && isFullRun) console.log("--force: full rebuild, ignoring merged city-rayons-osm.json");
+  else if (force && !isFullRun) console.log("--force with --offset/--limit: merging into existing file on disk");
   console.log("Cities to process:", slice.length, "cached:", Object.keys(existing).length);
 
   let newCount = 0;
+
   for (const city of slice) {
     if (existing[city]?.length) continue;
+    const pop = byName.get(city)?.population ?? 0;
+    if (pop < MIN_POPULATION_FOR_OVERPASS) {
+      existing[city] = [`Город «${city}» (целиком)`];
+      newCount++;
+    }
+  }
+  if (newCount > 0) fs.writeFileSync(outPath, JSON.stringify(existing));
+  console.log("Prefilled small cities (<" + MIN_POPULATION_FOR_OVERPASS + " pop):", newCount);
+
+  newCount = 0;
+  for (const city of slice) {
+    if (existing[city]?.length) continue;
+    const pop = byName.get(city)?.population ?? 0;
+    if (pop < MIN_POPULATION_FOR_OVERPASS) continue;
 
     process.stderr.write(`\r${city} …                    `);
-    const coords = byName.get(city)?.coords;
-    const rayons = await fetchCity(city, coords);
+    const rayons = await fetchCity(city);
     existing[city] = rayons.length ? rayons : [`Город «${city}» (целиком)`];
     newCount++;
     fs.writeFileSync(outPath, JSON.stringify(existing));
     await sleep(SLEEP_MS);
   }
 
-  console.log("\nWrote", outPath, "total cities", Object.keys(existing).length, "new:", newCount);
+  console.log("\nWrote", outPath, "total cities", Object.keys(existing).length, "Overpass new:", newCount);
 }
 
 main().catch((e) => {
