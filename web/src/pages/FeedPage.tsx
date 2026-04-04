@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AdminAreaSelect, isSingleOkrugCity } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
+import { SuggestGymPanel } from "../components/SuggestGymPanel";
 import { api } from "../lib/api";
 
 type Gym = { id: string; name: string; city: string; chainName?: string | null };
@@ -169,6 +170,7 @@ export function FeedPage() {
               else setProfiles([]);
             }}
           />
+          <SuggestGymPanel city={city} okrug={okrug} district={district} />
         </div>
         {errorMessage && <div className="error">{errorMessage}</div>}
         {message && <div className="success">{message}</div>}

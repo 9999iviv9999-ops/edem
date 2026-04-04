@@ -105,6 +105,35 @@ gymsRouter.get("/", async (req, res, next) => {
   }
 });
 
+const gymSuggestionSchema = z.object({
+  city: z.string().min(1),
+  okrug: z.string().max(200).optional(),
+  district: z.string().max(200).optional(),
+  name: z.string().min(1).max(200),
+  address: z.string().min(1).max(500),
+  details: z.string().max(1000).optional()
+});
+
+gymsRouter.post("/suggestions", requireAuth, async (req, res, next) => {
+  try {
+    const body = gymSuggestionSchema.parse(req.body);
+    const row = await prisma.gymSuggestion.create({
+      data: {
+        userId: req.userId!,
+        city: body.city.trim(),
+        okrug: body.okrug?.trim() || null,
+        district: body.district?.trim() || null,
+        name: body.name.trim(),
+        address: body.address.trim(),
+        details: body.details?.trim() || null
+      }
+    });
+    return res.status(201).json({ id: row.id, ok: true });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 gymsRouter.get("/maps/status", (_req, res) => {
   res.json(mapsKeysConfigured());
 });

@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { AdminAreaSelect, isSingleOkrugCity } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
+import { SuggestGymPanel } from "../components/SuggestGymPanel";
 import { api } from "../lib/api";
 
 type Gym = { id: string; name: string; city: string; chainName?: string | null };
@@ -195,6 +196,7 @@ export function ProfilePage() {
                 value={form.mainGymId}
                 onChange={(mainGymId) => setForm((s) => ({ ...s, mainGymId }))}
               />
+              <SuggestGymPanel city={form.city} okrug={form.okrug} district={form.district} />
             </div>
           </div>
 

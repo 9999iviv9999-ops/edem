@@ -70,6 +70,7 @@ model User {
   blocksReceived    Block[]             @relation("Blocked")
   reportsInitiated  Report[]            @relation("Reporter")
   reportsReceived   Report[]            @relation("Reported")
+  gymSuggestions    GymSuggestion[]
   isBanned          Boolean             @default(false)
   banReason         String?
 }
@@ -96,6 +97,25 @@ model Gym {
   @@index([city])
   @@index([city, district])
   @@index([city, okrug, district])
+}
+
+/** Заявка пользователя: добавить зал/центр в каталог (модерация вручную). */
+model GymSuggestion {
+  id        String   @id @default(cuid())
+  userId    String
+  city      String
+  okrug     String?
+  district  String?
+  name      String
+  address   String
+  details   String?
+  status    String   @default("new")
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([city, createdAt])
+  @@index([status, createdAt])
 }
 
 model UserGymMembership {
