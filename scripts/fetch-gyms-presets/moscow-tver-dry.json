@@ -1,0 +1,6 @@
+{
+  "city": "Москва",
+  "district": "Тверской",
+  "dryRun": true,
+  "out": "scripts/fetch-gyms-presets/sample-moscow-tver.json"
+}

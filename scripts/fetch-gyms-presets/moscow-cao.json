@@ -1,0 +1,7 @@
+{
+  "city": "Москва",
+  "okrug": "ЦАО",
+  "dryRun": true,
+  "sleepMs": 1000,
+  "out": "scripts/fetch-gyms-presets/sample-moscow-cao.json"
+}

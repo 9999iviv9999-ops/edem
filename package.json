@@ -14,7 +14,8 @@
     "build:city-divisions": "node scripts/build-city-divisions.mjs",
     "fetch:city-rayons": "node scripts/fetch-city-rayons-overpass.mjs",
     "fetch:city-rayons:force": "node scripts/fetch-city-rayons-overpass.mjs --force",
-    "import:gyms:file": "node scripts/import-gyms-file.mjs"
+    "import:gyms:file": "node scripts/import-gyms-file.mjs",
+    "fetch:gyms:osm": "node scripts/fetch-gyms-osm.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
