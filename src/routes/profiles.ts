@@ -20,6 +20,12 @@ const updateProfileSchema = z.object({
   trainingTypes: z.array(z.enum(["strength", "cardio", "crossfit", "yoga"])).min(1)
 });
 
+const patchLocationSchema = z.object({
+  city: z.string().min(1),
+  okrug: z.string().max(200).optional().default(""),
+  district: z.string().max(200).optional().default("")
+});
+
 const filterSchema = z.object({
   minAge: z.coerce.number().int().optional(),
   maxAge: z.coerce.number().int().optional(),
@@ -43,6 +49,40 @@ profilesRouter.get("/me", requireAuth, async (req, res, next) => {
     });
     if (!user) return res.status(404).json({ error: "User not found" });
     return res.json(user);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Частичное обновление города / округа / района (лента и т.п. без полного PUT профиля). */
+profilesRouter.patch("/me/location", requireAuth, async (req, res, next) => {
+  try {
+    const data = patchLocationSchema.parse(req.body);
+    const okrug = data.okrug.trim() ? data.okrug.trim() : null;
+    const district = data.district.trim() ? data.district.trim() : null;
+
+    const prev = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      select: { city: true }
+    });
+    if (!prev) return res.status(404).json({ error: "User not found" });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: req.userId! },
+        data: { city: data.city, okrug, district }
+      });
+      if (prev.city !== data.city) {
+        await tx.userGymMembership.deleteMany({
+          where: {
+            userId: req.userId!,
+            gym: { city: { not: data.city } }
+          }
+        });
+      }
+    });
+
+    return res.json({ ok: true });
   } catch (err) {
     return next(err);
   }

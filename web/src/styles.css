@@ -460,6 +460,17 @@ label.field select:not(.multi) {
   object-fit: contain;
 }
 
+.feed-location {
+  margin-top: 8px;
+  margin-bottom: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--eden-border);
+}
+
+.feed-location-hint {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
 
 .profile-card {
   background: var(--eden-card);
