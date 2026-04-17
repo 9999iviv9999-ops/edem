@@ -1,6 +1,9 @@
 # Render Blueprint: https://render.com/docs/blueprint-spec
 # Подключи репозиторий в Render → New → Blueprint → указать этот файл.
 # После деплоя задай вручную в панели API: JWT_SECRET, ADMIN_MODERATION_KEY, VPROK_* (см. .env.example).
+#
+# Если раньше упало на vprok_order_settlement (P3018/P3009): Render Shell для vprok-api, затем Redeploy:
+#   npx prisma migrate resolve --rolled-back 20260417180000_vprok_order_settlement
 
 databases:
   - name: vprok-postgres
