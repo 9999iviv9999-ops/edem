@@ -4,8 +4,16 @@
  * Usage:
  *   node scripts/import-gyms-file.mjs "C:/path/gyms.json"
  *   node scripts/import-gyms-file.mjs "C:/path/gyms.csv"
+ *   node scripts/import-gyms-file.mjs scripts/data/moscow-cao-gyms.json
  *
- * Expected columns/keys:
+ * JSON — один из вариантов:
+ * 1) Массив объектов с полями name, address, city, okrug?, district?, region?, chainName?, latitude?, longitude?
+ * 2) Объект каталога по округу:
+ *    { "format": "edem-city-okrug-districts", "city", "okrug", "region"?, "districts": [
+ *        { "district": "Арбат", "venues": [ { "name", "address", "chainName"? } ] }
+ *      ] }
+ *
+ * CSV columns:
  *   name,address,city,okrug,district,region,chainName,latitude,longitude
  */
 import fs from "node:fs";
@@ -83,11 +91,55 @@ function toExternalId(row) {
   return `user-${crypto.createHash("sha1").update(source).digest("hex").slice(0, 24)}`;
 }
 
+/**
+ * @param {unknown} raw
+ * @returns {Record<string, unknown>[]}
+ */
+function jsonToRows(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === "object" && "districts" in raw) {
+    const o = /** @type {Record<string, unknown>} */ (raw);
+    const city = String(o.city || "").trim();
+    const okrug = String(o.okrug || "").trim() || null;
+    const region = String(o.region || "").trim() || null;
+    const districts = o.districts;
+    if (!city || !Array.isArray(districts)) {
+      throw new Error("Catalog object needs non-empty city and districts[]");
+    }
+    const rows = [];
+    for (const block of districts) {
+      if (!block || typeof block !== "object") continue;
+      const b = /** @type {Record<string, unknown>} */ (block);
+      const district = String(b.district || b.name || "").trim();
+      const venues = b.venues || b.items;
+      if (!district || !Array.isArray(venues)) continue;
+      for (const v of venues) {
+        if (!v || typeof v !== "object") continue;
+        const row = /** @type {Record<string, unknown>} */ (v);
+        rows.push({
+          name: row.name,
+          address: row.address,
+          city,
+          okrug,
+          district,
+          region: region || null,
+          chainName: row.chainName,
+          latitude: row.latitude,
+          longitude: row.longitude
+        });
+      }
+    }
+    return rows;
+  }
+  throw new Error("JSON must be an array of rows or a catalog object with city, okrug, districts[]");
+}
+
 async function main() {
   const raw = readData(filePath);
-  if (!Array.isArray(raw)) throw new Error("File root must be an array");
+  const rawRows = path.extname(filePath).toLowerCase() === ".json" ? jsonToRows(raw) : raw;
+  if (!Array.isArray(rawRows)) throw new Error("CSV root parse failed");
 
-  const cleaned = raw
+  const cleaned = rawRows
     .map((r) => ({
       name: String(r.name || "").trim(),
       address: String(r.address || "").trim(),

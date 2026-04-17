@@ -9,6 +9,7 @@ import { requireAuth } from "../middleware/auth";
 
 const registerSchema = z.object({
   email: z.string().email(),
+  phone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone format"),
   password: z.string().min(6),
   name: z.string().min(1),
   age: z.number().int().min(18).max(80),
@@ -20,6 +21,7 @@ const registerSchema = z.object({
 
 const loginSchema = z.object({
   email: z.string().email(),
+  phone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone format"),
   password: z.string().min(6)
 });
 
@@ -56,15 +58,20 @@ authRouter.post("/register", async (req, res, next) => {
   try {
     const data = registerSchema.parse(req.body);
 
-    const exists = await prisma.user.findUnique({ where: { email: data.email } });
+    const exists = await prisma.user.findFirst({
+      where: {
+        OR: [{ email: data.email }, { phone: data.phone }]
+      }
+    });
     if (exists) {
-      return res.status(409).json({ error: "Email already used" });
+      return res.status(409).json({ error: "Email or phone already used" });
     }
 
     const passwordHash = await bcrypt.hash(data.password, 10);
     const user = await prisma.user.create({
       data: {
         email: data.email,
+        phone: data.phone,
         passwordHash,
         name: data.name,
         age: data.age,
@@ -90,7 +97,9 @@ authRouter.post("/register", async (req, res, next) => {
 authRouter.post("/login", async (req, res, next) => {
   try {
     const data = loginSchema.parse(req.body);
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    const user = await prisma.user.findFirst({
+      where: { email: data.email, phone: data.phone }
+    });
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
     }

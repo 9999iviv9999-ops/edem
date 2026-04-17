@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
+import { VprokLogo } from "./VprokLogo";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
 
@@ -32,19 +33,16 @@ export function Shell({ children }: Props) {
       <header className="topbar">
         <div className="brand-lockup">
           <div className="brand-wrap">
-            <div className="brand">Edem</div>
-            <span className="brand-tagline">райский сад знакомств</span>
+            <VprokLogo size={40} labeled wordmark className="brand-logo-mark" />
+            <span className="brand-tagline">покупай заранее, забирай позже</span>
           </div>
         </div>
         <nav className="nav">
-          <NavLink className={navClass} end to="/">
-            Лента
+          <NavLink className={navClass} to="/vprok">
+            Впрок
           </NavLink>
-          <NavLink className={navClass} to="/matches">
-            Матчи
-          </NavLink>
-          <NavLink className={navClass} to="/profile">
-            Профиль
+          <NavLink className={navClass} to="/vprok-admin">
+            Vprok Admin
           </NavLink>
         </nav>
         <button className="ghost-btn" onClick={onLogout}>

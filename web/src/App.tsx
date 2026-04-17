@@ -1,11 +1,11 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Shell } from "./components/Shell";
-import { FeedPage } from "./pages/FeedPage";
 import { LoginPage } from "./pages/LoginPage";
-import { MatchesPage } from "./pages/MatchesPage";
-import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { VprokPage } from "./pages/VprokPage";
+import { VprokPreviewPage } from "./pages/VprokPreviewPage";
+import { VprokAdminPage } from "./pages/VprokAdminPage";
 
 function App() {
   return (
@@ -13,37 +13,29 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/vprok-preview" element={<VprokPreviewPage />} />
+        <Route path="/" element={<Navigate to="/vprok-preview" replace />} />
         <Route
-          path="/"
+          path="/vprok-admin"
           element={
             <ProtectedRoute>
               <Shell>
-                <FeedPage />
+                <VprokAdminPage />
               </Shell>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/profile"
+          path="/vprok"
           element={
             <ProtectedRoute>
               <Shell>
-                <ProfilePage />
+                <VprokPage />
               </Shell>
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/matches"
-          element={
-            <ProtectedRoute>
-              <Shell>
-                <MatchesPage />
-              </Shell>
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/vprok-preview" replace />} />
       </Routes>
     </BrowserRouter>
   );

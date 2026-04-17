@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16
+    container_name: vprok-shared-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vprok
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - vprok_dual_pg_data:/var/lib/postgresql/data
+
+  api-edem:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: edem-api
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/vprok?schema=public
+    command: npm run start
+    ports:
+      - "3000:3000"
+
+  api-vprok:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vprok-api
+    restart: unless-stopped
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/vprok?schema=public
+    command: npm run start:vprok
+    ports:
+      - "3001:3000"
+
+volumes:
+  vprok_dual_pg_data:
+

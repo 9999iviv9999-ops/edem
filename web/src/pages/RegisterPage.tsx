@@ -1,8 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AdminAreaSelect } from "../components/AdminAreaSelect";
-import { CitySelect } from "../components/CitySelect";
-import { EdemLogo } from "../components/EdemLogo";
+import { VprokLogo } from "../components/VprokLogo";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
 
@@ -11,12 +9,13 @@ export function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     age: 22,
     gender: "male",
     city: "Москва",
-    okrug: "",
-    district: ""
+    okrug: undefined as string | undefined,
+    district: undefined as string | undefined
   });
   const [error, setError] = useState("");
 
@@ -29,7 +28,7 @@ export function RegisterPage() {
         age: Number(form.age)
       });
       setTokens(data.accessToken, data.refreshToken);
-      navigate("/profile");
+      navigate("/vprok");
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { error?: string } }; message?: string };
       const msg =
@@ -44,12 +43,12 @@ export function RegisterPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-brand">
-          <EdemLogo size={56} labeled />
+          <VprokLogo size={56} labeled wordmark />
         </div>
         <h1>Создать аккаунт</h1>
         <p className="auth-lede">
-          Шаг в <strong>райский сад Edem</strong>: анкета привязана к твоему фитнес-центру — так проще
-          встретиться вживую после совпадения.
+          Шаг в <strong>Vprok</strong>: зарегистрируйся, чтобы пользоваться платформой
+          отложенных покупок и личным кабинетом.
         </p>
         <form onSubmit={onSubmit} className="grid">
           <input
@@ -61,6 +60,11 @@ export function RegisterPage() {
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+          />
+          <input
+            placeholder="Телефон (+79991234567)"
+            value={form.phone}
+            onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
           />
           <input
             type="password"
@@ -91,23 +95,10 @@ export function RegisterPage() {
             <option value="female">Женщина</option>
             <option value="other">Другое</option>
           </select>
-          <CitySelect
+          <input
+            placeholder="Город"
             value={form.city}
-            onChange={(city) =>
-              setForm((s) => ({
-                ...s,
-                city,
-                okrug: "",
-                district: ""
-              }))
-            }
-          />
-          <AdminAreaSelect
-            city={form.city}
-            okrug={form.okrug}
-            district={form.district}
-            onOkrugChange={(okrug) => setForm((s) => ({ ...s, okrug }))}
-            onDistrictChange={(district) => setForm((s) => ({ ...s, district }))}
+            onChange={(e) => setForm((s) => ({ ...s, city: e.target.value }))}
           />
           {error && <div className="error">{error}</div>}
           <button className="primary-btn">Создать аккаунт</button>

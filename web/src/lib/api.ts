@@ -2,7 +2,7 @@ import axios from "axios";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
 
 // Пустой baseURL = запросы на тот же origin (/api/...).
-// Локально: Vite proxy (vite.config.ts). На Vercel: vercel.json rewrites -> api.edem.press.
+// Локально: Vite proxy (vite.config.ts).
 // Если задан VITE_API_URL — используем его (прямой вызов API).
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "";
 

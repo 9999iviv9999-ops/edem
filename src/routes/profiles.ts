@@ -26,6 +26,10 @@ const patchLocationSchema = z.object({
   district: z.string().max(200).optional().default("")
 });
 
+const patchPrimaryGymSchema = z.object({
+  gymId: z.string().min(1)
+});
+
 const filterSchema = z.object({
   minAge: z.coerce.number().int().optional(),
   maxAge: z.coerce.number().int().optional(),
@@ -80,6 +84,37 @@ profilesRouter.patch("/me/location", requireAuth, async (req, res, next) => {
           }
         });
       }
+    });
+
+    return res.json({ ok: true });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** Основной зал из ленты: тот же членство, что в профиле, без полного PUT. */
+profilesRouter.patch("/me/primary-gym", requireAuth, async (req, res, next) => {
+  try {
+    const { gymId } = patchPrimaryGymSchema.parse(req.body);
+    const gym = await prisma.gym.findUnique({ where: { id: gymId } });
+    if (!gym) return res.status(400).json({ error: "Gym not found" });
+
+    await prisma.$transaction(async (tx) => {
+      await tx.userGymMembership.updateMany({
+        where: { userId: req.userId! },
+        data: { isPrimary: false }
+      });
+      await tx.userGymMembership.upsert({
+        where: {
+          userId_gymId: { userId: req.userId!, gymId }
+        },
+        create: {
+          userId: req.userId!,
+          gymId,
+          isPrimary: true
+        },
+        update: { isPrimary: true }
+      });
     });
 
     return res.json({ ok: true });

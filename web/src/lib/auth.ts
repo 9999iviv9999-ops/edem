@@ -1,5 +1,5 @@
-const ACCESS_KEY = "edem_access_token";
-const REFRESH_KEY = "edem_refresh_token";
+const ACCESS_KEY = "vprok_access_token";
+const REFRESH_KEY = "vprok_refresh_token";
 
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_KEY);

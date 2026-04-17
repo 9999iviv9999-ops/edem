@@ -1,27 +1,29 @@
 services:
   db:
     image: postgres:16
-    container_name: edem-db
+    container_name: vprok-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: edem
+      POSTGRES_DB: vprok
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
     volumes:
-      - edem_pg_data:/var/lib/postgresql/data
+      - vprok_pg_data:/var/lib/postgresql/data
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: edem-api
+    container_name: vprok-api
     restart: unless-stopped
     depends_on:
       - db
     env_file:
       - .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/vprok?schema=public
     ports:
       - "3000:3000"
 
@@ -31,7 +33,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:3000
-    container_name: edem-web
+    container_name: vprok-web
     restart: unless-stopped
     depends_on:
       - api
@@ -40,10 +42,10 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:8
-    container_name: edem-pgadmin
+    container_name: vprok-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@edem.local
+      PGADMIN_DEFAULT_EMAIL: admin@vprok.local
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
@@ -51,4 +53,4 @@ services:
       - db
 
 volumes:
-  edem_pg_data:
+  vprok_pg_data:

@@ -9,6 +9,7 @@ import { profilesRouter } from "./routes/profiles";
 import { interactionsRouter } from "./routes/interactions";
 import { mediaRouter } from "./routes/media";
 import { moderationRouter } from "./routes/moderation";
+import { vprokRouter } from "./routes/vprok";
 import { errorHandler } from "./middleware/error-handler";
 
 const app = express();
@@ -28,6 +29,7 @@ app.use("/api/profiles", profilesRouter);
 app.use("/api", interactionsRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/moderation", moderationRouter);
+app.use("/api/vprok", vprokRouter);
 
 app.use(errorHandler);
 
