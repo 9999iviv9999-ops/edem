@@ -1,22 +1,33 @@
-/* Vprok interface theme */
+/* Vprok interface theme — «дорого»: тёплый уголь, шампань, бронза/золото */
 
 :root {
-  accent-color: var(--eden-sage);
-  --eden-deep: #0b1020;
-  --eden-forest: #121a33;
-  --eden-leaf: #1b2450;
-  --eden-sage: #4f74ff;
-  --eden-mint: #7dc4ff;
-  --eden-mist: #c6d5ff;
-  --eden-cream: #f5f7ff;
-  --eden-gold: #a855f7;
-  --eden-gold-bright: #c084fc;
-  --eden-gold-soft: rgba(192, 132, 252, 0.25);
-  --eden-text: #e8eeff;
-  --eden-text-muted: #9fb2e5;
-  --eden-card: rgba(19, 28, 56, 0.78);
-  --eden-border: rgba(125, 157, 255, 0.35);
-  --eden-shadow: 0 10px 34px rgba(3, 8, 24, 0.45);
+  accent-color: var(--eden-gold-bright);
+  --eden-deep: #070608;
+  --eden-forest: #101014;
+  --eden-leaf: #1a181c;
+  --eden-sage: #b8943f;
+  --eden-mint: #e4d4b8;
+  --eden-mist: #c4b8a4;
+  --eden-cream: #faf6ef;
+  --eden-gold: #8a6f2e;
+  --eden-gold-bright: #e3c56d;
+  --eden-gold-soft: rgba(212, 175, 88, 0.22);
+  --eden-text: #efe9df;
+  --eden-text-muted: #91887b;
+  --eden-card: rgba(22, 20, 24, 0.92);
+  --eden-border: rgba(200, 175, 120, 0.28);
+  --eden-shadow: 0 18px 50px rgba(0, 0, 0, 0.58);
+
+  /* поверхности без «зелёного сада» */
+  --lux-ink: rgba(12, 11, 14, 0.74);
+  --lux-ink-deep: rgba(10, 9, 12, 0.88);
+  --lux-ink-soft: rgba(10, 9, 12, 0.48);
+  --lux-ink-faint: rgba(10, 9, 12, 0.36);
+  --lux-wash: rgba(184, 148, 72, 0.16);
+  --lux-wash-strong: rgba(184, 148, 72, 0.26);
+  --lux-line: rgba(188, 168, 120, 0.22);
+  --lux-sapphire: rgba(88, 102, 138, 0.32);
+  --lux-sapphire-bright: rgba(110, 128, 168, 0.42);
 
   font-family: "DM Sans", system-ui, -apple-system, sans-serif;
   color: var(--eden-text);
@@ -41,10 +52,10 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
   background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(79, 116, 255, 0.33), transparent 55%),
-    radial-gradient(ellipse 90% 60% at 100% 50%, rgba(27, 36, 80, 0.42), transparent 50%),
-    radial-gradient(ellipse 80% 50% at 0% 80%, rgba(192, 132, 252, 0.12), transparent 45%),
-    linear-gradient(165deg, var(--eden-deep) 0%, var(--eden-forest) 45%, #0f1730 100%);
+    radial-gradient(ellipse 115% 75% at 50% -18%, rgba(200, 165, 90, 0.14), transparent 54%),
+    radial-gradient(ellipse 88% 58% at 100% 42%, rgba(42, 38, 52, 0.55), transparent 52%),
+    radial-gradient(ellipse 72% 48% at 0% 88%, rgba(120, 85, 40, 0.07), transparent 46%),
+    linear-gradient(168deg, var(--eden-deep) 0%, var(--eden-forest) 44%, #0c0b0e 100%);
 }
 
 a {
@@ -74,7 +85,7 @@ button {
   border-radius: 14px;
   border: 1px solid var(--eden-border);
   padding: 12px 14px;
-  background: rgba(10, 28, 18, 0.65);
+  background: var(--lux-ink);
   color: var(--eden-cream);
   width: 100%;
   max-width: 100%;
@@ -95,7 +106,7 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--eden-cream);
   caret-color: var(--eden-cream);
-  box-shadow: 0 0 0 1000px rgba(10, 28, 18, 0.92) inset;
+  box-shadow: 0 0 0 1000px rgba(12, 11, 14, 0.94) inset;
   transition: background-color 99999s ease-out 0s;
 }
 
@@ -120,8 +131,8 @@ button {
   gap: 10px 12px;
   padding: 12px clamp(14px, 4vw, 22px);
   border-bottom: 1px solid var(--eden-border);
-  background: rgba(12, 26, 18, 0.88);
-  backdrop-filter: blur(14px);
+  background: var(--lux-ink-deep);
+  backdrop-filter: blur(16px);
   position: sticky;
   top: 0;
   z-index: 20;
@@ -161,7 +172,7 @@ button {
 
 .brand-logo-mark {
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 12px rgba(79, 116, 255, 0.35));
+  filter: drop-shadow(0 2px 14px rgba(200, 165, 80, 0.28));
 }
 
 .brand-logo-mark.vprok-logo--luxury {
@@ -231,8 +242,8 @@ button {
 
 .nav-link--active {
   color: var(--eden-cream);
-  background: rgba(90, 138, 106, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(212, 175, 55, 0.35);
+  background: var(--lux-wash);
+  box-shadow: inset 0 0 0 1px rgba(212, 175, 88, 0.4);
 }
 
 .container {
@@ -257,7 +268,7 @@ button {
   overflow: hidden;
   background:
     radial-gradient(ellipse 90% 70% at 100% -10%, rgba(212, 175, 55, 0.09), transparent 50%),
-    radial-gradient(ellipse 60% 45% at -5% 105%, rgba(90, 138, 106, 0.18), transparent 50%),
+    radial-gradient(ellipse 60% 45% at -5% 105%, var(--lux-wash), transparent 50%),
     var(--eden-card);
   box-shadow: var(--eden-shadow), inset 0 1px 0 rgba(212, 175, 55, 0.22);
 }
@@ -268,7 +279,7 @@ button {
   right: -15%;
   width: min(420px, 90vw);
   height: min(420px, 90vw);
-  background: radial-gradient(circle, rgba(143, 188, 154, 0.12), transparent 68%);
+  background: radial-gradient(circle, rgba(200, 170, 100, 0.1), transparent 68%);
   pointer-events: none;
   z-index: 0;
 }
@@ -283,7 +294,7 @@ button {
   gap: 12px;
   margin-top: 18px;
   padding-top: 18px;
-  border-top: 1px solid rgba(139, 178, 150, 0.2);
+  border-top: 1px solid var(--lux-line);
 }
 
 .profile-section:first-of-type {
@@ -353,7 +364,7 @@ label.field select:not(.multi) {
 }
 
 .chip {
-  background: rgba(90, 138, 106, 0.25);
+  background: var(--lux-wash);
   border: 1px solid var(--eden-border);
   border-radius: 999px;
   padding: 6px 10px;
@@ -366,19 +377,19 @@ label.field select:not(.multi) {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #3d6b4f 0%, var(--eden-leaf) 45%, #2d5a40 100%);
-  border: 1px solid rgba(212, 175, 55, 0.45);
+  background: linear-gradient(145deg, #1f1c18 0%, #3a3228 42%, #6b542c 100%);
+  border: 1px solid rgba(220, 185, 100, 0.5);
   color: var(--eden-cream);
   font-weight: 600;
   width: auto;
   min-height: 48px;
   padding: 12px 22px;
-  box-shadow: 0 4px 20px rgba(31, 74, 50, 0.45);
+  box-shadow: 0 6px 26px rgba(0, 0, 0, 0.5), 0 0 28px rgba(180, 145, 70, 0.12);
 }
 
 .primary-btn:hover {
-  filter: brightness(1.08);
-  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.2);
+  filter: brightness(1.06);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.52), 0 0 32px rgba(220, 185, 100, 0.18);
 }
 
 .ghost-btn {
@@ -410,7 +421,7 @@ label.field select:not(.multi) {
   content: "";
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at 50% 120%, rgba(90, 138, 106, 0.15), transparent 50%);
+  background: radial-gradient(circle at 50% 120%, var(--lux-wash), transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -426,7 +437,7 @@ label.field select:not(.multi) {
 }
 
 .auth-brand .vprok-logo {
-  filter: drop-shadow(0 4px 18px rgba(90, 138, 106, 0.35));
+  filter: drop-shadow(0 4px 20px rgba(200, 165, 80, 0.25));
 }
 
 .auth-card {
@@ -464,7 +475,7 @@ label.field select:not(.multi) {
 }
 
 .success {
-  color: #9fd4b0;
+  color: #c8d4a8;
   font-size: 14px;
 }
 
@@ -482,17 +493,17 @@ label.field select:not(.multi) {
 
 .feed-hero {
   background:
-    radial-gradient(circle at 20% 10%, rgba(237, 137, 205, 0.14), transparent 35%),
-    radial-gradient(circle at 80% 0%, rgba(172, 93, 255, 0.16), transparent 30%),
-    linear-gradient(165deg, rgba(9, 21, 27, 0.96), rgba(17, 34, 30, 0.9));
+    radial-gradient(circle at 18% 8%, rgba(200, 165, 95, 0.12), transparent 38%),
+    radial-gradient(circle at 82% 0%, rgba(90, 75, 120, 0.14), transparent 32%),
+    linear-gradient(165deg, rgba(12, 10, 14, 0.96), rgba(22, 18, 16, 0.92));
 }
 
 .feed-hero-image-wrap {
   position: relative;
   border-radius: 16px;
   overflow: hidden;
-  border: 1px solid rgba(212, 175, 55, 0.24);
-  background: rgba(10, 20, 28, 0.55);
+  border: 1px solid rgba(200, 175, 120, 0.28);
+  background: var(--lux-ink-soft);
 }
 
 .feed-hero-image {
@@ -612,7 +623,7 @@ label.field select:not(.multi) {
   min-height: 340px;
   max-height: 420px;
   overflow: auto;
-  background: rgba(10, 28, 18, 0.6);
+  background: var(--lux-ink);
   border: 1px solid var(--eden-border);
   border-radius: 14px;
   padding: 12px;
@@ -623,7 +634,7 @@ label.field select:not(.multi) {
 
 .bubble {
   max-width: 70%;
-  background: rgba(90, 138, 106, 0.35);
+  background: var(--lux-wash-strong);
   border-radius: 14px;
   padding: 10px 12px;
   color: var(--eden-cream);
@@ -697,7 +708,7 @@ label.field select:not(.multi) {
 .gym-picker-maps {
   margin-top: 12px;
   padding-top: 14px;
-  border-top: 1px solid rgba(139, 178, 150, 0.22);
+  border-top: 1px solid var(--lux-line);
   display: grid;
   gap: 10px;
 }
@@ -816,7 +827,7 @@ textarea {
   gap: 10px;
   padding: 10px 12px;
   border-radius: 14px;
-  background: rgba(12, 26, 18, 0.65);
+  background: var(--lux-ink);
   border: 1px solid var(--eden-border);
 }
 
@@ -863,20 +874,20 @@ textarea {
 }
 
 .acebook-shortcut:hover {
-  background: rgba(90, 138, 106, 0.18);
+  background: var(--lux-wash);
   color: var(--eden-cream);
 }
 
 .acebook-shortcut--active {
-  background: rgba(24, 119, 242, 0.18);
+  background: var(--lux-sapphire);
   color: var(--eden-cream);
-  box-shadow: inset 0 0 0 1px rgba(24, 119, 242, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(160, 175, 210, 0.35);
 }
 
 .acebook-sidebar-card {
   padding: 14px;
   border-radius: 14px;
-  background: rgba(12, 26, 18, 0.55);
+  background: var(--lux-ink-soft);
   border: 1px solid var(--eden-border);
 }
 
@@ -910,9 +921,9 @@ textarea {
   padding: 14px 16px;
   border-radius: 16px;
   background:
-    linear-gradient(135deg, rgba(24, 119, 242, 0.18) 0%, rgba(12, 26, 18, 0.88) 55%),
-    rgba(12, 26, 18, 0.75);
-  border: 1px solid rgba(24, 119, 242, 0.28);
+    linear-gradient(135deg, var(--lux-sapphire) 0%, var(--lux-ink-deep) 58%),
+    rgba(14, 12, 16, 0.78);
+  border: 1px solid rgba(180, 165, 120, 0.22);
   box-shadow: var(--eden-shadow);
 }
 
@@ -931,9 +942,9 @@ textarea {
   place-items: center;
   font-weight: 600;
   font-size: 1.25rem;
-  color: #fff;
-  background: linear-gradient(145deg, #1877f2 0%, #0d5dbf 100%);
-  box-shadow: 0 4px 16px rgba(24, 119, 242, 0.35);
+  color: #faf6ef;
+  background: linear-gradient(145deg, #6a5a48 0%, #3d3428 55%, #2a241c 100%);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45), 0 0 20px rgba(200, 165, 90, 0.15);
   flex-shrink: 0;
 }
 
@@ -960,8 +971,8 @@ textarea {
   max-width: 360px;
   padding: 8px 12px;
   border-radius: 999px;
-  background: rgba(10, 28, 18, 0.75);
-  border: 1px solid rgba(24, 119, 242, 0.22);
+  background: var(--lux-ink);
+  border: 1px solid var(--lux-line);
 }
 
 .acebook-search-icon {
@@ -1001,7 +1012,7 @@ textarea {
 .acebook-sponsored-link {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #6ab0ff;
+  color: var(--eden-mint);
 }
 
 .acebook-contacts {
@@ -1097,9 +1108,9 @@ textarea {
   min-height: 140px;
   border-radius: 0 0 20px 20px;
   background:
-    linear-gradient(105deg, rgba(24, 119, 242, 0.45) 0%, rgba(12, 26, 18, 0.2) 45%, rgba(212, 175, 55, 0.15) 100%),
-    radial-gradient(ellipse 80% 100% at 50% 0%, rgba(90, 138, 106, 0.35), transparent 55%),
-    linear-gradient(180deg, #0f2419 0%, #0c1a12 100%);
+    linear-gradient(105deg, var(--lux-sapphire-bright) 0%, rgba(14, 12, 10, 0.35) 42%, rgba(200, 165, 88, 0.18) 100%),
+    radial-gradient(ellipse 80% 100% at 50% 0%, var(--lux-wash-strong), transparent 55%),
+    linear-gradient(180deg, #141118 0%, #0a090b 100%);
   border-bottom: 1px solid var(--eden-border);
 }
 
@@ -1204,7 +1215,7 @@ textarea {
   gap: 4px;
   padding: 4px;
   border-radius: 14px;
-  background: rgba(12, 26, 18, 0.5);
+  background: var(--lux-ink-soft);
   border: 1px solid var(--eden-border);
 }
 
@@ -1224,13 +1235,13 @@ textarea {
 
 .group-tab:hover:not(:disabled) {
   color: var(--eden-cream);
-  background: rgba(90, 138, 106, 0.15);
+  background: var(--lux-wash);
 }
 
 .group-tab--active {
   color: var(--eden-cream);
-  background: rgba(24, 119, 242, 0.22);
-  box-shadow: inset 0 0 0 1px rgba(24, 119, 242, 0.35);
+  background: var(--lux-sapphire);
+  box-shadow: inset 0 0 0 1px rgba(160, 175, 210, 0.32);
 }
 
 .group-tab:disabled {
@@ -1256,13 +1267,13 @@ textarea {
 .group-composer-input {
   flex: 1;
   min-width: 0;
-  background: rgba(10, 28, 18, 0.55);
+  background: var(--lux-ink);
 }
 
 .group-composer-actions {
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(139, 178, 150, 0.2);
+  border-top: 1px solid var(--lux-line);
 }
 
 .group-composer-hint {
@@ -1281,8 +1292,8 @@ textarea {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: rgba(24, 119, 242, 0.35);
-  border: 1px solid rgba(24, 119, 242, 0.4);
+  background: var(--lux-sapphire);
+  border: 1px solid rgba(200, 180, 130, 0.35);
   flex-shrink: 0;
 }
 
@@ -1309,15 +1320,15 @@ textarea {
   gap: 8px;
   flex-wrap: wrap;
   padding-top: 10px;
-  border-top: 1px solid rgba(139, 178, 150, 0.2);
+  border-top: 1px solid var(--lux-line);
 }
 
 .group-post-action {
   width: auto;
   min-height: 40px;
   padding: 8px 14px;
-  background: rgba(90, 138, 106, 0.22);
-  border-color: rgba(139, 178, 150, 0.35);
+  background: var(--lux-wash);
+  border-color: rgba(200, 175, 120, 0.35);
   color: var(--eden-mint);
   font-size: 0.88rem;
 }
@@ -1367,7 +1378,7 @@ textarea {
   justify-content: space-between;
   gap: 12px;
   padding: 8px 0;
-  border-top: 1px solid rgba(139, 178, 150, 0.2);
+  border-top: 1px solid var(--lux-line);
   font-size: 0.9rem;
 }
 
@@ -1415,15 +1426,15 @@ textarea {
   color: var(--eden-text-muted);
   text-align: center;
   font-size: 0.8rem;
-  background: rgba(10, 28, 18, 0.45);
+  background: var(--lux-ink-faint);
   display: grid;
   gap: 6px;
 }
 
 .vprok-step--active {
   color: var(--eden-cream);
-  border-color: rgba(212, 175, 55, 0.45);
-  background: rgba(90, 138, 106, 0.25);
+  border-color: rgba(220, 185, 100, 0.45);
+  background: var(--lux-wash-strong);
 }
 
 .vprok-ad-slot {
@@ -1453,7 +1464,7 @@ textarea {
   min-height: 160px;
   border: 1px dashed var(--eden-border);
   border-radius: 12px;
-  background: rgba(10, 28, 18, 0.35);
+  background: var(--lux-ink-faint);
   display: grid;
   place-items: center;
   padding: 14px;
@@ -1466,7 +1477,7 @@ textarea {
   padding: 12px;
   text-align: center;
   color: var(--eden-text-muted);
-  background: rgba(10, 28, 18, 0.35);
+  background: var(--lux-ink-faint);
 }
 
 .vprok-chip {

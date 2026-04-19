@@ -59,18 +59,18 @@ export function VprokLogo({
       {(labeled || wordmark) && <title>Vprok</title>}
       <defs>
         <linearGradient id={gBg} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#121a33" />
-          <stop offset="100%" stopColor="#1b2450" />
+          <stop offset="0%" stopColor="#141118" />
+          <stop offset="100%" stopColor="#2a241c" />
         </linearGradient>
         <linearGradient id={gRing} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7dc4ff" />
-          <stop offset="50%" stopColor="#4f74ff" />
-          <stop offset="100%" stopColor="#c084fc" />
+          <stop offset="0%" stopColor="#c9a352" />
+          <stop offset="50%" stopColor="#8b7355" />
+          <stop offset="100%" stopColor="#dcc9a4" />
         </linearGradient>
         <linearGradient id={gMark} x1="0%" y1="100%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#e8eeff" />
-          <stop offset="55%" stopColor="#c6d5ff" />
-          <stop offset="100%" stopColor="#7dc4ff" />
+          <stop offset="0%" stopColor="#faf6ef" />
+          <stop offset="55%" stopColor="#e4d4b8" />
+          <stop offset="100%" stopColor="#c9a352" />
         </linearGradient>
       </defs>
       <rect x="3" y="3" width="50" height="50" rx="14" fill={`url(#${gBg})`} />
@@ -100,7 +100,7 @@ export function VprokLogo({
         strokeLinecap="round"
         opacity={0.92}
       />
-      <circle cx="40" cy="16" r="2.25" fill="#c084fc" opacity={0.95} />
+      <circle cx="40" cy="16" r="2.25" fill="#e3c56d" opacity={0.95} />
     </svg>
   );
 
