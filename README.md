@@ -26,7 +26,8 @@ Ready-to-run fullstack platform for delayed retail purchases ("buy now, pick up 
 ## Project folders
 
 - API: `./`
-- Web (Vprok): `./web`
+- Web (Vprok only): `./web` — прод обычно **vprok.club**
+- Web (Edem — лента, профиль, залы): `./edem-web` — прод обычно **app.edem.press** (отдельный Vercel-проект, см. `edem-web/DEPLOY_VERCEL.md`)
 - Geneso NFT marketplace (standalone web): `./nft-web`
 - Smart contracts: `./contracts`
 - Mobile (Expo shell): `./mobile`

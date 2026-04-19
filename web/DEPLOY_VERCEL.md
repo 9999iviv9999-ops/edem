@@ -1,6 +1,11 @@
 # Vercel — Vprok web (`web/`)
 
-This project is the **Vprok web app**. NFT marketplace lives in `nft-web/` as a separate Vercel project.
+This project is the **Vprok web app** only (all routes, including `/vprok-preview`, are Vprok). The Geneso NFT UI lives in `nft-web/` as **another** Vercel project.
+
+## Domains (important)
+
+- **vprok.club** → this project (`web/` root) — верно.
+- **app.edem.press** → отдельный Vercel-проект с root **`edem-web/`** (см. [`edem-web/DEPLOY_VERCEL.md`](../edem-web/DEPLOY_VERCEL.md)). Убери `app.edem.press` с этого Vprok-проекта, иначе на Edem-домене будет Vprok.
 
 ## Build settings
 

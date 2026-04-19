@@ -40,6 +40,9 @@
     "geneso:web:install": "npm --prefix nft-web install",
     "geneso:web:dev": "npm --prefix nft-web run dev",
     "geneso:web:build": "npm --prefix nft-web run build",
+    "edem:web:install": "npm --prefix edem-web install",
+    "edem:web:dev": "npm --prefix edem-web run dev",
+    "edem:web:build": "npm --prefix edem-web run build",
     "geneso:bootstrap": "node scripts/geneso-bootstrap.mjs",
     "geneso:doctor": "node scripts/geneso-doctor.mjs"
   },
