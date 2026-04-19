@@ -3,13 +3,44 @@ import { useId } from "react";
 type Props = {
   size?: number;
   className?: string;
-  /** Доступность: заголовок SVG для скринридеров */
+  /** Доступность: осмысленный alt / role */
   labeled?: boolean;
-  /** Текст «Vprok» рядом с знаком */
+  /** Рядом с знаком текст «Vprok» — для варианта `svg`; у `luxury` подпись уже в PNG */
   wordmark?: boolean;
+  /** `luxury` — PNG из `/public`; `svg` — прежний векторный знак */
+  variant?: "luxury" | "svg";
 };
 
-export function VprokLogo({ size = 44, className = "", labeled = false, wordmark = false }: Props) {
+export function VprokLogo({
+  size = 44,
+  className = "",
+  labeled = false,
+  wordmark = false,
+  variant = "luxury"
+}: Props) {
+  if (variant === "luxury") {
+    const h = wordmark ? Math.round(size * 1.38) : size;
+    return (
+      <img
+        src="/vprok-logo-luxury.png"
+        alt="Vprok"
+        className={`vprok-logo vprok-logo--luxury ${className}`.trim()}
+        style={{
+          height: h,
+          width: "auto",
+          maxHeight: h,
+          objectFit: "contain",
+          display: "block"
+        }}
+        width={wordmark ? Math.round(size * 4.2) : size}
+        height={h}
+        loading="lazy"
+        decoding="async"
+        {...(labeled || wordmark ? {} : { "aria-hidden": true as const })}
+      />
+    );
+  }
+
   const raw = useId().replace(/:/g, "");
   const gBg = `vprok-bg-${raw}`;
   const gRing = `vprok-ring-${raw}`;

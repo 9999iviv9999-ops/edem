@@ -164,6 +164,19 @@ button {
   filter: drop-shadow(0 2px 12px rgba(79, 116, 255, 0.35));
 }
 
+.brand-logo-mark.vprok-logo--luxury {
+  filter: drop-shadow(0 2px 14px rgba(212, 175, 55, 0.45)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.35));
+}
+
+.vprok-logo--luxury {
+  flex-shrink: 0;
+  max-width: min(100%, 320px);
+}
+
+.auth-brand .vprok-logo--luxury {
+  max-width: min(100%, 380px);
+}
+
 .brand-wrap {
   display: flex;
   flex-direction: column;
