@@ -3,6 +3,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Shell } from "./components/Shell";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { LandingPage } from "./pages/LandingPage";
 import { VprokPage } from "./pages/VprokPage";
 import { VprokPreviewPage } from "./pages/VprokPreviewPage";
 import { VprokAdminPage } from "./pages/VprokAdminPage";
@@ -13,8 +14,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/vprok-preview" element={<VprokPreviewPage />} />
-        <Route path="/" element={<Navigate to="/vprok-preview" replace />} />
         <Route
           path="/vprok-admin"
           element={
@@ -35,7 +36,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/vprok-preview" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
