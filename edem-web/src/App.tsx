@@ -6,6 +6,7 @@ import { LoginPage } from "./pages/LoginPage";
 import { MatchesPage } from "./pages/MatchesPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { FounderForumPage } from "./pages/FounderForumPage";
 import { VprokPreviewRedirectPage } from "./pages/VprokPreviewRedirectPage";
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/vprok-preview" element={<VprokPreviewRedirectPage />} />
+        <Route path="/forum-lab" element={<FounderForumPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route
