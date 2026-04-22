@@ -4,6 +4,7 @@ import { Shell } from "./components/Shell";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { LandingPage } from "./pages/LandingPage";
+import { FounderForumPage } from "./pages/FounderForumPage";
 import { VprokPage } from "./pages/VprokPage";
 import { VprokPreviewPage } from "./pages/VprokPreviewPage";
 import { VprokAdminPage } from "./pages/VprokAdminPage";
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/" element={<LandingPage />} />
+        <Route path="/forum-lab" element={<FounderForumPage />} />
         <Route path="/vprok-preview" element={<VprokPreviewPage />} />
         <Route
           path="/vprok-admin"
