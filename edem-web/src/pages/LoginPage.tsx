@@ -7,6 +7,7 @@ import { setTokens } from "../lib/auth";
 export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -14,11 +15,11 @@ export function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const { data } = await api.post("/api/auth/login", { email, password });
+      const { data } = await api.post("/api/auth/login", { email, phone, password });
       setTokens(data.accessToken, data.refreshToken);
       navigate("/");
     } catch {
-      setError("Неверный email или пароль");
+      setError("Неверные email/телефон/пароль");
     }
   }
 
@@ -35,6 +36,11 @@ export function LoginPage() {
         </p>
         <form onSubmit={onSubmit} className="grid">
           <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <input
+            placeholder="Телефон (+79991234567)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
           <input
             type="password"
             placeholder="Пароль"

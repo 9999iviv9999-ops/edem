@@ -11,6 +11,7 @@ export function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     age: 22,
     gender: "male",
@@ -61,6 +62,11 @@ export function RegisterPage() {
             placeholder="Email"
             value={form.email}
             onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))}
+          />
+          <input
+            placeholder="Телефон (+79991234567)"
+            value={form.phone}
+            onChange={(e) => setForm((s) => ({ ...s, phone: e.target.value }))}
           />
           <input
             type="password"
