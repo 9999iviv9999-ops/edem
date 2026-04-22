@@ -29,10 +29,10 @@ services:
 
   web:
     build:
-      context: ./web
+      context: ./edem-web
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: http://localhost:3000
+        VITE_API_URL: http://89.108.66.253:3000
     container_name: vprok-web
     restart: unless-stopped
     depends_on:
