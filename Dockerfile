@@ -18,4 +18,4 @@ RUN chmod +x /app/docker-entrypoint-api.sh
 EXPOSE 3000
 
 ENTRYPOINT ["/app/docker-entrypoint-api.sh"]
-CMD ["npm", "run", "start:vprok"]
+CMD ["npm", "run", "start"]
