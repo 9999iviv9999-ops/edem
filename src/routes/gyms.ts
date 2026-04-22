@@ -71,8 +71,11 @@ gymsRouter.get("/", async (req, res, next) => {
     if (q.region?.trim()) {
       where.region = { contains: q.region.trim() };
     }
+    // В текущем этапе каталога показываем только DDX во всех городах.
     if (q.chainName?.trim()) {
       where.chainName = { contains: q.chainName.trim() };
+    } else {
+      where.chainName = { startsWith: "DDX" };
     }
     if (q.q?.trim()) {
       where.OR = [
