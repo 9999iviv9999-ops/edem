@@ -37,9 +37,6 @@ export function LandingPage() {
           <Link to="/register" className="primary-btn">
             Начать сейчас
           </Link>
-          <a className="ghost-btn" href="mailto:partners@vprok.club?subject=Vprok%20partnership">
-            Стать ритейл-партнёром
-          </a>
         </div>
       </header>
 
