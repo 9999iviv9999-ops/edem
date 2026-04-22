@@ -53,7 +53,7 @@ async function main() {
 
   const removed = await prisma.gym.deleteMany({
     where: {
-      OR: [{ chainName: null }, { chainName: { not: { contains: "ddx", mode: "insensitive" } } }]
+      OR: [{ chainName: null }, { chainName: { not: { startsWith: "DDX" } } }]
     }
   });
 
@@ -68,7 +68,7 @@ async function main() {
 
   const left = await prisma.gym.count();
   const leftDdx = await prisma.gym.count({
-    where: { chainName: { contains: "ddx", mode: "insensitive" } }
+    where: { chainName: { startsWith: "DDX" } }
   });
 
   console.log(`Removed non-DDX gyms: ${removed.count}`);
