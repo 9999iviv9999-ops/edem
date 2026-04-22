@@ -1,6 +1,4 @@
 import type { Prisma } from "@prisma/client";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
@@ -22,88 +20,6 @@ const createGymSchema = z.object({
 });
 
 export const gymsRouter = Router();
-
-type GeneratedGym = {
-  name: string;
-  address: string;
-  city: string;
-  okrug?: string;
-  district?: string;
-  region?: string;
-  chainName?: string;
-  externalProvider: "other";
-  externalId: string;
-};
-
-let generatedGymsByCity: Map<string, GeneratedGym[]> | null = null;
-
-function norm(s?: string | null): string {
-  return (s || "").trim().toLowerCase();
-}
-
-function loadGeneratedGymsByCity(): Map<string, GeneratedGym[]> {
-  if (generatedGymsByCity) return generatedGymsByCity;
-  const p = join(process.cwd(), "prisma", "gyms-generated.json");
-  if (!existsSync(p)) {
-    generatedGymsByCity = new Map();
-    return generatedGymsByCity;
-  }
-  const rows = JSON.parse(readFileSync(p, "utf8")) as GeneratedGym[];
-  const byCity = new Map<string, GeneratedGym[]>();
-  for (const g of rows) {
-    const key = norm(g.city);
-    if (!key) continue;
-    const arr = byCity.get(key) || [];
-    arr.push(g);
-    byCity.set(key, arr);
-  }
-  generatedGymsByCity = byCity;
-  return byCity;
-}
-
-async function backfillGymsFromGeneratedCatalog(filters: {
-  city?: string;
-  okrug?: string;
-  district?: string;
-  region?: string;
-  chainName?: string;
-}): Promise<number> {
-  const cityKey = norm(filters.city);
-  if (!cityKey) return 0;
-  const byCity = loadGeneratedGymsByCity();
-  const candidates = byCity.get(cityKey) || [];
-  if (!candidates.length) return 0;
-
-  const okrugQ = norm(filters.okrug);
-  const districtQ = norm(filters.district);
-  const regionQ = norm(filters.region);
-  const chainQ = norm(filters.chainName);
-
-  const rows = candidates.filter((g) => {
-    if (okrugQ && norm(g.okrug) !== okrugQ) return false;
-    if (districtQ && !norm(g.district).includes(districtQ)) return false;
-    if (regionQ && !norm(g.region).includes(regionQ)) return false;
-    if (chainQ && !norm(g.chainName).includes(chainQ)) return false;
-    return true;
-  });
-  if (!rows.length) return 0;
-
-  const res = await prisma.gym.createMany({
-    data: rows.map((g) => ({
-      name: g.name,
-      address: g.address,
-      city: g.city,
-      okrug: g.okrug ?? null,
-      district: g.district ?? null,
-      region: g.region ?? null,
-      chainName: g.chainName ?? null,
-      externalProvider: g.externalProvider,
-      externalId: g.externalId
-    })),
-    skipDuplicates: true
-  });
-  return res.count;
-}
 
 gymsRouter.post("/", async (req, res, next) => {
   try {
@@ -178,26 +94,11 @@ gymsRouter.get("/", async (req, res, next) => {
       take = 200;
     }
 
-    let gyms = await prisma.gym.findMany({
+    const gyms = await prisma.gym.findMany({
       where,
       orderBy: [{ city: "asc" }, { name: "asc" }],
       ...(take !== undefined ? { take } : {})
     });
-
-    if (gyms.length === 0 && q.city?.trim()) {
-      await backfillGymsFromGeneratedCatalog({
-        city: q.city,
-        okrug: q.okrug,
-        district: q.district,
-        region: q.region,
-        chainName: q.chainName
-      });
-      gyms = await prisma.gym.findMany({
-        where,
-        orderBy: [{ city: "asc" }, { name: "asc" }],
-        ...(take !== undefined ? { take } : {})
-      });
-    }
 
     return res.json(gyms);
   } catch (err) {
