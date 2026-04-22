@@ -50,9 +50,6 @@ export function GymPicker({
         <span className="field-label">Фитнес-центр / зал (каталог Edem)</span>
         <select id={id} value={value} onChange={(e) => onChange(e.target.value)}>
           <option value="">Выберите зал</option>
-          {value && selected && !filtered.some((g) => g.id === value) && (
-            <option value={value}>{selected.name}</option>
-          )}
           {filtered.map((g) => (
             <option key={g.id} value={g.id}>
               {g.name}
@@ -69,11 +66,6 @@ export function GymPicker({
           </>
         ) : null}
       </p>
-      {selected && !filtered.some((g) => g.id === value) && (
-        <p className="gym-picker-hint">
-          Текущий зал «{selected.name}» скрыт фильтром — очистите поиск, чтобы увидеть его в списке.
-        </p>
-      )}
       {q.trim() && filtered.length === 0 && (
         <p className="city-select-empty">В каталоге ничего не найдено — измени запрос</p>
       )}

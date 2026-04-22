@@ -97,10 +97,14 @@ export function FeedPage() {
     if (!isSingleOkrugCity(nextCity) && nextOkrug) gymParams.okrug = nextOkrug;
     const gymsRes = await api.get("/api/gyms", { params: gymParams });
     setGyms(gymsRes.data);
+    const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
     const main = me.memberships.find((m: { isPrimary?: boolean }) => m.isPrimary)?.gymId;
-    if (main) {
+    if (main && gymIds.has(main)) {
       setGymId(main);
       await loadProfiles(main);
+    } else {
+      setGymId("");
+      setProfiles([]);
     }
   }
 

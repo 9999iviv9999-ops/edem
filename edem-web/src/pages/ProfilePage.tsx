@@ -86,8 +86,13 @@ export function ProfilePage() {
     if (!isSingleOkrugCity(city) && me.okrug) gymParams.okrug = me.okrug;
     const gymsRes = await api.get("/api/gyms", { params: gymParams });
     setGyms(gymsRes.data);
-    const main = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
-    const extra = me.memberships.filter((m: any) => !m.isPrimary).map((m: any) => m.gymId);
+    const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
+    const mainRaw = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
+    const main = gymIds.has(mainRaw) ? mainRaw : "";
+    const extra = me.memberships
+      .filter((m: any) => !m.isPrimary)
+      .map((m: any) => m.gymId)
+      .filter((id: string) => gymIds.has(id));
 
     setForm({
       name: me.name || "",
