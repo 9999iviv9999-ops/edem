@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.edem.press/api/:path*"
+      "destination": "https://edem.press/api/:path*"
     },
     {
       "source": "/(.*)",

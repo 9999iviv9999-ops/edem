@@ -1,6 +1,6 @@
-# Vercel — Edem web (`edem-web/`)
+# Vercel — ЭДЕМ web (`edem-web/`)
 
-Отдельный фронт **Edem** (лента, профиль, залы). Не путать с **`web/`** — там только **Vprok**.
+Отдельный фронт **ЭДЕМ** (лента, профиль, залы). Не путать с **`web/`** — там только **Vprok**.
 
 ## Build settings (новый проект в Vercel)
 
@@ -34,13 +34,13 @@
 
 ## API
 
-`vercel.json` проксирует `/api/*` → `https://api.edem.press/api/*`. При необходимости поменяй `destination` под свой бэкенд.
+`vercel.json` проксирует `/api/*` → `https://edem.press/api/*` (бэкенд на том же домене, где крутится API). Раньше использовался несуществующий в DNS `api.edem.press` — из‑за этого лента и профиль «ломались» на Vercel.
 
-Опционально в **Environment Variables**: `VITE_API_URL=https://api.edem.press` — тогда клиент ходит напрямую (rewrites всё ещё можно оставить для других путей).
+Опционально в **Environment Variables**: `VITE_API_URL=https://edem.press` — прямой вызов API (нужен CORS на бэкенде для `*.vercel.app`).
 
 ## Маршрут `/vprok-preview`
 
-На домене Edem этот путь **редиректит** на `https://vprok.club/vprok-preview`, чтобы старые закладки не открывали Vprok внутри Edem.
+На домене ЭДЕМ этот путь **редиректит** на `https://vprok.club/vprok-preview`, чтобы старые закладки не открывали Vprok внутри ЭДЕМ.
 
 ## Локально
 

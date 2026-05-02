@@ -1,14 +1,42 @@
 import { FormEvent, useEffect, useState } from "react";
-import { AdminAreaSelect, isSingleOkrugCity } from "../components/AdminAreaSelect";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
-import { SuggestGymPanel } from "../components/SuggestGymPanel";
 import { api } from "../lib/api";
 
-type Gym = { id: string; name: string; city: string; chainName?: string | null };
+type Gym = { id: string; name: string; city: string; address?: string | null; chainName?: string | null };
+
+function normalizePhotoUrl(url: string) {
+  const value = url.trim();
+  if (!value) return value;
+  if (value.startsWith("blob:") || value.startsWith("data:")) {
+    return value;
+  }
+  if (value.startsWith("uploads/")) {
+    return `${window.location.origin}/${value}`;
+  }
+  if (value.startsWith("/")) {
+    return `${window.location.origin}${value}`;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const parsed = new URL(value);
+      if (parsed.pathname.startsWith("/uploads/")) {
+        return `${window.location.origin}${parsed.pathname}`;
+      }
+    } catch {
+      // Keep original URL if it cannot be parsed.
+    }
+  }
+  const uploadMatch = value.match(/(\/uploads\/[^?#]+)/i);
+  if (uploadMatch?.[1]) {
+    return `${window.location.origin}${uploadMatch[1]}`;
+  }
+  return value;
+}
 
 export function ProfilePage() {
   const [gyms, setGyms] = useState<Gym[]>([]);
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: "",
     age: 22,
@@ -24,12 +52,45 @@ export function ProfilePage() {
     trainingTimeSlots: ["evening"],
     trainingTypes: ["strength"]
   });
-  const [photoInput, setPhotoInput] = useState("");
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [snoozedCount, setSnoozedCount] = useState(0);
+
+  const profileCompletion = (() => {
+    let score = 0;
+    if (form.name.trim().length >= 2) score += 20;
+    if (form.age >= 18) score += 10;
+    if (form.city.trim()) score += 10;
+    if (form.mainGymId) score += 20;
+    if (form.description.trim().length >= 20) score += 20;
+    if (form.photos.length > 0) score += 20;
+    return Math.min(100, score);
+  })();
 
   useEffect(() => {
     void load();
+    try {
+      const raw = localStorage.getItem("edem_snoozed_profiles");
+      const parsed = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      const now = Date.now();
+      const activeCount = Object.values(parsed).filter((until) => Number.isFinite(until) && until > now).length;
+      setSnoozedCount(activeCount);
+    } catch {
+      setSnoozedCount(0);
+    }
   }, []);
+
+  function extractCitiesFromGyms(items: Gym[]) {
+    return Array.from(new Set(items.map((g) => g.city).filter(Boolean))).sort((a, b) =>
+      a.localeCompare(b, "ru")
+    );
+  }
 
   async function onCityChange(city: string) {
     if (!city || city === form.city) return;
@@ -45,88 +106,185 @@ export function ProfilePage() {
     }));
   }
 
-  async function onOkrugChange(okrug: string) {
-    const { data } = await api.get("/api/gyms", {
-      params: { city: form.city, okrug: okrug || undefined }
-    });
-    setGyms(data);
-    setForm((s) => ({
-      ...s,
-      okrug,
-      district: "",
-      mainGymId: "",
-      extraGymIds: []
-    }));
-  }
-
-  async function onDistrictChange(district: string) {
-    const params: Record<string, string | undefined> = {
-      city: form.city,
-      district: district || undefined
-    };
-    if (!isSingleOkrugCity(form.city) && form.okrug) params.okrug = form.okrug;
-    const { data } = await api.get("/api/gyms", { params });
-    setGyms(data);
-    setForm((s) => ({
-      ...s,
-      district,
-      mainGymId: "",
-      extraGymIds: []
-    }));
-  }
-
   async function load() {
-    const meRes = await api.get("/api/profiles/me");
-    const me = meRes.data;
-    const city = me.city || "Москва";
-    const gymParams: Record<string, string | undefined> = {
-      city,
-      district: me.district || undefined
-    };
-    if (!isSingleOkrugCity(city) && me.okrug) gymParams.okrug = me.okrug;
-    const gymsRes = await api.get("/api/gyms", { params: gymParams });
-    setGyms(gymsRes.data);
-    const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
-    const mainRaw = me.memberships.find((m: any) => m.isPrimary)?.gymId || "";
-    const main = gymIds.has(mainRaw) ? mainRaw : "";
-    const extra = me.memberships
-      .filter((m: any) => !m.isPrimary)
-      .map((m: any) => m.gymId)
-      .filter((id: string) => gymIds.has(id));
+    setMessage("");
+    setLoadError("");
+    try {
+      const meRes = await api.get("/api/profiles/me");
+      const me = meRes.data as {
+        name?: string;
+        age?: number;
+        gender?: string;
+        city?: string;
+        description?: string | null;
+        photos?: string[];
+        memberships?: Array<{ isPrimary?: boolean; gymId?: string }>;
+        goals?: Array<{ goal?: string }>;
+        trainingSlots?: Array<{ slot?: string }>;
+        trainingTypes?: Array<{ type?: string }>;
+      };
+      const memberships = Array.isArray(me.memberships) ? me.memberships : [];
+      const goals = Array.isArray(me.goals) ? me.goals : [];
+      const trainingSlots = Array.isArray(me.trainingSlots) ? me.trainingSlots : [];
+      const trainingTypes = Array.isArray(me.trainingTypes) ? me.trainingTypes : [];
 
-    setForm({
-      name: me.name || "",
-      age: me.age || 22,
-      gender: me.gender || "male",
-      city: me.city || "Москва",
-      okrug: me.okrug || "",
-      district: me.district || "",
-      description: me.description || "",
-      photos: me.photos || [],
-      mainGymId: main,
-      extraGymIds: extra,
-      goals: me.goals.map((x: any) => x.goal),
-      trainingTimeSlots: me.trainingSlots.map((x: any) => x.slot),
-      trainingTypes: me.trainingTypes.map((x: any) => x.type)
-    });
+      let cities: string[] = [];
+      try {
+        const citiesRes = await api.get("/api/gyms/cities");
+        cities = Array.isArray(citiesRes.data) ? citiesRes.data : [];
+      } catch {
+        const allGymsRes = await api.get("/api/gyms");
+        cities = extractCitiesFromGyms(allGymsRes.data as Gym[]);
+      }
+      setAvailableCities(cities);
+      const city = me.city || "Москва";
+      const cityToUse = cities.includes(city) ? city : cities[0] || "Москва";
+      const gymsRes = await api.get("/api/gyms", { params: { city: cityToUse } });
+      setGyms(gymsRes.data);
+      const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
+      const mainRaw = memberships.find((m) => m.isPrimary)?.gymId || "";
+      const main = mainRaw && gymIds.has(mainRaw) ? mainRaw : "";
+      const extra = memberships
+        .filter((m) => !m.isPrimary)
+        .map((m) => m.gymId || "")
+        .filter((id) => id && gymIds.has(id));
+
+      setForm({
+        name: me.name || "",
+        age: me.age || 22,
+        gender: (me.gender as "male" | "female" | "other") || "male",
+        city: cityToUse,
+        okrug: "",
+        district: "",
+        description: me.description || "",
+        photos: (me.photos || []).map((photo: string) => normalizePhotoUrl(photo)),
+        mainGymId: main,
+        extraGymIds: extra,
+        goals: goals.map((x) => x.goal).filter(Boolean).length
+          ? (goals.map((x) => x.goal).filter(Boolean) as string[])
+          : ["communication"],
+        trainingTimeSlots: trainingSlots.map((x) => x.slot).filter(Boolean).length
+          ? (trainingSlots.map((x) => x.slot).filter(Boolean) as string[])
+          : ["evening"],
+        trainingTypes: trainingTypes.map((x) => x.type).filter(Boolean).length
+          ? (trainingTypes.map((x) => x.type).filter(Boolean) as string[])
+          : ["strength"]
+      });
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } }; message?: string };
+      setLoadError(
+        ax.response?.data?.error ||
+          ax.message ||
+          "Не удалось загрузить профиль. Проверь вход или обнови страницу."
+      );
+    }
   }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setMessage("");
-    await api.put("/api/profiles/me", form);
-    setMessage("Профиль сохранен");
+    try {
+      const payload = {
+        ...form,
+        goals: form.goals.length ? form.goals : ["communication"],
+        trainingTimeSlots: form.trainingTimeSlots.length ? form.trainingTimeSlots : ["evening"],
+        trainingTypes: form.trainingTypes.length ? form.trainingTypes : ["strength"]
+      };
+      await api.put("/api/profiles/me", payload);
+      setMessage("Профиль сохранен");
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setMessage(ax.response?.data?.error || "Не удалось сохранить профиль");
+    }
+  }
+
+  async function onChangePassword() {
+    setMessage("");
+    if (!passwordForm.currentPassword || !passwordForm.newPassword) {
+      setMessage("Заполни текущий и новый пароль");
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setMessage("Подтверждение пароля не совпадает");
+      return;
+    }
+    try {
+      await api.post("/api/auth/change-password", {
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      });
+      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setMessage("Пароль обновлен. Войди снова с новым паролем.");
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setMessage(ax.response?.data?.error || "Не удалось изменить пароль");
+    }
+  }
+
+  async function onUploadPhoto(file: File | null) {
+    if (!file) return;
+    setMessage("");
+    setUploadingPhoto(true);
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      const { data } = await api.post("/api/media/upload-photo", fd);
+      if (data?.url) {
+        setForm((s) => ({ ...s, photos: [...s.photos, normalizePhotoUrl(data.url)] }));
+        setMessage("Фото загружено");
+      } else {
+        setMessage("Не удалось получить ссылку на фото");
+      }
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setMessage(ax.response?.data?.error || "Не удалось загрузить фото");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  function makePrimaryPhoto(url: string) {
+    setForm((s) => ({
+      ...s,
+      photos: [url, ...s.photos.filter((p) => p !== url)]
+    }));
+  }
+
+  function removePhoto(url: string) {
+    setForm((s) => ({
+      ...s,
+      photos: s.photos.filter((p) => p !== url)
+    }));
+  }
+
+  function clearSnoozedProfiles() {
+    localStorage.removeItem("edem_snoozed_profiles");
+    setSnoozedCount(0);
+    setMessage("Скрытые анкеты восстановлены");
   }
 
   return (
     <div className="card profile-page">
       <div className="profile-page-glow" aria-hidden />
       <div className="profile-page-inner">
-        <h2 className="page-title">Мой сад</h2>
+        <h2 className="page-title">Мой профиль</h2>
         <p className="page-sub">
-          Расскажи о себе и привяжи зал — так Edem покажет тебе подходящих людей в твоём «райском уголке»
-          фитнеса.
+          Расскажи о себе и привяжи зал, чтобы ЭДЕМ показывал подходящих людей в твоем городе и клубе.
         </p>
+        {loadError ? (
+          <div className="error full" role="alert">
+            {loadError}
+          </div>
+        ) : null}
+        <div className="profile-progress">
+          <div className="profile-progress-head">
+            <span>Заполненность профиля</span>
+            <strong>{profileCompletion}%</strong>
+          </div>
+          <div className="profile-progress-track">
+            <span style={{ width: `${profileCompletion}%` }} />
+          </div>
+        </div>
         <form onSubmit={onSubmit} className="grid two-col profile-form">
           <div className="profile-section full">
             <h3 className="profile-section-title">О тебе</h3>
@@ -167,16 +325,7 @@ export function ProfilePage() {
                 </select>
               </label>
               <div className="full">
-                <CitySelect value={form.city} onChange={(c) => void onCityChange(c)} />
-              </div>
-              <div className="full">
-                <AdminAreaSelect
-                  city={form.city}
-                  okrug={form.okrug}
-                  district={form.district}
-                  onOkrugChange={(okrug) => void onOkrugChange(okrug)}
-                  onDistrictChange={(district) => void onDistrictChange(district)}
-                />
+                <CitySelect value={form.city} options={availableCities} onChange={(c) => void onCityChange(c)} />
               </div>
             </div>
           </div>
@@ -186,7 +335,7 @@ export function ProfilePage() {
             <label className="field full">
               <span className="field-label">О себе</span>
               <textarea
-                placeholder="Чем занимаешься, что ищешь в Edem — пару строк о тебе"
+                placeholder="Чем занимаешься, что ищешь в ЭДЕМ — пару строк о тебе"
                 value={form.description}
                 onChange={(e) => setForm((s) => ({ ...s, description: e.target.value }))}
               />
@@ -201,7 +350,6 @@ export function ProfilePage() {
                 value={form.mainGymId}
                 onChange={(mainGymId) => setForm((s) => ({ ...s, mainGymId }))}
               />
-              <SuggestGymPanel city={form.city} okrug={form.okrug} district={form.district} />
             </div>
           </div>
 
@@ -273,27 +421,91 @@ export function ProfilePage() {
             <h3 className="profile-section-title">Фото</h3>
             <div className="full row">
               <input
-                placeholder="URL фото"
-                value={photoInput}
-                onChange={(e) => setPhotoInput(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (!photoInput) return;
-                  setForm((s) => ({ ...s, photos: [...s.photos, photoInput] }));
-                  setPhotoInput("");
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  void onUploadPhoto(file);
+                  e.currentTarget.value = "";
                 }}
-              >
-                Добавить фото
-              </button>
+              />
+              <span>{uploadingPhoto ? "Загрузка..." : "Выбери фото на устройстве"}</span>
             </div>
-            <div className="full chips">
-              {form.photos.map((url) => (
-                <span key={url} className="chip">
-                  {url.slice(0, 24)}...
+            {form.photos.length > 0 ? (
+              <div className="full photo-grid">
+                {form.photos.map((url, index) => (
+                  <div className="photo-card" key={url}>
+                    <img
+                      className="photo-card-image"
+                      src={normalizePhotoUrl(url)}
+                      alt={`Фото ${index + 1}`}
+                      onError={(e) => {
+                        const failedSrc = e.currentTarget.currentSrc || e.currentTarget.src;
+                        const match = failedSrc.match(/(\/uploads\/[^?#]+)/i);
+                        if (match?.[1]) {
+                          e.currentTarget.src = `${window.location.origin}${match[1]}`;
+                        }
+                      }}
+                    />
+                    <div className="photo-card-actions">
+                      <button
+                        className="ghost-btn"
+                        type="button"
+                        onClick={() => makePrimaryPhoto(url)}
+                        disabled={index === 0}
+                      >
+                        {index === 0 ? "Основное фото" : "Сделать основным"}
+                      </button>
+                      <button className="ghost-btn" type="button" onClick={() => removePhoto(url)}>
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="profile-section full">
+            <h3 className="profile-section-title">Безопасность</h3>
+            <div className="grid two-col">
+              <label className="field">
+                <span className="field-label">Текущий пароль</span>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm((s) => ({ ...s, currentPassword: e.target.value }))}
+                />
+              </label>
+              <label className="field">
+                <span className="field-label">Новый пароль</span>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm((s) => ({ ...s, newPassword: e.target.value }))}
+                />
+              </label>
+              <label className="field full">
+                <span className="field-label">Подтверждение нового пароля</span>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm((s) => ({ ...s, confirmPassword: e.target.value }))}
+                />
+              </label>
+              <div className="full">
+                <button className="ghost-btn" type="button" onClick={() => void onChangePassword()}>
+                  Сменить пароль
+                </button>
+              </div>
+              <div className="full row" style={{ alignItems: "center" }}>
+                <span className="page-sub" style={{ margin: 0 }}>
+                  Скрытые анкеты: {snoozedCount}
                 </span>
-              ))}
+                <button className="ghost-btn" type="button" onClick={clearSnoozedProfiles}>
+                  Вернуть скрытые анкеты
+                </button>
+              </div>
             </div>
           </div>
 
