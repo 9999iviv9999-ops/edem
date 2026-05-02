@@ -30,7 +30,7 @@ import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SafetyScreen } from "./src/screens/SafetyScreen";
 import { TabKey } from "./src/types";
 
-const BUILD_MARKER = "MOBILE V2.1 BUILD v29";
+const BUILD_MARKER = "MOBILE V2.1 BUILD v30";
 const TOP_INSET = Platform.OS === "android" ? (NativeStatusBar.currentHeight ?? 0) : 0;
 const TAB_SAFE_BOTTOM = Platform.OS === "android" ? 28 : 14;
 const TAB_CONTENT_PADDING = 86 + TAB_SAFE_BOTTOM;
@@ -254,15 +254,7 @@ export default function App() {
                 </>
               ) : null}
 
-              <TextInput
-                style={styles.input}
-                placeholder="+79991234567 или email"
-                placeholderTextColor="#7f93bd"
-                autoCapitalize="none"
-                keyboardType="email-address"
-                value={phone}
-                onChangeText={setPhone}
-              />
+              <TextInput style={styles.input} placeholder="+79991234567" placeholderTextColor="#7f93bd" value={phone} onChangeText={setPhone} />
               <TextInput
                 style={styles.input}
                 placeholder="Пароль"
@@ -301,7 +293,7 @@ export default function App() {
         <Text style={styles.buildMarkerHeader}>{BUILD_MARKER}</Text>
       </View>
       <View style={styles.releaseBanner}>
-        <Text style={styles.releaseBannerText}>v29 — вход по email или телефону</Text>
+        <Text style={styles.releaseBannerText}>v30 — вход только по номеру</Text>
       </View>
       <View style={[styles.container, { paddingBottom: TAB_CONTENT_PADDING }]}>{content}</View>
       <View style={styles.tabsContainer}>

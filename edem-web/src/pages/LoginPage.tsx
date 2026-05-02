@@ -6,29 +6,17 @@ import { normalizePhoneRu } from "../lib/phone";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [identifier, setIdentifier] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    if (password.length < 6) {
-      setError("Пароль не короче 6 символов");
-      return;
-    }
-    const trimmed = identifier.trim();
     try {
-      if (trimmed.includes("@")) {
-        const email = trimmed.toLowerCase();
-        const { data } = await api.post("/api/auth/login", { email, password });
-        setTokens(data.accessToken, data.refreshToken);
-        navigate("/");
-        return;
-      }
-      const withPlus = normalizePhoneRu(trimmed);
-      if (!withPlus) {
-        setError("Введи номер телефона или email");
+      const withPlus = normalizePhoneRu(phone);
+      if (!withPlus || password.length < 6) {
+        setError("Введи номер и пароль (не короче 6 символов)");
         return;
       }
       try {
@@ -46,7 +34,7 @@ export function LoginPage() {
         navigate("/");
       }
     } catch {
-      setError("Неверный телефон, email или пароль");
+      setError("Неверный номер или пароль");
     }
   }
 
@@ -58,14 +46,14 @@ export function LoginPage() {
         </div>
         <h1>Добро пожаловать в ЭДЕМ</h1>
         <p className="auth-lede">
-          Вход по телефону или email и паролю.
+          Вход по номеру телефона. Укажи номер и пароль.
         </p>
         <form onSubmit={onSubmit} className="grid">
           <input
-            placeholder="Телефон или email"
-            value={identifier}
-            onChange={(e) => setIdentifier(e.target.value)}
-            autoComplete="username"
+            placeholder="Телефон (+79991234567)"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            autoComplete="tel"
           />
           <input
             type="password"
