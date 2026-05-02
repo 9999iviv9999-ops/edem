@@ -1,12 +1,11 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { EdemLogo } from "../components/EdemLogo";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
+import { normalizePhoneRu } from "../lib/phone";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,11 +14,27 @@ export function LoginPage() {
     e.preventDefault();
     setError("");
     try {
-      const { data } = await api.post("/api/auth/login", { email, phone, password });
-      setTokens(data.accessToken, data.refreshToken);
-      navigate("/");
+      const withPlus = normalizePhoneRu(phone);
+      if (!withPlus || password.length < 6) {
+        setError("Введи номер и пароль (не короче 6 символов)");
+        return;
+      }
+      try {
+        const { data } = await api.post("/api/auth/login", { phone: withPlus, password });
+        setTokens(data.accessToken, data.refreshToken);
+        navigate("/");
+        return;
+      } catch {
+        const digits = withPlus.replace(/\D+/g, "");
+        const { data } = await api.post("/api/auth/login", {
+          email: `${digits}@phone.local`,
+          password
+        });
+        setTokens(data.accessToken, data.refreshToken);
+        navigate("/");
+      }
     } catch {
-      setError("Неверные email/телефон/пароль");
+      setError("Неверный номер или пароль");
     }
   }
 
@@ -27,15 +42,13 @@ export function LoginPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-brand">
-          <EdemLogo size={56} labeled />
+          <img className="auth-brand-logo" src="/edem-logo-v2.png" alt="ЭДЕМ" />
         </div>
-        <h1>Добро пожаловать в Edem</h1>
+        <h1>Добро пожаловать в ЭДЕМ</h1>
         <p className="auth-lede">
-          <strong>Эдем</strong> — образ райского сада: спокойное место, где знакомства начинаются с общего
-          зала и схожих ценностей. Войди, чтобы найти своих людей рядом с тобой в зале.
+          Вход по номеру телефона. Укажи номер и пароль.
         </p>
         <form onSubmit={onSubmit} className="grid">
-          <input placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <input
             placeholder="Телефон (+79991234567)"
             value={phone}

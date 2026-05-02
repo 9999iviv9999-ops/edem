@@ -4,6 +4,7 @@ import { CitySelect } from "../components/CitySelect";
 import russianCities from "../data/russianCities.json";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
+import { normalizePhoneRu } from "../lib/phone";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -67,8 +68,7 @@ export function RegisterPage() {
     e.preventDefault();
     setError("");
     try {
-      const phoneDigits = form.phone.trim().replace(/\D+/g, "");
-      const normalizedPhone = phoneDigits ? `+${phoneDigits}` : "";
+      const normalizedPhone = normalizePhoneRu(form.phone);
       const emailFromPhone = `${normalizedPhone.replace(/\D+/g, "")}@phone.local`;
       const { data } = await api.post("/api/auth/register", {
         ...form,
