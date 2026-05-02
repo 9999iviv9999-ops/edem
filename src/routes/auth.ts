@@ -102,7 +102,8 @@ authRouter.post("/register", authByIpThrottle, async (req, res, next) => {
     const exists = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { phone }]
-      }
+      },
+      select: { id: true }
     });
     if (exists) {
       return res.status(409).json({ error: "Email or phone already used" });
@@ -124,7 +125,11 @@ authRouter.post("/register", authByIpThrottle, async (req, res, next) => {
       }
     });
 
-    await syncProfileBadgeForPhone(phone, user.id);
+    try {
+      await syncProfileBadgeForPhone(phone, user.id);
+    } catch (err) {
+      console.error("syncProfileBadgeForPhone failed (non-fatal):", err);
+    }
 
     const tokens = await createAuthSession({
       userId: user.id,
@@ -156,7 +161,8 @@ authRouter.post("/login", authByIpThrottle, loginByIdentityThrottle, async (req,
     }
 
     const user = await prisma.user.findFirst({
-      where: { OR: orClause }
+      where: { OR: orClause },
+      select: { id: true, passwordHash: true, isBanned: true, phone: true }
     });
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -171,7 +177,11 @@ authRouter.post("/login", authByIpThrottle, loginByIdentityThrottle, async (req,
       return res.status(403).json({ error: "Account is banned" });
     }
 
-    await syncProfileBadgeForPhone(user.phone, user.id);
+    try {
+      await syncProfileBadgeForPhone(user.phone, user.id);
+    } catch (err) {
+      console.error("syncProfileBadgeForPhone failed (non-fatal):", err);
+    }
 
     const tokens = await createAuthSession({
       userId: user.id,
