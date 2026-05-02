@@ -1,4 +1,30 @@
+# ЭДЕМ — отдельный стек (API + веб + своя БД). Без внешних docker-сетей других проектов.
+# База по умолчанию: имя БД `edem`, не общая с vprok.
+#
+# Если Postgres пока ещё крутится в старом compose-проекте: подключите api к той сети вручную
+#   docker network connect <имя_сети_старого_проекта> edem-api
+# и в .env укажите DATABASE_URL на хост из той сети (и при необходимости имя БД vprok),
+# пока не перенесёте дамп в локальный контейнер `db`.
+
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: edem-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: edem_app
+      POSTGRES_PASSWORD: ${EDEM_DB_PASSWORD:-edem_app_2026}
+      POSTGRES_DB: edem
+    volumes:
+      - edem_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edem_app -d edem"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - default
+
   api:
     build:
       context: .
@@ -11,9 +37,11 @@ services:
       - "127.0.0.1:3000:3000"
     volumes:
       - ./uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - default
-      - legacy_db
 
   web:
     build:
@@ -28,7 +56,9 @@ services:
     networks:
       - default
 
+volumes:
+  edem_pgdata:
+
 networks:
-  legacy_db:
-    external: true
-    name: edem-backend_default
+  default:
+    name: edem_default
