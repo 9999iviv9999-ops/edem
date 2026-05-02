@@ -6,17 +6,29 @@ import { normalizePhoneRu } from "../lib/phone";
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    if (password.length < 6) {
+      setError("Пароль не короче 6 символов");
+      return;
+    }
+    const trimmed = identifier.trim();
     try {
-      const withPlus = normalizePhoneRu(phone);
-      if (!withPlus || password.length < 6) {
-        setError("Введи номер и пароль (не короче 6 символов)");
+      if (trimmed.includes("@")) {
+        const email = trimmed.toLowerCase();
+        const { data } = await api.post("/api/auth/login", { email, password });
+        setTokens(data.accessToken, data.refreshToken);
+        navigate("/");
+        return;
+      }
+      const withPlus = normalizePhoneRu(trimmed);
+      if (!withPlus) {
+        setError("Введи номер телефона или email");
         return;
       }
       try {
@@ -34,7 +46,7 @@ export function LoginPage() {
         navigate("/");
       }
     } catch {
-      setError("Неверный номер или пароль");
+      setError("Неверный телефон, email или пароль");
     }
   }
 
@@ -46,19 +58,21 @@ export function LoginPage() {
         </div>
         <h1>Добро пожаловать в ЭДЕМ</h1>
         <p className="auth-lede">
-          Вход по номеру телефона. Укажи номер и пароль.
+          Вход по телефону или email и паролю.
         </p>
         <form onSubmit={onSubmit} className="grid">
           <input
-            placeholder="Телефон (+79991234567)"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            placeholder="Телефон или email"
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            autoComplete="username"
           />
           <input
             type="password"
             placeholder="Пароль"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
           />
           {error && <div className="error">{error}</div>}
           <button className="primary-btn">Войти</button>
