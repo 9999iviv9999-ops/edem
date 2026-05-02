@@ -3,6 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import { env } from "./lib/env";
+import { assertPrismaUserTableQueryable } from "./lib/schema-guard";
 import { authRouter } from "./routes/auth";
 import { mediaRouter } from "./routes/media";
 import { vprokRouter } from "./routes/vprok";
@@ -29,7 +30,15 @@ app.use("/api/vprok", vprokRouter);
 
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`Vprok API is running on port ${env.PORT}`);
+async function bootstrap() {
+  await assertPrismaUserTableQueryable();
+  app.listen(env.PORT, () => {
+    console.log(`Vprok API is running on port ${env.PORT}`);
+  });
+}
+
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
 

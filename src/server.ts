@@ -13,6 +13,7 @@ import { mediaRouter } from "./routes/media";
 import { moderationRouter } from "./routes/moderation";
 import { errorHandler } from "./middleware/error-handler";
 import { createRequestThrottle } from "./middleware/request-throttle";
+import { assertPrismaUserTableQueryable } from "./lib/schema-guard";
 
 const app = express();
 app.disable("x-powered-by");
@@ -70,10 +71,23 @@ async function healthHandler(req: express.Request, res: express.Response) {
   }
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: "ok", service: "edem-api", db: "ok" });
   } catch {
     res.status(503).json({ status: "error", service: "edem-api", db: "unreachable" });
+    return;
   }
+  try {
+    await assertPrismaUserTableQueryable();
+  } catch {
+    res.status(503).json({
+      status: "error",
+      service: "edem-api",
+      db: "ok",
+      userModel: "schema_mismatch",
+      hint: "Apply prisma migrations (as DB owner if needed); see docker-entrypoint logs."
+    });
+    return;
+  }
+  res.json({ status: "ok", service: "edem-api", db: "ok", userModel: "ok" });
 }
 
 app.get("/health", healthHandler);
@@ -88,6 +102,14 @@ app.use("/api/moderation", moderationRouter);
 
 app.use(errorHandler);
 
-app.listen(env.PORT, () => {
-  console.log(`ЭДЕМ API is running on port ${env.PORT}`);
+async function bootstrap() {
+  await assertPrismaUserTableQueryable();
+  app.listen(env.PORT, () => {
+    console.log(`ЭДЕМ API is running on port ${env.PORT}`);
+  });
+}
+
+bootstrap().catch((err) => {
+  console.error(err);
+  process.exit(1);
 });
