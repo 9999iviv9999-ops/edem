@@ -67,24 +67,47 @@ export function RegisterPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    const name = form.name.trim();
+    if (!name) {
+      setError("Укажи имя");
+      return;
+    }
+    const normalizedPhone = normalizePhoneRu(form.phone);
+    if (!normalizedPhone) {
+      setError("Укажи номер телефона (например +7… или 8…)");
+      return;
+    }
+    if (!form.password || form.password.length < 6) {
+      setError("Пароль не короче 6 символов");
+      return;
+    }
+    const ageNum = Number(form.age);
+    if (!Number.isFinite(ageNum) || ageNum < 18 || ageNum > 80) {
+      setError("Возраст от 18 до 80");
+      return;
+    }
     try {
-      const normalizedPhone = normalizePhoneRu(form.phone);
       const emailFromPhone = `${normalizedPhone.replace(/\D+/g, "")}@phone.local`;
       const { data } = await api.post("/api/auth/register", {
         ...form,
-        name: form.name.trim(),
+        name,
         city: form.city.trim(),
         phone: normalizedPhone,
         email: emailFromPhone,
-        age: Number(form.age)
+        age: ageNum
       });
       setTokens(data.accessToken, data.refreshToken);
       navigate("/profile");
     } catch (err: unknown) {
       const ax = err as {
+        code?: string;
         response?: { data?: { error?: string; details?: Array<{ path?: Array<string | number>; message?: string }> } };
         message?: string;
       };
+      if (ax.code === "ERR_NETWORK" || ax.message === "Network Error") {
+        setError("Сервер не отвечает: проверь интернет и что сайт открыт с того домена, где настроен API.");
+        return;
+      }
       const detailText =
         ax.response?.data?.details?.[0]?.message ||
         (Array.isArray(ax.response?.data?.details) && ax.response?.data?.details?.length
