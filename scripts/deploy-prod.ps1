@@ -22,6 +22,9 @@ git pull --ff-only
 Write-Host "Rebuilding and restarting containers (migrations run in api entrypoint)..."
 docker compose up -d --build
 
+Write-Host "Verifying prisma migration status in api container..."
+docker compose exec -T api npx prisma migrate status
+
 Write-Host "Importing DDX catalog (inside api container; DATABASE_URL must use host db)..."
 docker compose exec -T api npm run import:gyms:ddx-only
 
