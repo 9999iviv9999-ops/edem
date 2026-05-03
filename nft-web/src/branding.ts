@@ -1,6 +1,7 @@
+import genesoLogo from "./assets/geneso-logo.png";
+
 /**
- * Logo at `public/geneso-logo.png` (dist root). BASE_URL supports subpath deploys.
- * Avoid only hashed `/assets/` URLs if the host rewrites unknown paths to `index.html`.
+ * Bundled under `/assets/` — Vercel serves those files before SPA rewrites.
+ * Keep `public/geneso-logo.png` in sync for `/guides/` and direct URLs.
  */
-const base = import.meta.env.BASE_URL;
-export const GENESO_LOGO_SRC = `${base.endsWith("/") ? base : `${base}/`}geneso-logo.png`;
+export const GENESO_LOGO_SRC = genesoLogo;
