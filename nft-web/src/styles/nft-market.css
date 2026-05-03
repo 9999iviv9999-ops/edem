@@ -54,10 +54,17 @@ a.nft-link:hover {
     var(--nft-bg);
 }
 
-/* Header — full-width brand strip + sticky toolbar */
-.nft-header {
+/* Logo strip is injected into index.html (data URI). Toolbar sticks below it. */
+.nft-header__brandbar--static {
   position: sticky;
   top: 0;
+  z-index: 60;
+}
+
+/* Header — sticky toolbar under inlined brand strip */
+.nft-header {
+  position: sticky;
+  top: clamp(51px, 14vw, 159px);
   z-index: 50;
   border-bottom: 1px solid var(--nft-border);
   background: #000;
