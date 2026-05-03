@@ -1,4 +1,4 @@
 import genesoLogo from "./assets/geneso-logo.jpg";
 
-/** Hashed under /assets/ after `vite build`. Public copy: public/geneso-logo.jpg (guides, direct URL). */
+/** Canonical file: src/assets/geneso-logo.jpg. `npm run dev` / `build` sync it to public/ for /guides/. */
 export const GENESO_LOGO_SRC = genesoLogo;

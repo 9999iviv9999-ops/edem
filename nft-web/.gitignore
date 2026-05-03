@@ -6,6 +6,9 @@ npm-debug.log*
 node_modules
 dist
 dist-ssr
+
+# Generated from src/assets/geneso-logo.jpg (see scripts/sync-geneso-logo.mjs)
+public/geneso-logo.jpg
 *.local
 
 # Editor
