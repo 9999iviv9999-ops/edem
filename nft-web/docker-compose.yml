@@ -1,0 +1,22 @@
+# Geneso NFT static SPA. Build bakes VITE_* into assets — set vars before build.
+# From this directory:
+#   npm run sync:env   # or export VITE_* yourself
+#   docker compose up -d --build
+#
+# Or pass build args only:
+#   VITE_MARKETPLACE_ADDRESS=0x... VITE_NFT_COLLECTION_ADDRESS=0x... docker compose up -d --build
+
+services:
+  geneso-nft:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_MARKETPLACE_ADDRESS: ${VITE_MARKETPLACE_ADDRESS:?set VITE_MARKETPLACE_ADDRESS}
+        VITE_NFT_COLLECTION_ADDRESS: ${VITE_NFT_COLLECTION_ADDRESS:?set VITE_NFT_COLLECTION_ADDRESS}
+        VITE_WALLETCONNECT_PROJECT_ID: ${VITE_WALLETCONNECT_PROJECT_ID:-}
+    image: geneso-nft-web:local
+    ports:
+      # 8080 часто занят — на VPS: GENESO_NFT_PORT=18473 docker compose up -d
+      - "${GENESO_NFT_PORT:-8080}:80"
+    restart: unless-stopped

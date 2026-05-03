@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Geneso — руководства</title>
+    <style>
+      :root {
+        --bg: #0d111c;
+        --text: #f6f8fc;
+        --muted: #9aa3b5;
+        --accent: #2295ff;
+        --border: rgba(255, 255, 255, 0.1);
+      }
+      body {
+        margin: 0;
+        font-family: system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+        padding: 24px 20px 48px;
+        max-width: 720px;
+        margin-inline: auto;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin: 0 0 8px;
+      }
+      p.lede {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      h2 {
+        font-size: 1.1rem;
+        margin: 28px 0 12px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+      }
+      a {
+        color: var(--accent);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        border: 1px solid var(--border);
+        padding: 8px 10px;
+        text-align: left;
+      }
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .cards {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 16px;
+      }
+      .card strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .thumbs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+        margin-top: 12px;
+      }
+      .thumbs img {
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+      .guides-brand-logo {
+        display: block;
+        width: 100%;
+        max-width: none;
+        height: clamp(52px, 14vw, 160px);
+        margin: 0 0 16px;
+        object-fit: contain;
+        background: #000;
+      }
+      h1.page-title {
+        font-size: 1.35rem;
+        margin: 0 0 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      class="guides-brand-logo"
+      src="/geneso-logo.png"
+      alt="Geneso"
+      width="800"
+      height="400"
+      decoding="async"
+    />
+    <h1 class="page-title">Руководства</h1>
+    <p class="lede">
+      Полные тексты в репозитории (Markdown). Ниже — быстрые ссылки и адреса маркетплейса.
+    </p>
+
+    <h2>Адреса маркетплейса</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Окружение</th>
+          <th>URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Vercel</td>
+          <td><a href="https://nft-web-roan.vercel.app/">https://nft-web-roan.vercel.app/</a></td>
+        </tr>
+        <tr>
+          <td>VPS (IP)</td>
+          <td><a href="http://89.108.66.253:18473/">http://89.108.66.253:18473/</a></td>
+        </tr>
+        <tr>
+          <td>Поддомен</td>
+          <td><a href="https://geneso.edem.press/">https://geneso.edem.press/</a> (после DNS и сертификата)</td>
+        </tr>
+        <tr>
+          <td>Локально</td>
+          <td>http://localhost:5174/</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>Документы (GitHub)</h2>
+    <p class="muted">
+      Замените <code>main</code> на вашу ветку при необходимости. Если репозиторий приватный — откройте файлы из клонированной копии:
+      <code>docs/geneso/guides/</code>
+    </p>
+    <div class="cards">
+      <div class="card">
+        <strong>Продавцы</strong>
+        <a
+          href="https://github.com/9999iviv9999-ops/edem/blob/main/docs/geneso/guides/SELLER_GUIDE_RU.md"
+          >SELLER_GUIDE_RU.md</a
+        >
+      </div>
+      <div class="card">
+        <strong>Покупатели</strong>
+        <a
+          href="https://github.com/9999iviv9999-ops/edem/blob/main/docs/geneso/guides/BUYER_GUIDE_RU.md"
+          >BUYER_GUIDE_RU.md</a
+        >
+      </div>
+      <div class="card">
+        <strong>Все адреса одним файлом</strong>
+        <a href="https://github.com/9999iviv9999-ops/edem/blob/main/docs/geneso/guides/ADDRESSES.md">ADDRESSES.md</a>
+      </div>
+    </div>
+
+    <h2>Иллюстрации (на этом домене)</h2>
+    <p class="muted">Схематичные макеты UI. Пути от корня сайта:</p>
+    <div class="thumbs">
+      <a href="/guides/img/geneso-guide-seller-discover.png"
+        ><img src="/guides/img/geneso-guide-seller-discover.png" alt="Витрина и форма листинга"
+      /></a>
+      <a href="/guides/img/geneso-guide-seller-wallet.png"
+        ><img src="/guides/img/geneso-guide-seller-wallet.png" alt="Кошелёк"
+      /></a>
+      <a href="/guides/img/geneso-guide-buyer-grid.png"
+        ><img src="/guides/img/geneso-guide-buyer-grid.png" alt="Сетка листингов"
+      /></a>
+      <a href="/guides/img/geneso-guide-buyer-item.png"
+        ><img src="/guides/img/geneso-guide-buyer-item.png" alt="Страница лота"
+      /></a>
+    </div>
+
+    <p style="margin-top: 32px" class="muted">
+      <a href="/">← На маркетплейс</a>
+    </p>
+  </body>
+</html>

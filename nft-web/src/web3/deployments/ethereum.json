@@ -1,0 +1,10 @@
+{
+  "network": "ethereum",
+  "chainId": 1,
+  "deployer": "0x9878ba9598172bd5919f3710D66dA585a39B1310",
+  "nftCollection": "0x9765C401fF2615732A9e9ecC3D779309073C18bf",
+  "marketplace": "0x348F779C521Ea28d0F16Bcc82C426B6634dEe1Ce",
+  "feeRecipient": "0x9878ba9598172bd5919f3710D66dA585a39B1310",
+  "platformFeeBps": 250,
+  "deployedAt": "2026-05-03T11:03:14.918Z"
+}
