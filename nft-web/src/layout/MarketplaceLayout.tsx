@@ -1,6 +1,7 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useChainId } from "wagmi";
+import { GENESO_LOGO_SRC } from "../branding";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { WalletButton } from "../components/WalletButton";
 import { useI18n } from "../i18n";
@@ -18,6 +19,7 @@ export function MarketplaceLayout({ children }: Props) {
   const chainId = useChainId();
   const { t } = useI18n();
   const location = useLocation();
+  const [logoFailed, setLogoFailed] = useState(false);
   useEffect(() => {
     const path = location.pathname;
     let page = t("nav.discover");
@@ -41,6 +43,27 @@ export function MarketplaceLayout({ children }: Props) {
   return (
     <div className="nft-market">
       <header className="nft-header">
+        <NavLink
+          to="/"
+          className={`nft-header__brandbar${logoFailed ? " nft-header__brandbar--fallback" : ""}`}
+          aria-label={t("brand.logoAlt")}
+        >
+          {logoFailed ? (
+            <span className="nft-header__brandbar-fallback">Geneso</span>
+          ) : (
+            <img
+              className="nft-header__brandbar-img"
+              src={GENESO_LOGO_SRC}
+              alt=""
+              width={1920}
+              height={480}
+              decoding="async"
+              fetchPriority="high"
+              draggable={false}
+              onError={() => setLogoFailed(true)}
+            />
+          )}
+        </NavLink>
         <div className="nft-header__inner">
           <div className="nft-header__spacer" aria-hidden />
           <nav className="nft-nav" aria-label={t("nav.primary")}>
