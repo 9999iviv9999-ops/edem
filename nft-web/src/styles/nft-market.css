@@ -983,6 +983,62 @@ a.nft-link:hover {
   overflow: hidden;
 }
 
+.nft-social-editor {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--nft-border);
+}
+
+.nft-social-editor__title {
+  margin: 0 0 10px;
+  font-size: 0.95rem;
+}
+
+.nft-social-editor__row {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  color: var(--nft-muted);
+}
+
+.nft-social-editor__row input {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--nft-border);
+  background: rgba(0, 0, 0, 0.24);
+  color: var(--nft-text);
+  font: inherit;
+}
+
+.nft-social-badges {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nft-social-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border: 1px solid var(--nft-border);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--nft-text);
+  text-decoration: none;
+  text-transform: capitalize;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.nft-social-badge:hover {
+  border-color: var(--nft-border-strong);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .profile-body {
   padding: 16px;
 }

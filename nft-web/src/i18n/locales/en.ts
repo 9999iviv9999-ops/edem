@@ -96,6 +96,10 @@ export const en = {
   "profile.noGlobalActivity": "No recent marketplace events.",
   "profile.copyAddress": "Copy address",
   "profile.addressCopied": "Copied",
+  "profile.socialTitle": "Seller social links",
+  "profile.socialSave": "Save links",
+  "profile.socialSaved": "Saved",
+  "profile.socialWebsite": "Website",
 
   "activity.listed": "Listed",
   "activity.sold": "Sold",

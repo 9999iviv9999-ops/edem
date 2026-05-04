@@ -98,6 +98,10 @@ export const ru = {
   "profile.noGlobalActivity": "Нет недавних событий маркетплейса.",
   "profile.copyAddress": "Скопировать адрес",
   "profile.addressCopied": "Скопировано",
+  "profile.socialTitle": "Соцсети продавца",
+  "profile.socialSave": "Сохранить ссылки",
+  "profile.socialSaved": "Сохранено",
+  "profile.socialWebsite": "Сайт",
 
   "activity.listed": "Выставлено",
   "activity.sold": "Продано",

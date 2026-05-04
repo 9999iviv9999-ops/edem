@@ -14,6 +14,12 @@ import {
 } from "../web3/hooks";
 import { formatUserError } from "../web3/errors";
 import { formatEth, shortAddress } from "../web3/utils";
+import {
+  readSellerSocial,
+  sellerSocialHref,
+  writeSellerSocial,
+  type SellerSocialLinks,
+} from "../web3/seller-social";
 
 export function ProfilePage() {
   const { t } = useI18n();
@@ -41,12 +47,28 @@ export function ProfilePage() {
   const [pendingListingId, setPendingListingId] = useState<bigint | null>(null);
   const [addressCopied, setAddressCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
+  const [socialSaved, setSocialSaved] = useState(false);
+  const [social, setSocial] = useState<SellerSocialLinks>({});
 
   useEffect(() => {
     if (!addressCopied) return;
     const id = window.setTimeout(() => setAddressCopied(false), 2000);
     return () => window.clearTimeout(id);
   }, [addressCopied]);
+
+  useEffect(() => {
+    if (!address) {
+      setSocial({});
+      return;
+    }
+    setSocial(readSellerSocial(address));
+  }, [address]);
+
+  useEffect(() => {
+    if (!socialSaved) return;
+    const id = window.setTimeout(() => setSocialSaved(false), 2000);
+    return () => window.clearTimeout(id);
+  }, [socialSaved]);
 
   async function copyWalletAddress() {
     if (!address) return;
@@ -57,6 +79,13 @@ export function ProfilePage() {
     } catch {
       setCopyFailed(true);
     }
+  }
+
+  function saveSellerSocial() {
+    if (!address) return;
+    writeSellerSocial(address, social);
+    setSocial(readSellerSocial(address));
+    setSocialSaved(true);
   }
 
   function bidForListing(listingId: bigint) {
@@ -151,6 +180,66 @@ export function ProfilePage() {
               {t("errors.copyFailed")}
             </p>
           ) : null}
+          <div className="nft-social-editor">
+            <h3 className="nft-social-editor__title">{t("profile.socialTitle")}</h3>
+            <label className="nft-social-editor__row">
+              <span>Telegram</span>
+              <input
+                value={social.telegram ?? ""}
+                onChange={(e) => setSocial((s) => ({ ...s, telegram: e.target.value }))}
+                placeholder="@username"
+              />
+            </label>
+            <label className="nft-social-editor__row">
+              <span>X</span>
+              <input
+                value={social.x ?? ""}
+                onChange={(e) => setSocial((s) => ({ ...s, x: e.target.value }))}
+                placeholder="@handle"
+              />
+            </label>
+            <label className="nft-social-editor__row">
+              <span>Instagram</span>
+              <input
+                value={social.instagram ?? ""}
+                onChange={(e) => setSocial((s) => ({ ...s, instagram: e.target.value }))}
+                placeholder="@username"
+              />
+            </label>
+            <label className="nft-social-editor__row">
+              <span>{t("profile.socialWebsite")}</span>
+              <input
+                value={social.website ?? ""}
+                onChange={(e) => setSocial((s) => ({ ...s, website: e.target.value }))}
+                placeholder="https://your-site.com"
+              />
+            </label>
+            <button
+              type="button"
+              className="nft-btn nft-btn--ghost nft-btn--compact"
+              disabled={!address}
+              onClick={saveSellerSocial}
+            >
+              {socialSaved ? t("profile.socialSaved") : t("profile.socialSave")}
+            </button>
+            <div className="nft-social-badges">
+              {(["telegram", "x", "instagram", "website"] as const).map((kind) => {
+                const href = sellerSocialHref(kind, social[kind]);
+                if (!href) return null;
+                return (
+                  <a
+                    key={kind}
+                    className="nft-social-badge"
+                    href={href}
+                    target="_blank"
+                    rel="nofollow noopener noreferrer"
+                  >
+                    {kind === "website" ? t("profile.socialWebsite") : kind}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
         </article>
 
         <article className="nft-panel">
