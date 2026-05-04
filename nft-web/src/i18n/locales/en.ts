@@ -24,6 +24,8 @@ export const en = {
   "wallet.connecting": "Connecting…",
   "wallet.stuckHint":
     " — Open MetaMask and approve or reject the waiting request. If it is stuck: MetaMask → ⋮ → Connected sites → disconnect this site, then connect again on {{chain}}.",
+  "wallet.mobileWalletConnectRequired":
+    "Tip: in mobile Safari/Chrome there is often no browser extension. Prefer “WalletConnect” below if available, open this site inside MetaMask’s browser, or ask the admin to set VITE_WALLETCONNECT_PROJECT_ID for reliable mobile linking.",
 
   "market.discoverTitle": "Discover",
   "market.discoverLede":

@@ -1,8 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useI18n } from "../i18n";
-import { DEFAULT_CHAIN } from "../web3/config";
+import { DEFAULT_CHAIN, WALLET_CONNECT_CONFIGURED } from "../web3/config";
 import { shortAddress } from "../web3/utils";
+
+function hasBrowserEthereum(): boolean {
+  return typeof window !== "undefined" && Boolean((window as unknown as { ethereum?: unknown }).ethereum);
+}
+
+function isMobileUserAgent(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
 
 export function WalletButton() {
   const { t } = useI18n();
@@ -28,6 +37,16 @@ export function WalletButton() {
   const [menuOpen, setMenuOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const connectLock = useRef(false);
+
+  const mobileNeedsWalletConnect = useMemo(
+    () => isMobileUserAgent() && !hasBrowserEthereum() && !WALLET_CONNECT_CONFIGURED,
+    []
+  );
+
+  const singleConnector = connectors.length === 1 ? connectors[0] : null;
+  const shouldAutoConnectSingle =
+    Boolean(singleConnector) &&
+    (singleConnector!.id === "walletConnect" || hasBrowserEthereum());
 
   useEffect(() => {
     if (!isPending) {
@@ -75,12 +94,19 @@ export function WalletButton() {
       >
         {isPending ? t("wallet.connecting") : t("wallet.connect")}
       </button>
+      {mobileNeedsWalletConnect ? (
+        <p className="nft-wallet__hint" role="note">
+          {t("wallet.mobileWalletConnectRequired")}
+        </p>
+      ) : null}
       {error ? (
         <p className="nft-wallet__error" role="status">
           {connectErrorHint(error.message)}
         </p>
       ) : null}
-      {menuOpen && connectors.length > 1 && (
+      {menuOpen &&
+        connectors.length > 0 &&
+        !(connectors.length === 1 && shouldAutoConnectSingle) && (
         <ul className="nft-wallet__menu" role="menu">
           {connectors.map((connector) => (
             <li key={connector.uid}>

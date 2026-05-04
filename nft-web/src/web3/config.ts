@@ -8,32 +8,50 @@ import { coinbaseWallet, injected, metaMask, walletConnect } from "wagmi/connect
 
 export const APP_NAME = "Geneso NFT";
 
-const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
+const walletConnectProjectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID?.trim();
+
+/** True when a WalletConnect Cloud project id is set (required for most mobile browsers). */
+export const WALLET_CONNECT_CONFIGURED = Boolean(walletConnectProjectId);
 
 const appUrl =
   typeof window !== "undefined" ? window.location.origin : "https://geneso.xyz";
 
-const connectors = [
-  // `injected` works as soon as `window.ethereum` exists; `metaMask()` can stay
-  // not "ready" until EIP-6963 announces the extension, which disabled our button.
-  injected(),
-  metaMask(),
-  coinbaseWallet({ appName: APP_NAME }),
-  ...(walletConnectProjectId
-    ? [
-        walletConnect({
-          projectId: walletConnectProjectId,
-          showQrModal: true,
-          metadata: {
-            name: APP_NAME,
-            description: "Curated esoteric NFT marketplace",
-            url: appUrl,
-            icons: [`${appUrl}/favicon.svg`],
-          },
-        }),
-      ]
-    : []),
-];
+function createConnectors() {
+  const injectedConnector = injected();
+  const metaMaskConnector = metaMask();
+  const coinbaseConnector = coinbaseWallet({ appName: APP_NAME });
+  const base = [injectedConnector, metaMaskConnector, coinbaseConnector];
+
+  if (!walletConnectProjectId) {
+    return base;
+  }
+
+  const wc = walletConnect({
+    projectId: walletConnectProjectId,
+    showQrModal: true,
+    metadata: {
+      name: APP_NAME,
+      description: "Curated esoteric NFT marketplace",
+      url: appUrl,
+      icons: [`${appUrl}/favicon.svg`],
+    },
+  });
+
+  const isBrowser = typeof window !== "undefined";
+  const ua = isBrowser ? navigator.userAgent : "";
+  const isMobileUa = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+  const hasInjected =
+    isBrowser && Boolean((window as unknown as { ethereum?: unknown }).ethereum);
+
+  // Mobile Safari/Chrome usually have no `window.ethereum`; WalletConnect should be first.
+  if (isMobileUa && !hasInjected) {
+    return [wc, ...base];
+  }
+
+  return [...base, wc];
+}
+
+const connectors = createConnectors();
 
 export const SUPPORTED_CHAINS = [mainnet] as const;
 

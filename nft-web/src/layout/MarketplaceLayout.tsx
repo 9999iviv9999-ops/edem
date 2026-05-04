@@ -55,8 +55,8 @@ export function MarketplaceLayout({ children }: Props) {
               className="nft-header__brandbar-img"
               src={GENESO_LOGO_SRC}
               alt=""
-              width={1920}
-              height={480}
+              width={1024}
+              height={643}
               decoding="async"
               fetchPriority="high"
               draggable={false}

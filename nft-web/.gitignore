@@ -7,7 +7,7 @@ node_modules
 dist
 dist-ssr
 
-# Generated from src/assets/geneso-logo.jpg (see scripts/sync-geneso-logo.mjs)
+# Generated from src/assets/geneso-logo.jpg (vite plugin)
 public/geneso-logo.jpg
 *.local
 

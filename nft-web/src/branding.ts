@@ -1,7 +1,4 @@
-import genesoLogo from "./assets/geneso-logo.jpg";
+import genesoLogoUrl from "./assets/geneso-logo.jpg?url";
 
-/**
- * With `build.assetsInlineLimit` in vite.config, this becomes a data URL in the main chunk
- * (no extra request). Source: src/assets/geneso-logo.jpg; also copied to public/ for /guides/.
- */
-export const GENESO_LOGO_SRC = genesoLogo;
+/** Official Geneso banner; replace `src/assets/geneso-logo.jpg` to update the brand. */
+export const GENESO_LOGO_SRC = genesoLogoUrl;

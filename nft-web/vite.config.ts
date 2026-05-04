@@ -6,7 +6,7 @@ import { defineConfig, type Plugin } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Copy canonical logo to public/ on every dev/build (guides + /geneso-logo.jpg). */
+/** Copy canonical logo to public/ for static /guides/ pages (same file as in src/assets). */
 function syncGenesoLogoToPublic(): Plugin {
   return {
     name: "sync-geneso-logo-to-public",
@@ -25,8 +25,6 @@ function syncGenesoLogoToPublic(): Plugin {
 export default defineConfig({
   plugins: [react(), syncGenesoLogoToPublic()],
   build: {
-    /** Inline logo into JS (no separate /assets/*.jpg) so CDN SPA rewrites cannot break it. */
-    assetsInlineLimit: 200000,
     rollupOptions: {
       output: {
         manualChunks: {

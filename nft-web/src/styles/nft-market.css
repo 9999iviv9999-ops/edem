@@ -635,6 +635,14 @@ a.nft-link:hover {
   color: var(--nft-danger, #e5484d);
 }
 
+.nft-wallet__hint {
+  margin: 8px 0 0;
+  max-width: min(320px, 92vw);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--nft-muted);
+}
+
 .nft-wallet__menu {
   position: absolute;
   top: calc(100% + 8px);
@@ -918,6 +926,13 @@ a.nft-link:hover {
 
   .nft-header__inner {
     justify-content: center;
+  }
+
+  .nft-header__actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 8px;
+    width: 100%;
   }
 
   .nft-nav {

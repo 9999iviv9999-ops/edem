@@ -26,6 +26,8 @@ export const ru = {
   "wallet.connecting": "Подключение…",
   "wallet.stuckHint":
     " — Откройте MetaMask и подтвердите или отклоните ожидающий запрос. Если зависло: MetaMask → ⋮ → Подключённые сайты → отключите этот сайт и подключите снова в сети {{chain}}.",
+  "wallet.mobileWalletConnectRequired":
+    "Подсказка: в Safari/Chrome на телефоне обычно нет расширения кошелька. Если есть пункт WalletConnect — используйте его, либо откройте сайт во встроенном браузере MetaMask; для стабильной связки попросите задать VITE_WALLETCONNECT_PROJECT_ID на сервере.",
 
   "market.discoverTitle": "Витрина",
   "market.discoverLede":
