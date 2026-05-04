@@ -32,6 +32,7 @@ npm run dev
 4. **Wallet** — Browser wallet on **Ethereum mainnet**, with **ETH** for gas.
 5. **Listing flow** — Own a token → **Approve** marketplace for that token ID → **createListing** (Discover page form).
 6. **Production** — Set the same `VITE_*` vars in Vercel (or your host) and redeploy. See `DEPLOY_VERCEL.md`.
+   - **Git push ≠ обновление сайта на VPS:** после изменений в репозитории на сервере нужно `git pull` и пересборка Docker (`scripts/geneso-vps-update.sh` или `geneso-vps-docker-up.sh`). На Vercel — проверьте Root Directory `nft-web` и вкладку Deployments.
 7. **Optional** — `VITE_WALLETCONNECT_PROJECT_ID` for WalletConnect / mobile QR.
 
 ## Routes

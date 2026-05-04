@@ -44,6 +44,17 @@ docker compose up -d --build
 
 ## Обновление
 
+**Важно:** push в GitHub **сам по себе не обновляет** сайт. Пока на VPS не сделан `git pull` и пересборка контейнера, пользователи продолжают видеть старый бандл (логотип, тексты и т.д.).
+
+Одной командой (на сервере, в каталоге клона):
+
+```bash
+cd /path/to/edem-backend
+GENESO_REPO="$PWD" bash scripts/geneso-vps-update.sh
+```
+
+Вручную (то же самое):
+
 ```bash
 cd /path/to/edem-backend && git pull
 GENESO_REPO="$PWD" bash scripts/geneso-vps-docker-up.sh
