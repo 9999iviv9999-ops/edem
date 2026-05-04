@@ -53,10 +53,10 @@ a.nft-link:hover {
   display: flex;
   flex-direction: column;
   background:
-    linear-gradient(180deg, rgba(4, 8, 18, 0.78) 0%, rgba(5, 9, 20, 0.84) 46%, rgba(4, 8, 18, 0.9) 100%),
-    radial-gradient(ellipse 120% 80% at 50% -28%, rgba(106, 127, 255, 0.18), transparent 58%),
-    url("/bg-reference.png") center top / cover no-repeat fixed,
-    linear-gradient(180deg, #050912 0%, #080d16 42%, #090e1a 100%);
+    radial-gradient(ellipse 110% 70% at 50% -24%, rgba(104, 116, 255, 0.26), transparent 58%),
+    radial-gradient(circle at 74% 22%, rgba(94, 136, 255, 0.14), transparent 34%),
+    radial-gradient(circle at 22% 78%, rgba(86, 102, 228, 0.16), transparent 36%),
+    linear-gradient(180deg, #060a14 0%, #080e1a 42%, #070c18 100%);
 }
 
 /* Header — full-width brand strip + sticky toolbar */
@@ -74,7 +74,7 @@ a.nft-link:hover {
   width: 100%;
   text-decoration: none;
   color: inherit;
-  background: #000;
+  background: linear-gradient(180deg, rgba(4, 8, 18, 0.96), rgba(6, 10, 22, 0.95));
   line-height: 0;
 }
 
