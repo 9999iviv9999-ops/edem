@@ -76,6 +76,9 @@ export function MarketplaceLayout({ children }: Props) {
             <NavLink className={navClass} to="/profile">
               {t("nav.profile")}
             </NavLink>
+            <a className="nft-nav__link" href="/guides/">
+              {t("nav.guides")}
+            </a>
           </nav>
           <div className="nft-header__actions">
             <LanguageSwitcher />

@@ -4,6 +4,7 @@ export const ru = {
   "nav.discover": "Витрина",
   "nav.offers": "Предложения",
   "nav.profile": "Профиль",
+  "nav.guides": "Гайды",
   "nav.primary": "Основная навигация",
 
   "brand.tagline": "Кураторские эзотерические NFT",

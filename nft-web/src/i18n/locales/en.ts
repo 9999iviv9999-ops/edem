@@ -2,6 +2,7 @@ export const en = {
   "nav.discover": "Discover",
   "nav.offers": "Offers",
   "nav.profile": "Profile",
+  "nav.guides": "Guides",
   "nav.primary": "Primary navigation",
 
   "brand.tagline": "Curated Esoteric NFTs",
