@@ -643,6 +643,22 @@ a.nft-link:hover {
   color: var(--nft-muted);
 }
 
+.nft-wallet__mm-link {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--nft-accent);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(34, 149, 255, 0.45);
+  padding-bottom: 2px;
+}
+
+.nft-wallet__mm-link:hover {
+  color: var(--nft-accent-hover);
+  border-bottom-color: var(--nft-accent-hover);
+}
+
 .nft-wallet__menu {
   position: absolute;
   top: calc(100% + 8px);

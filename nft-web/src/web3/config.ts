@@ -18,7 +18,13 @@ const appUrl =
 
 function createConnectors() {
   const injectedConnector = injected();
-  const metaMaskConnector = metaMask();
+  const metaMaskConnector = metaMask({
+    dappMetadata: {
+      name: APP_NAME,
+      url: appUrl,
+      iconUrl: `${appUrl}/favicon.svg`,
+    },
+  });
   const coinbaseConnector = coinbaseWallet({ appName: APP_NAME });
   const base = [injectedConnector, metaMaskConnector, coinbaseConnector];
 

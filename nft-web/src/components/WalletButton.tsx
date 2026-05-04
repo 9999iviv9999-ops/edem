@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useI18n } from "../i18n";
 import { DEFAULT_CHAIN, WALLET_CONNECT_CONFIGURED } from "../web3/config";
+import { metamaskDappDeepLink } from "../web3/metamask-deeplink";
 import { shortAddress } from "../web3/utils";
 
 function hasBrowserEthereum(): boolean {
@@ -43,6 +44,10 @@ export function WalletButton() {
     []
   );
 
+  const showMetaMaskAppLink = isMobileUserAgent() && !hasBrowserEthereum();
+  const metaMaskAppHref =
+    typeof window !== "undefined" ? metamaskDappDeepLink(window.location.href) : "#";
+
   const singleConnector = connectors.length === 1 ? connectors[0] : null;
   const shouldAutoConnectSingle =
     Boolean(singleConnector) &&
@@ -80,7 +85,7 @@ export function WalletButton() {
         onClick={(e) => {
           e.stopPropagation();
           if (connectLock.current || isPending) return;
-          if (connectors.length === 1) {
+          if (connectors.length === 1 && shouldAutoConnectSingle) {
             connectLock.current = true;
             connect(
               { connector: connectors[0] },
@@ -94,6 +99,15 @@ export function WalletButton() {
       >
         {isPending ? t("wallet.connecting") : t("wallet.connect")}
       </button>
+      {showMetaMaskAppLink ? (
+        <a
+          className="nft-wallet__mm-link"
+          href={metaMaskAppHref}
+          rel="noopener noreferrer"
+        >
+          {t("wallet.openInMetaMask")}
+        </a>
+      ) : null}
       {mobileNeedsWalletConnect ? (
         <p className="nft-wallet__hint" role="note">
           {t("wallet.mobileWalletConnectRequired")}
