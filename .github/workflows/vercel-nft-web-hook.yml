@@ -1,0 +1,30 @@
+# Опционально дергает Vercel Deploy Hook после изменений в nft-web.
+# Без секрета шаг просто пропускается (ошибки CI не будет).
+#
+# Настройка: Vercel → Project (nft-web) → Settings → Git → Deploy Hooks
+# → создать hook для branch main → скопировать URL → в GitHub:
+#   Repo → Settings → Secrets → VERCEL_DEPLOY_HOOK_NFT (repository secret)
+
+name: Vercel nft-web deploy hook
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "nft-web/**"
+      - ".github/workflows/vercel-nft-web-hook.yml"
+
+jobs:
+  hook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger production deploy on Vercel
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_NFT }}
+        run: |
+          if [ -z "${HOOK:-}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_NFT not set — skipping (add Deploy Hook URL in repo secrets to auto-redeploy)."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"
+          echo "Deploy hook OK"
