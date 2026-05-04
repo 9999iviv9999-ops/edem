@@ -18,6 +18,28 @@ function syncGenesoLogoToPublic(): Plugin {
       }
       fs.mkdirSync(path.dirname(dest), { recursive: true });
       fs.copyFileSync(src, dest);
+
+      // Mirror Russian guides from repository docs into public/guides for live site links.
+      const guidePairs: Array<[string, string]> = [
+        [
+          path.join(__dirname, "..", "docs", "geneso", "guides", "SELLER_GUIDE_RU.md"),
+          path.join(__dirname, "public", "guides", "SELLER_GUIDE_RU.md"),
+        ],
+        [
+          path.join(__dirname, "..", "docs", "geneso", "guides", "BUYER_GUIDE_RU.md"),
+          path.join(__dirname, "public", "guides", "BUYER_GUIDE_RU.md"),
+        ],
+        [
+          path.join(__dirname, "..", "docs", "geneso", "guides", "ADDRESSES.md"),
+          path.join(__dirname, "public", "guides", "ADDRESSES.md"),
+        ],
+      ];
+
+      for (const [guideSrc, guideDest] of guidePairs) {
+        if (!fs.existsSync(guideSrc)) continue;
+        fs.mkdirSync(path.dirname(guideDest), { recursive: true });
+        fs.copyFileSync(guideSrc, guideDest);
+      }
     },
   };
 }
