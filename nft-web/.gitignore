@@ -7,8 +7,7 @@ node_modules
 dist
 dist-ssr
 
-# Generated from src/assets/geneso-logo.jpg (vite plugin)
-public/geneso-logo.jpg
+# public/geneso-logo.jpg is committed (Vercel + guides); vite plugin overwrites from src/assets on build
 *.local
 
 # Editor
