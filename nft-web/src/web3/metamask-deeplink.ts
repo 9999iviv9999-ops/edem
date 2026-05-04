@@ -8,3 +8,10 @@ export function metamaskDappDeepLink(pageHref: string): string {
   const dappPath = `${u.host}${u.pathname}${u.search}`;
   return `https://link.metamask.io/dapp/${dappPath}`;
 }
+
+/** Direct app scheme; can fail in some browsers, so use with web fallback. */
+export function metamaskDappSchemeLink(pageHref: string): string {
+  const u = new URL(pageHref);
+  const dappPath = `${u.host}${u.pathname}${u.search}`;
+  return `metamask://dapp/${dappPath}`;
+}

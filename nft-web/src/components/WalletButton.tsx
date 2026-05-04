@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { useI18n } from "../i18n";
 import { DEFAULT_CHAIN, WALLET_CONNECT_CONFIGURED } from "../web3/config";
-import { metamaskDappDeepLink } from "../web3/metamask-deeplink";
+import { metamaskDappDeepLink, metamaskDappSchemeLink } from "../web3/metamask-deeplink";
 import { shortAddress } from "../web3/utils";
 
 function hasBrowserEthereum(): boolean {
@@ -47,6 +47,8 @@ export function WalletButton() {
   const showMetaMaskAppLink = isMobileUserAgent() && !hasBrowserEthereum();
   const metaMaskAppHref =
     typeof window !== "undefined" ? metamaskDappDeepLink(window.location.href) : "#";
+  const metaMaskSchemeHref =
+    typeof window !== "undefined" ? metamaskDappSchemeLink(window.location.href) : "#";
 
   const singleConnector = connectors.length === 1 ? connectors[0] : null;
   const shouldAutoConnectSingle =
@@ -104,6 +106,15 @@ export function WalletButton() {
           className="nft-wallet__mm-link"
           href={metaMaskAppHref}
           rel="noopener noreferrer"
+          onClick={(e) => {
+            // Try direct app scheme first, then fall back to official https deep link.
+            e.preventDefault();
+            if (typeof window === "undefined") return;
+            window.location.href = metaMaskSchemeHref;
+            window.setTimeout(() => {
+              window.location.href = metaMaskAppHref;
+            }, 700);
+          }}
         >
           {t("wallet.openInMetaMask")}
         </a>
