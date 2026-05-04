@@ -5,6 +5,6 @@
  */
 export function metamaskDappDeepLink(pageHref: string): string {
   const u = new URL(pageHref);
-  const withoutHash = `${u.origin}${u.pathname}${u.search}`;
-  return `https://link.metamask.io/dapp/${encodeURIComponent(withoutHash)}`;
+  const dappPath = `${u.host}${u.pathname}${u.search}`;
+  return `https://link.metamask.io/dapp/${dappPath}`;
 }
