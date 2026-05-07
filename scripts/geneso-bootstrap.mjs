@@ -18,9 +18,16 @@ try {
   run("Install nft-web dependencies", "npm run geneso:web:install");
   run("Compile contracts", "npm run geneso:contracts:compile");
   run("Contract smoke test", "npm run geneso:contracts:test");
+  try {
+    run("Sync nft-web/.env from deployments/ethereum.json", "npm run geneso:sync-nft-env");
+  } catch {
+    console.warn(
+      "\n[WARN] Could not sync nft-web/.env (missing contracts/deployments/ethereum.json?). Copy nft-web/.env.example and set VITE_* manually.\n"
+    );
+  }
   run("Build nft-web", "npm run geneso:web:build");
   console.log(
-    "\n[OK] Geneso bootstrap finished. Set contracts/.env and nft-web/.env, then: npm run geneso:doctor -- --strict\n"
+    "\n[OK] Geneso bootstrap finished.\n    Run UI: npm run geneso:web:dev\n    Sanity: npm run geneso:doctor\n    Deploy new contracts: copy contracts/.env.example → contracts/.env, then npm run geneso:contracts:deploy:ethereum && npm run geneso:contracts:export:abi && npm run geneso:sync-nft-env\n"
   );
 } catch {
   process.exit(1);

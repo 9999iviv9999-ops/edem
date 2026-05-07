@@ -6,15 +6,13 @@ $ErrorActionPreference = "Stop"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $root
 
-if (-not (Test-Path ".env")) {
-  throw "ERROR: .env not found in $root"
+if (-not (Test-Path "node_modules")) {
+  Write-Host "npm ci (нет node_modules, нужен для preflight / prisma validate)..."
+  npm ci
 }
 
-$envFile = Get-Content ".env"
-$dbLine = $envFile | Where-Object { $_ -match "^DATABASE_URL=" } | Select-Object -First 1
-if (-not $dbLine -or $dbLine -notmatch "edem_app") {
-  throw "ERROR: DATABASE_URL must use dedicated app user (edem_app), not postgres."
-}
+Write-Host "Preflight (env + prisma + compose)..."
+npm run preflight -- --compose
 
 Write-Host "Pulling latest changes..."
 git pull --ff-only

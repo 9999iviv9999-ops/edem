@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "ЭДЕМ",
+    "slug": "edem-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.jpg",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090f1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "press.edem.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "press.edem.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.jpg",
+        "backgroundColor": "#090f1a"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "versionCode": 32
+    },
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d4a95449-4e03-4c8b-b2ac-567ef803ff25"
+      }
+    },
+    "owner": "petroff8010",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ЭДЕМ использует фото для твоего профиля в сервисе знакомств.",
+          "cameraPermission": "ЭДЕМ может сделать снимок для аватара в профиле."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.jpg",
+          "color": "#090f1a"
+        }
+      ]
+    ]
+  }
+}

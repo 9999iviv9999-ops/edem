@@ -17,7 +17,7 @@
 | Путь | Назначение |
 |------|------------|
 | `nft-web/` | Standalone веб-маркетплейс Geneso (Vite + React + wagmi/viem), **отдельно** от dating-приложения `web/` |
-| `contracts/` | Solidity: `GenesoGenesis721`, `GenesoMarketplace`; деплой на **Base mainnet** |
+| `contracts/` | Solidity: `GenesoGenesis721`, `GenesoMarketplace`; прод-деплой на **Ethereum mainnet** (`deploy:ethereum`) |
 | `mobile/` | Оболочка **Expo (React Native)** — один код на Android + iOS |
 | Корень `package.json` | Скрипты `geneso:*` для установки, сборки, проверки env |
 
@@ -27,16 +27,16 @@
 
 ```bash
 npm run geneso:bootstrap
+npm run geneso:web:dev
 ```
 
-Дальше: скопировать `contracts/.env.example` → `contracts/.env`, `nft-web/.env.example` → `nft-web/.env`, задеплоить контракты на **Base mainnet**, прописать адреса, экспорт ABI:
+Деплой контрактов (нужен `contracts/.env` с ключом и `FEE_RECIPIENT`):
 
 ```bash
-npm run geneso:contracts:deploy:base
+npm run geneso:contracts:deploy:ethereum
 npm run geneso:contracts:export:abi
+npm run geneso:sync-nft-env
 npm run geneso:doctor
-# CI / строгая проверка:
-npm run geneso:doctor -- --strict
 ```
 
 Локально фронт:
@@ -45,15 +45,15 @@ npm run geneso:doctor -- --strict
 npm run geneso:web:dev
 ```
 
-Полный чеклист также в **корневом `README.md`** (секция «Geneso NFT quickstart»).
+Полный чеклист: **корневой `README.md`** (секция Geneso NFT).
 
 ---
 
 ## Переменные окружения
 
-**contracts/.env** (пример в `contracts/.env.example`): `BASE_MAINNET_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `FEE_RECIPIENT`, `PLATFORM_FEE_BPS`, имя/символ NFT. Для прод-деплоя нужны **реальные ETH на Base** на кошельке деплоя.
+**contracts/.env**: `ETH_MAINNET_RPC_URL`, `DEPLOYER_PRIVATE_KEY`, `FEE_RECIPIENT`, `PLATFORM_FEE_BPS`, имя/символ NFT. Для прод-деплоя нужны **ETH на Ethereum mainnet** на кошельке деплоя.
 
-**nft-web/.env**: `VITE_MARKETPLACE_ADDRESS`, `VITE_NFT_COLLECTION_ADDRESS`, опционально `VITE_WALLETCONNECT_PROJECT_ID`.
+**nft-web/.env**: `VITE_MARKETPLACE_ADDRESS`, `VITE_NFT_COLLECTION_ADDRESS`, опционально `VITE_WALLETCONNECT_PROJECT_ID`. Автозаполнение из `contracts/deployments/ethereum.json`: `npm run geneso:sync-nft-env`.
 
 **Vercel** (проект `nft-web`): те же `VITE_*` в настройках проекта.
 
@@ -61,15 +61,16 @@ npm run geneso:web:dev
 
 ## Прод-деплой фронта
 
-- Проект Vercel с **root directory `nft-web`**, build `npm run build`, output `dist`.
-- Алиас продакшена (по состоянию на сессию разработки): **https://nft-web-roan.vercel.app** — при смене домена обновить этот файл или `nft-web/DEPLOY_VERCEL.md`.
+- **Vercel:** root directory `nft-web`, build `npm run build`, output `dist`. См. `nft-web/DEPLOY_VERCEL.md`.
+- **Свой VPS (Docker + nginx):** `nft-web/DEPLOY_SERVER.md`, образ с nginx внутри контейнера; на хосте — **`ops/nginx-geneso.edem.press.conf`** (прокси на порт контейнера, по умолчанию после конфликтов портов часто **18473**).
+- Пример Vercel-URL (если используется): **https://nft-web-roan.vercel.app** — при смене домена обновить документацию.
 
 ---
 
 ## UX и ошибки (веб)
 
-- Общая функция **`formatUserError`** в `nft-web/src/web3/errors.ts` — человекочитаемые сообщения для отказа в кошельке, RPC, revert, сеть.
-- Используется на страницах маркетплейса и в **`TxStatusBanner`** (ожидание receipt, revert).
+- **`formatUserError`** в `nft-web/src/web3/errors.ts` — сообщения для отказа в кошельке, RPC, revert, сеть (EN/RU через `t()`).
+- **`TxStatusBanner`** — ожидание receipt, revert.
 
 ---
 
@@ -85,19 +86,23 @@ npm run geneso:web:dev
 
 ## Контракты и сеть
 
-- Фронт (`nft-web`) и конфиг mobile ориентированы на **Base mainnet** (chain id **8453**). Тестовые сети в основном флоу **не используются**.
-- Файл деплоя: `contracts/deployments/base.json`. После деплоя адреса должны совпадать с ABI в `nft-web/src/web3/abis/generated/`.
+- Фронт (`nft-web`) на **Ethereum mainnet** (chain id **1**). Файл деплоя: **`contracts/deployments/ethereum.json`**. После смены контрактов: `npm run export:abi` в `contracts/`.
+- Скрипты `deploy:base` в репозитории — только для экспериментов; текущий фронт не переключён на Base.
+
+---
+
+## ЭДЕМ и Geneso на одном VPS
+
+- Тот же сервер, что **ЭДЕМ** (`/opt/edem` и nginx `edem.press`), может обслуживать **Geneso** отдельным поддоменом (**geneso.edem.press**) — см. `ops/nginx-geneso.edem.press.conf`. Контейнер Geneso слушает на localhost (например **18473**).
 
 ---
 
 ## Если «программа вылетит»
 
-1. Открыть этот файл: **`docs/GENESO_PROJECT_MEMORY.md`**
-2. Корневой **`README.md`** (Geneso quickstart)
-3. **`nft-web/README.md`**, **`contracts/README.md`**, **`mobile/README.md`**
-
-Вся существенная логика и команды дублируются там, где разработчику их искать естественно.
+1. Этот файл: **`docs/GENESO_PROJECT_MEMORY.md`**
+2. Корневой **`README.md`** (Geneso)
+3. **`nft-web/README.md`**, **`nft-web/DEPLOY_SERVER.md`**, **`contracts/README.md`**, **`mobile/README.md`**
 
 ---
 
-*Последнее обновление: Base mainnet only; Geneso NFT web, contracts, Expo mobile, geneso:bootstrap / geneso:doctor, formatUserError, Vercel.*
+*Последнее обновление: Ethereum mainnet; Geneso NFT web, Docker, nginx snippet geneso.edem.press, geneso:bootstrap / geneso:doctor / geneso:sync-nft-env, i18n EN/RU.*

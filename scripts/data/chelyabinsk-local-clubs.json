@@ -1,0 +1,45 @@
+[
+  { "name": "Citrus Fitness", "address": "г. Челябинск, ул. Молдавская, д. 10", "city": "Челябинск", "chainName": "Citrus Fitness", "externalId": "chl-citrus-moldavskaya-10" },
+  { "name": "Носорог", "address": "г. Челябинск, ул. Луценко, д. 6", "city": "Челябинск", "chainName": "Носорог", "externalId": "chl-nosorog-lutsenko-6" },
+
+  { "name": "Колизей Молодогвардейцев", "address": "г. Челябинск, ул. Молодогвардейцев, д. 38А", "city": "Челябинск", "chainName": "Колизей", "externalId": "chl-kolizey-molodogvardeytsev-38a" },
+  { "name": "Колизей Свердловский", "address": "г. Челябинск, Свердловский пр., д. 35", "city": "Челябинск", "chainName": "Колизей", "externalId": "chl-kolizey-sverdlovskiy-35" },
+  { "name": "Колизей Чичерина", "address": "г. Челябинск, ул. Чичерина, д. 37", "city": "Челябинск", "chainName": "Колизей", "externalId": "chl-kolizey-chicherina-37" },
+
+  { "name": "Profilaktika", "address": "г. Челябинск, ул. Лесопарковая, д. 9А", "city": "Челябинск", "chainName": "Profilaktika", "externalId": "chl-profilaktika-lesoparkovaya-9a" },
+
+  { "name": "Атлетика Сони Кривой", "address": "г. Челябинск, ул. Сони Кривой, д. 54", "city": "Челябинск", "chainName": "Атлетика", "externalId": "chl-atletika-soni-krivoy-54" },
+  { "name": "Атлетика Красная", "address": "г. Челябинск, ул. Красная, д. 63", "city": "Челябинск", "chainName": "Атлетика", "externalId": "chl-atletika-krasnaya-63" },
+
+  { "name": "МетроФитнес Молодогвардейцев", "address": "г. Челябинск, ул. Молодогвардейцев, д. 55А", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-molodogvardeytsev-55a" },
+  { "name": "МетроФитнес Южный Бульвар", "address": "г. Челябинск, ул. Южный Бульвар, д. 2А", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-yuzhniy-bulvar-2a" },
+  { "name": "МетроФитнес Салютная", "address": "г. Челябинск, ул. Салютная, д. 27", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-salyutnaya-27" },
+  { "name": "МетроФитнес Ленина", "address": "г. Челябинск, пр-т Ленина, д. 86", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-lenina-86" },
+  { "name": "МетроФитнес Сталеваров", "address": "г. Челябинск, ул. Сталеваров, д. 5к3", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-stalevarov-5k3" },
+  { "name": "МетроФитнес Победы", "address": "г. Челябинск, пр-т Победы, д. 392", "city": "Челябинск", "chainName": "МетроФитнес", "externalId": "chl-metrofitness-pobedy-392" },
+
+  { "name": "Космос Чайковского", "address": "г. Челябинск, ул. Чайковского, д. 58", "city": "Челябинск", "chainName": "Космос", "externalId": "chl-kosmos-chaikovskogo-58" },
+  { "name": "Космос Чичерина", "address": "г. Челябинск, ул. Чичерина, д. 47", "city": "Челябинск", "chainName": "Космос", "externalId": "chl-kosmos-chicherina-47" },
+
+  { "name": "Территория спорта Полянка", "address": "г. Челябинск, ул. Полянка, д. 2А", "city": "Челябинск", "chainName": "Территория спорта", "externalId": "chl-tsport-polyanka-2a" },
+  { "name": "Территория спорта Агалакова", "address": "г. Челябинск, ул. Агалакова, д. 56", "city": "Челябинск", "chainName": "Территория спорта", "externalId": "chl-tsport-agalakova-56" },
+  { "name": "Территория спорта Молодогвардейцев", "address": "г. Челябинск, ул. Молодогвардейцев, д. 2В", "city": "Челябинск", "chainName": "Территория спорта", "externalId": "chl-tsport-molodogvardeytsev-2v" },
+  { "name": "Территория спорта Бр. Кашириных", "address": "г. Челябинск, ул. Бр. Кашириных, д. 95А/1", "city": "Челябинск", "chainName": "Территория спорта", "externalId": "chl-tsport-kashirinykh-95a1" },
+  { "name": "Территория спорта Воровского", "address": "г. Челябинск, ул. Воровского, д. 11А", "city": "Челябинск", "chainName": "Территория спорта", "externalId": "chl-tsport-vorovskogo-11a" },
+
+  { "name": "Bright Fit Алое Поле", "address": "г. Челябинск, пр-т Ленина, д. 64Б", "city": "Челябинск", "chainName": "Bright Fit", "externalId": "chl-brightfit-aloe-pole" },
+  { "name": "Bright Fit Привилегия", "address": "пос. Западный, ул. Уютная, д. 1", "city": "Челябинск", "chainName": "Bright Fit", "externalId": "chl-brightfit-privilegiya-uyutnaya-1" },
+  { "name": "Bright Fit Тополиная аллея", "address": "г. Челябинск, ул. Академика Королева, д. 39", "city": "Челябинск", "chainName": "Bright Fit", "externalId": "chl-brightfit-topolinaya-alleya" },
+
+  { "name": "Strong&Smart", "address": "г. Челябинск, ул. Братьев Кашириных, д. 54Б", "city": "Челябинск", "chainName": "Strong&Smart", "externalId": "chl-strongsmart-kashirinykh-54b" },
+  { "name": "ParkCity Fitness", "address": "г. Челябинск, ул. Лесопарковая, д. 6, стр. 1", "city": "Челябинск", "chainName": "ParkCity Fitness", "externalId": "chl-parkcityfitness-lesoparkovaya-6" },
+  { "name": "Видгоф", "address": "г. Челябинск, пр-т Ленина, д. 26А", "city": "Челябинск", "chainName": "Видгоф", "externalId": "chl-vidgof-lenina-26a" },
+
+  { "name": "Про-спорт Фокус", "address": "г. Челябинск, ул. Молдавская, д. 16, ТРК «Фокус»", "city": "Челябинск", "chainName": "Про-спорт", "externalId": "chl-prosport-focus-moldavskaya-16" },
+  { "name": "Про-спорт Металлургов", "address": "г. Челябинск, шоссе Металлургов, д. 5/3", "city": "Челябинск", "chainName": "Про-спорт", "externalId": "chl-prosport-metallurgov-5-3" },
+
+  { "name": "My Club", "address": "г. Челябинск, ул. Братьев Кашириных, д. 60А", "city": "Челябинск", "chainName": "My Club", "externalId": "chl-myclub-kashirinykh-60a" },
+  { "name": "VIP GYM", "address": "г. Челябинск, ул. Кыштымская, д. 19", "city": "Челябинск", "chainName": "VIP GYM", "externalId": "chl-vipgym-kyshtymskaya-19" },
+  { "name": "Spirit Fitness Фокус", "address": "г. Челябинск, ул. Молдавская, д. 16, ТРК «Фокус»", "city": "Челябинск", "chainName": "Spirit Fitness", "externalId": "chl-spirit-fitness-focus" },
+  { "name": "Adrenaline", "address": "г. Челябинск, ул. 1-я Окружная, д. 3", "city": "Челябинск", "chainName": "Adrenaline", "externalId": "chl-adrenaline-1-okruzhnaya-3" }
+]

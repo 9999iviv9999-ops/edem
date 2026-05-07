@@ -1,0 +1,19 @@
+{
+  "name": "ЭДЕМ",
+  "short_name": "ЭДЕМ",
+  "description": "Знакомства по интересам и фитнес-клубам.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0c1a12",
+  "theme_color": "#0c1a12",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/edem-logo-v2.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

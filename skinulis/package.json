@@ -1,0 +1,16 @@
+{
+  "name": "skinulis",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "api",
+    "web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace api",
+    "dev:api": "npm run dev --workspace api",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace api && npm run build --workspace web"
+  }
+}
+

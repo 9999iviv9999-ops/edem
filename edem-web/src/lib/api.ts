@@ -4,10 +4,19 @@ import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth"
 // Пустой baseURL = запросы на тот же origin (/api/...).
 // Локально: Vite proxy (vite.config.ts). На Vercel: vercel.json rewrites -> api.edem.press.
 // Если задан VITE_API_URL — используем его (прямой вызов API).
+// При base=/stg/ префиксуем пути /api → /stg/api (см. nginx на edem.press).
 const API_BASE_URL = (import.meta.env.VITE_API_URL as string | undefined)?.trim() || "";
+const APP_BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
 
 export const api = axios.create({
   baseURL: API_BASE_URL
+});
+
+api.interceptors.request.use((config) => {
+  if (!API_BASE_URL && APP_BASE && config.url?.startsWith("/api/")) {
+    config.url = `${APP_BASE}${config.url}`;
+  }
+  return config;
 });
 
 api.interceptors.request.use((config) => {
@@ -44,9 +53,8 @@ api.interceptors.response.use(
     try {
       const refreshToken = getRefreshToken();
       if (!refreshToken) throw new Error("No refresh token");
-      const refreshUrl = API_BASE_URL
-        ? `${API_BASE_URL}/api/auth/refresh`
-        : "/api/auth/refresh";
+      const refreshPath = APP_BASE ? `${APP_BASE}/api/auth/refresh` : "/api/auth/refresh";
+      const refreshUrl = API_BASE_URL ? `${API_BASE_URL}/api/auth/refresh` : refreshPath;
       const { data } = await axios.post(refreshUrl, {
         refreshToken
       });
@@ -55,8 +63,13 @@ api.interceptors.response.use(
       pending = [];
       original.headers.Authorization = `Bearer ${data.accessToken}`;
       return api(original);
-    } catch (refreshError) {
-      clearTokens();
+    } catch (refreshError: unknown) {
+      const status = (refreshError as { response?: { status?: number } })?.response?.status;
+      // Keep tokens on transient network/server errors.
+      // Clear only when refresh token is truly invalid/expired.
+      if (status === 401 || status === 403) {
+        clearTokens();
+      }
       pending.forEach((cb) => cb(null));
       pending = [];
       return Promise.reject(refreshError);

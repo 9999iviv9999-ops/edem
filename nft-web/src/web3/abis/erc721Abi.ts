@@ -16,4 +16,28 @@ export const erc721Abi = [
     ],
     outputs: [],
   },
+  {
+    type: "function",
+    name: "owner",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "address" }],
+  },
+  {
+    type: "function",
+    name: "nextTokenId",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "mintTo",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "tokenUri", type: "string" },
+    ],
+    outputs: [{ type: "uint256", name: "tokenId" }],
+  },
 ] as const;

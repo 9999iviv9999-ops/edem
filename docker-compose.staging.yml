@@ -1,0 +1,39 @@
+# Копия стенда (staging): параллельно с продом, своя БД и загрузки.
+# Полный список отличий от прода: docs/STAGING.md
+#
+#   cp .env.staging.example .env.staging
+#   # Заполнить секреты (не брать из прода).
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d --build
+#
+# Локально: веб http://127.0.0.1:8081 , API http://127.0.0.1:3001
+# Прод: 8080 / 3000 не трогаются. На сайте — оранжевая плашка «staging».
+#
+# Остановить: docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging down
+# (том БД сохраняется; удалить данные: ... down -v)
+
+name: edem-staging
+
+services:
+  db:
+    container_name: edem-db-staging
+
+  api:
+    container_name: edem-api-staging
+    env_file:
+      - .env.staging
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - ./uploads-staging:/app/uploads
+
+  web:
+    container_name: edem-web-staging
+    build:
+      args:
+        VITE_APP_ENV: staging
+    ports:
+      - "127.0.0.1:8081:80"
+
+networks:
+  default:
+    name: edem_staging_net

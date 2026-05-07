@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: skinulis-api
+    env: node
+    rootDir: api
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health/ready
+    autoDeploy: true
+

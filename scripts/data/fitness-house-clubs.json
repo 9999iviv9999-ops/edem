@@ -1,0 +1,284 @@
+[
+  {
+    "name": "Fitness House на Богословской",
+    "address": "ул. Богословская, дом 6, к1, стр.1",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-bogoslovskoy"
+  },
+  {
+    "name": "Fitness House на Большевиков",
+    "address": "пр. Большевиков, д.7 к2",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-bolshevikov"
+  },
+  {
+    "name": "Fitness House на Чкаловской",
+    "address": "ул. Б. Разночинная, д. 25 А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-chkalovskoy"
+  },
+  {
+    "name": "Fitness House на Дальневосточном",
+    "address": "ул. Крыленко, д. 14",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-dalnevostochnom"
+  },
+  {
+    "name": "Fitness House на Фучика",
+    "address": "ул. Фучика, д. 2, лит. А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-fuchika"
+  },
+  {
+    "name": "Fitness House на Гашека",
+    "address": "ул. Я. Гашека, д. 17А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-gasheka"
+  },
+  {
+    "name": "Fitness House на Хасанской",
+    "address": "Хасанская улица, 10, к2",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-hasanskoj"
+  },
+  {
+    "name": "Fitness House на Камышовой",
+    "address": "ул.Камышовая, 36 стр. 1",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-kamyshovoj"
+  },
+  {
+    "name": "Fitness House на Комендантском",
+    "address": "пр. Комендантский, д. 2, лит. А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-komendantskom"
+  },
+  {
+    "name": "Fitness House на Краснопутиловской",
+    "address": "ул. Краснопутиловская, д. 111А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-krasnoputilovskoy"
+  },
+  {
+    "name": "Fitness House на Крестовском",
+    "address": "пр. Крестовский, д. 24 Б",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-krestovskom"
+  },
+  {
+    "name": "Fitness House на Культуры",
+    "address": "пр. Культуры, д. 41, лит. А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-kultury"
+  },
+  {
+    "name": "Fitness House на Ладожской",
+    "address": "пл. Карла Фаберже, д. 8, лит. Е",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-ladozhskoy"
+  },
+  {
+    "name": "Fitness House на Ленинском",
+    "address": "пр. Ленинский, д. 160, лит. А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-leninskom"
+  },
+  {
+    "name": "Fitness House на Маршака",
+    "address": "пр.Маршака, д.10",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-marshaka"
+  },
+  {
+    "name": "Fitness House на Маршала Блюхера",
+    "address": "пр. Маршала Блюхера, д. 9, к. 3",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-marshala-blyuhera"
+  },
+  {
+    "name": "Fitness House на Маршала Говорова",
+    "address": "ул. Маршала Говорова, д. 35, к. 4",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-marshala-govorova"
+  },
+  {
+    "name": "Fitness House на Мебельной",
+    "address": "ул. Мебельная, д. 1, корп. 2А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-mebelnoy"
+  },
+  {
+    "name": "Fitness House на Наличной",
+    "address": "ул. Наличная, д. 44 к 1",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-nalichnoj"
+  },
+  {
+    "name": "Fitness House на Бульваре Новаторов",
+    "address": "Бульвар Новаторов, д. 32",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-novatorov"
+  },
+  {
+    "name": "Fitness House на Пискаревском",
+    "address": "пр. Пискаревский, д. 25, лит. А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-piskarevskom"
+  },
+  {
+    "name": "Fitness House на Политехнической",
+    "address": "ул. Политехническая д. 6",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-politehnicheskoy"
+  },
+  {
+    "name": "Fitness House на Пражской",
+    "address": "ул. Пражская, д. 30/2 A",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-prazhskoy"
+  },
+  {
+    "name": "Fitness House на Пулковском",
+    "address": "Шереметьевская ул., 13 литера А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-pulkovskom"
+  },
+  {
+    "name": "Fitness House на Салова",
+    "address": "ул. Салова, 61, стр. 1",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-salova"
+  },
+  {
+    "name": "Fitness House на Савушкина",
+    "address": "ул. Савушкина, д. 119, корп. 3",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-savushkina"
+  },
+  {
+    "name": "Fitness House на Северном",
+    "address": "Северный пр., д. 40, литер А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-severnom"
+  },
+  {
+    "name": "Fitness House на Шаврова",
+    "address": "ул. Шаврова, д. 26",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-shavrova"
+  },
+  {
+    "name": "Fitness House на Стачек",
+    "address": "пр. Стачек 47, лит. Ж",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-stachek"
+  },
+  {
+    "name": "Fitness House на Таллинском шоссе",
+    "address": "Таллинское шоссе, 25",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-tallinskom"
+  },
+  {
+    "name": "Fitness House на Ветеранов",
+    "address": "пр. Ветеранов, 121",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-veteranov"
+  },
+  {
+    "name": "Fitness House на Заречной",
+    "address": "Парнас, Заречная улица, д. 15, к. 1, стр. 1",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-na-zarechnoj"
+  },
+  {
+    "name": "Fitness House в Новогорелово",
+    "address": "п. Новогорелово, ул. Современников, 2А, ТЦ «KRONUNG НОВОГОРЕЛОВО»",
+    "city": "Новогорелово",
+    "externalId": "fh-novogorelovo"
+  },
+  {
+    "name": "Fitness House на Гашека +",
+    "address": "ул. Я. Гашека, д. 17А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-prestige-na-gasheka"
+  },
+  {
+    "name": "Fitness House на Хошимина",
+    "address": "Выборгское шоссе, д. 15А",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-prestige-na-hoshimina"
+  },
+  {
+    "name": "Fitness House на Пулковском +",
+    "address": "Шереметьевская ул., 13",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-prestige-na-pulkovskom"
+  },
+  {
+    "name": "Fitness House в Девяткино",
+    "address": "ул. Главная, 60",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-devyatkino"
+  },
+  {
+    "name": "Fitness House в Гатчине",
+    "address": "ул. Генерала Кныша, д. 2 А",
+    "city": "Гатчина",
+    "externalId": "fh-v-gatchine"
+  },
+  {
+    "name": "Fitness House в Кудрово",
+    "address": "г. Кудрово, Европейский пр. 21, стр.1, лит.В",
+    "city": "Кудрово",
+    "externalId": "fh-v-kudrovo"
+  },
+  {
+    "name": "Fitness House в Лахте",
+    "address": "пр. Лахтинский, д. 85",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-lahte"
+  },
+  {
+    "name": "Fitness House в Мурино",
+    "address": "г. Мурино, ул. Шувалова д.11",
+    "city": "Мурино",
+    "externalId": "fh-v-murino"
+  },
+  {
+    "name": "Fitness House в Охта Молле",
+    "address": "ТРЦ \"Охта Молл\", Брантовская дор., 3",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-ohta-molle"
+  },
+  {
+    "name": "Fitness House в Рыбацком",
+    "address": "пер. Скачков, д. 5",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-rybatskom"
+  },
+  {
+    "name": "Fitness House в Шушарах",
+    "address": "п.Шушары, Новгородский пр-т, д.6, к.2",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-shusharah"
+  },
+  {
+    "name": "Fitness House в Славянке",
+    "address": "Славянка, ул. Ростовская, д. 20",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-slavyanke"
+  },
+  {
+    "name": "Fitness House в Светлановском",
+    "address": "пр. Энгельса, д. 33, корп. 1, ТЦ \"Светлановский\"",
+    "city": "Санкт-Петербург",
+    "externalId": "fh-v-svetlanovskom"
+  },
+  {
+    "name": "Fitness House в Янино",
+    "address": "г. Санкт -Петербург ГП Янино 1, ул. Ветряных Мельниц д. 3/1",
+    "city": "Янино",
+    "externalId": "fh-v-yanino"
+  }
+]

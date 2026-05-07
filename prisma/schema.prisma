@@ -73,12 +73,48 @@ model User {
   reportsReceived   Report[]            @relation("Reported")
   gymSuggestions    GymSuggestion[]
   isBanned          Boolean             @default(false)
+  isAdmin           Boolean             @default(false)
+  /** Публичная метка статуса (VIP и т.п.), видна другим в API */
+  profileBadge      String?
+  /** Пользователь вручную включил статус "Я в зале" */
+  inGymAt           DateTime?
   banReason         String?
   companyMemberships CompanyMember[]
   vprokOrders       VprokOrder[]
   vprokDisputes     VprokDispute[]
   vprokRiskEvents   VprokRiskEvent[]
   vprokTermsAcceptances VprokTermsAcceptance[]
+  adminAuditLogs    AdminAuditLog[]
+  profileCommentsWritten  ProfileComment[] @relation("ProfileCommentAuthor")
+  profileCommentsReceived ProfileComment[] @relation("ProfileCommentTarget")
+  pushDevices             PushDevice[]
+}
+
+/** Токен Expo Push / FCM для мобильных уведомлений */
+model PushDevice {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminUserId String
+  action     String
+  entityType String
+  entityId   String
+  payload    String?
+  createdAt  DateTime @default(now())
+  adminUser  User     @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
 }
 
 model Gym {
@@ -200,10 +236,26 @@ model Message {
   fromUserId String
   text      String
   createdAt DateTime @default(now())
+  readAt    DateTime?
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   fromUser  User     @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
 
   @@index([matchId, createdAt])
+}
+
+model ProfileComment {
+  id          String   @id @default(cuid())
+  authorId    String
+  targetUserId String
+  /** null = комментарий к анкете в целом, иначе индекс фото в массиве photos */
+  photoIndex  Int?
+  text        String
+  createdAt   DateTime @default(now())
+  author      User     @relation("ProfileCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  targetUser  User     @relation("ProfileCommentTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@index([targetUserId, createdAt])
+  @@index([authorId, createdAt])
 }
 
 model RefreshSession {

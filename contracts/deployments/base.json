@@ -1,0 +1,10 @@
+{
+  "network": "base",
+  "chainId": 8453,
+  "deployer": "0x9878ba9598172bd5919f3710D66dA585a39B1310",
+  "nftCollection": "0xA96abc4a3cEC6364f0102CeeDa2b1cD16461541E",
+  "marketplace": "0x9765C401fF2615732A9e9ecC3D779309073C18bf",
+  "feeRecipient": "0x9878ba9598172bd5919f3710D66dA585a39B1310",
+  "platformFeeBps": 250,
+  "deployedAt": "2026-05-03T09:43:15.289Z"
+}

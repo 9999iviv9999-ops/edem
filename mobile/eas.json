@@ -1,0 +1,36 @@
+{
+  "cli": {
+    "version": ">= 18.8.1",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://edem.press",
+        "EXPO_PUBLIC_WEB_URL": "https://edem.press"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://edem.press",
+        "EXPO_PUBLIC_WEB_URL": "https://edem.press"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://edem.press",
+        "EXPO_PUBLIC_WEB_URL": "https://edem.press"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

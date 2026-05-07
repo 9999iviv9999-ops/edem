@@ -9,19 +9,23 @@ import { generateRefreshToken, hashRefreshToken } from "../utils/refresh-token";
 import { env } from "../lib/env";
 import { normalizePhone } from "../lib/phone-normalize";
 import { syncProfileBadgeForPhone } from "../lib/profile-badge-sync";
+import { createOAuthExchangeCode, consumeOAuthExchangeCode } from "../lib/oauth-exchange";
 import { requireAuth } from "../middleware/auth";
 import { createRequestThrottle } from "../middleware/request-throttle";
 
 const registerSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().max(254),
   phone: z.string().trim().regex(/^\+?[0-9]{10,15}$/, "Invalid phone format"),
-  password: z.string().min(6),
-  name: z.string().min(1),
+  password: z.string().min(8).max(200),
+  name: z.string().min(1).max(120),
   age: z.number().int().min(18).max(80),
-  gender: z.enum(["male", "female", "other"]),
-  city: z.string().min(1),
+  gender: z.enum(["male", "female"]),
+  city: z.string().min(1).max(120),
   okrug: z.string().max(200).optional(),
-  district: z.string().max(200).optional()
+  district: z.string().max(200).optional(),
+  acceptPrivacyPolicy: z.literal(true, {
+    errorMap: () => ({ message: "Необходимо принять политику конфиденциальности" })
+  })
 });
 
 const loginSchema = z
@@ -53,15 +57,27 @@ const loginByIdentityThrottle = createRequestThrottle({
     return email || phone || (req.ip || "unknown");
   }
 });
+const refreshByIpThrottle = createRequestThrottle({
+  keyPrefix: "refresh-by-ip",
+  windowMs: 60 * 1000,
+  max: 30,
+  errorMessage: "Too many token refresh attempts. Try again shortly.",
+  keyGenerator: (req) => req.ip || "unknown"
+});
+const oauthExchangeByIpThrottle = createRequestThrottle({
+  keyPrefix: "oauth-exchange-by-ip",
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  errorMessage: "Too many login code exchanges. Try again later.",
+  keyGenerator: (req) => req.ip || "unknown"
+});
 const googleAuthClient = env.GOOGLE_CLIENT_ID ? new OAuth2Client(env.GOOGLE_CLIENT_ID) : null;
 
-function buildAuthRedirect(mode: "login" | "register", tokens: { accessToken: string; refreshToken: string }) {
+function buildAuthRedirect(mode: "login" | "register", exchangeCode: string) {
   const base = env.WEB_BASE_URL.replace(/\/+$/, "");
   const targetPath = mode === "register" ? "/register" : "/login";
   const params = new URLSearchParams({
-    social: "vk",
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken
+    oauth_exchange: exchangeCode
   });
   return `${base}${targetPath}?${params.toString()}`;
 }
@@ -197,7 +213,7 @@ authRouter.post("/login", authByIpThrottle, loginByIdentityThrottle, async (req,
 
 authRouter.post("/social/google", authByIpThrottle, async (req, res, next) => {
   try {
-    const schema = z.object({ idToken: z.string().min(20) });
+    const schema = z.object({ idToken: z.string().min(20).max(16_000) });
     const data = schema.parse(req.body);
     if (!googleAuthClient || !env.GOOGLE_CLIENT_ID) {
       return res.status(503).json({ error: "Google login is not configured" });
@@ -234,7 +250,7 @@ authRouter.post("/social/google", authByIpThrottle, async (req, res, next) => {
           passwordHash,
           name: fullName,
           age: 22,
-          gender: "other",
+          gender: "male",
           city: "Москва",
           photos: []
         }
@@ -278,9 +294,9 @@ authRouter.get("/social/vk/callback", authByIpThrottle, async (req, res, next) =
     if (!env.VK_CLIENT_ID || !env.VK_CLIENT_SECRET || !env.VK_REDIRECT_URI) {
       return res.status(503).json({ error: "VK login is not configured" });
     }
-    const code = typeof req.query.code === "string" ? req.query.code : "";
+    const vkCode = typeof req.query.code === "string" ? req.query.code : "";
     const mode = req.query.state === "register" ? "register" : "login";
-    if (!code) {
+    if (!vkCode) {
       return res.status(400).json({ error: "Missing VK auth code" });
     }
 
@@ -288,7 +304,7 @@ authRouter.get("/social/vk/callback", authByIpThrottle, async (req, res, next) =
       client_id: env.VK_CLIENT_ID,
       client_secret: env.VK_CLIENT_SECRET,
       redirect_uri: env.VK_REDIRECT_URI,
-      code
+      code: vkCode
     });
     const tokenResponse = await fetch(`https://oauth.vk.com/access_token?${tokenParams.toString()}`);
     if (!tokenResponse.ok) {
@@ -343,7 +359,7 @@ authRouter.get("/social/vk/callback", authByIpThrottle, async (req, res, next) =
           passwordHash,
           name: fullName,
           age: 22,
-          gender: "other",
+          gender: "male",
           city: "Москва",
           photos: []
         }
@@ -356,13 +372,28 @@ authRouter.get("/social/vk/callback", authByIpThrottle, async (req, res, next) =
       userAgent: req.headers["user-agent"],
       ipAddress: req.ip
     });
-    return res.redirect(buildAuthRedirect(mode, tokens));
+    const exchangeCode = createOAuthExchangeCode(tokens);
+    return res.redirect(buildAuthRedirect(mode, exchangeCode));
   } catch (err) {
     return next(err);
   }
 });
 
-authRouter.post("/refresh", async (req, res, next) => {
+authRouter.post("/oauth/exchange", oauthExchangeByIpThrottle, async (req, res, next) => {
+  try {
+    const schema = z.object({ code: z.string().min(16).max(512) });
+    const { code } = schema.parse(req.body);
+    const tokens = consumeOAuthExchangeCode(code);
+    if (!tokens) {
+      return res.status(401).json({ error: "Invalid or expired login code" });
+    }
+    return res.json(tokens);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+authRouter.post("/refresh", refreshByIpThrottle, async (req, res, next) => {
   try {
     const schema = z.object({ refreshToken: z.string().min(16) });
     const data = schema.parse(req.body);
@@ -427,8 +458,8 @@ authRouter.post("/logout-all", requireAuth, async (req, res, next) => {
 authRouter.post("/change-password", requireAuth, async (req, res, next) => {
   try {
     const schema = z.object({
-      currentPassword: z.string().min(6),
-      newPassword: z.string().min(6)
+      currentPassword: z.string().min(6).max(200),
+      newPassword: z.string().min(8).max(200)
     });
     const data = schema.parse(req.body);
 

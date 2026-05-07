@@ -6,18 +6,24 @@ import { defineConfig, type Plugin } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/** Copy canonical logo to public/ for static /guides/ pages (same file as in src/assets). */
+/** Copy canonical logo(s) to public/ for static hosting (same files as in src/assets). */
 function syncGenesoLogoToPublic(): Plugin {
   return {
     name: "sync-geneso-logo-to-public",
     buildStart() {
-      const src = path.join(__dirname, "src", "assets", "geneso-logo.jpg");
-      const dest = path.join(__dirname, "public", "geneso-logo.jpg");
-      if (!fs.existsSync(src)) {
-        this.error(`Missing logo: ${src}`);
+      const jpgSrc = path.join(__dirname, "src", "assets", "geneso-logo.jpg");
+      const jpgDest = path.join(__dirname, "public", "geneso-logo.jpg");
+      if (!fs.existsSync(jpgSrc)) {
+        this.error(`Missing logo: ${jpgSrc}`);
       }
-      fs.mkdirSync(path.dirname(dest), { recursive: true });
-      fs.copyFileSync(src, dest);
+      fs.mkdirSync(path.dirname(jpgDest), { recursive: true });
+      fs.copyFileSync(jpgSrc, jpgDest);
+
+      const pngSrc = path.join(__dirname, "src", "assets", "geneso-logo.png");
+      const pngDest = path.join(__dirname, "public", "geneso-logo.png");
+      if (fs.existsSync(pngSrc)) {
+        fs.copyFileSync(pngSrc, pngDest);
+      }
 
       // Mirror Russian guides from repository docs into public/guides for live site links.
       const guidePairs: Array<[string, string]> = [

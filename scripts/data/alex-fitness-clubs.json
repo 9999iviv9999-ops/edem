@@ -1,0 +1,46 @@
+[
+  {"name": "Alex Fitness Коломенское", "address": "г. Москва, пр-т Андропова, д. 22, БЦ «Нагатинский»", "city": "Москва", "externalId": "af-msk-kolomenskoe"},
+  {"name": "Alex Fitness Филион", "address": "г. Москва, Багратионовский проезд, д. 5, ТРЦ «Филион»", "city": "Москва", "externalId": "af-msk-filion"},
+
+  {"name": "Alex Fitness Кудрово", "address": "Кудрово, ул. Ленинградская, д. 1, ЖК «Новый Оккервиль»", "city": "Санкт-Петербург", "externalId": "af-spb-kudrovo"},
+  {"name": "Alex Fitness Ушинского", "address": "г. Санкт-Петербург, ул. Ушинского, д. 19, корп. 2", "city": "Санкт-Петербург", "externalId": "af-spb-ushinskogo"},
+  {"name": "Alex Fitness Лиговский", "address": "г. Санкт-Петербург, Транспортный пер., д. 1, ТК «Платформа»", "city": "Санкт-Петербург", "externalId": "af-spb-ligovskiy"},
+
+  {"name": "Alex Fitness Черёмушки", "address": "г. Краснодар, ул. Ставропольская, д. 140", "city": "Краснодар", "externalId": "af-krasnodar-cheremushki"},
+
+  {"name": "Alex Fitness РИО", "address": "г. Ростов-на-Дону, пр-т Михаила Нагибина, д. 17, ТРЦ «РИО»", "city": "Ростов-на-Дону", "externalId": "af-rostov-rio"},
+  {"name": "Alex Fitness Левенцовка", "address": "г. Ростов-на-Дону, ул. Доватора, д. 269", "city": "Ростов-на-Дону", "externalId": "af-rostov-leventsovka"},
+
+  {"name": "Alex Fitness Миллениум", "address": "г. Пермь, бульвар Гагарина, д. 32, РК «Миллениум», 2–3 этаж", "city": "Пермь", "externalId": "af-perm-millenium"},
+  {"name": "Alex Fitness Триада", "address": "г. Пермь, ул. Куйбышева, д. 66, ТЦ «Триада», 3–4 этаж", "city": "Пермь", "externalId": "af-perm-triada"},
+
+  {"name": "Alex Fitness Гагарин Парк", "address": "г. Челябинск, ул. Труда, д. 183, ТРК «Гагарин Парк»", "city": "Челябинск", "externalId": "af-chl-gagarin-park"},
+  {"name": "Alex Fitness Калибр", "address": "г. Челябинск, ул. Худякова, д. 12, ТК «Калибр»", "city": "Челябинск", "externalId": "af-chl-kalibr"},
+
+  {"name": "Alex Fitness Московская", "address": "г. Пенза, ул. Московская, д. 83", "city": "Пенза", "externalId": "af-penza-moskovskaya"},
+  {"name": "Alex Fitness Онежский", "address": "г. Пенза, 1-й Онежский проезд, д. 4", "city": "Пенза", "externalId": "af-penza-onezhskiy"},
+
+  {"name": "Alex Fitness Мармелад", "address": "г. Волгоград, ул. Землячки, д. 110б", "city": "Волгоград", "externalId": "af-vlg-marmelad"},
+
+  {"name": "Alex Fitness Березники", "address": "г. Березники, ул. Пятилетки, д. 150", "city": "Березники", "externalId": "af-brz-main"},
+
+  {"name": "Alex Fitness Гулливер", "address": "г. Оренбург, ул. Новая, д. 4", "city": "Оренбург", "externalId": "af-orb-gulliver"},
+
+  {"name": "Alex Fitness Виктория Плаза", "address": "г. Рязань, Первомайский пр., д. 70, корп. 1, лит. А", "city": "Рязань", "externalId": "af-ryz-viktoria-plaza"},
+
+  {"name": "Alex Fitness Красная Линия", "address": "г. Ставрополь, ул. Ленина, д. 381", "city": "Ставрополь", "externalId": "af-stv-krasnaya-liniya"},
+
+  {"name": "Alex Fitness Вершина Плаза", "address": "г. Пятигорск, ул. Ессентукская, д. 31А", "city": "Пятигорск", "externalId": "af-ptg-vershina-plaza"},
+
+  {"name": "Alex Fitness ГУМ", "address": "г. Казань, ул. Баумана, д. 51/50, ТЦ «ГУМ»", "city": "Казань", "externalId": "af-kzn-gum"},
+
+  {"name": "Alex Fitness Континент", "address": "г. Новосибирск, ул. Троллейная, д. 130а, ТРЦ «Континент»", "city": "Новосибирск", "externalId": "af-nsk-kontinent"},
+  {"name": "Alex Fitness Родники", "address": "г. Новосибирск, ул. Тюленина, д. 17/1, ТЦ «Кристалл»", "city": "Новосибирск", "externalId": "af-nsk-rodniki"},
+  {"name": "Alex Fitness Амолл", "address": "г. Новосибирск, ул. Богдана Хмельницкого, д. 1/1, ТЦ «Амолл», 4 этаж", "city": "Новосибирск", "externalId": "af-nsk-amoll"},
+
+  {"name": "Alex Fitness Московский Проспект", "address": "г. Воронеж, Московский пр., д. 129/1, ТРЦ «Московский Проспект»", "city": "Воронеж", "externalId": "af-vrn-moskovskiy-prospekt"},
+  {"name": "Alex Fitness МаксиМир", "address": "г. Воронеж, Ленинский пр., д. 174П, ТРЦ «МаксиМир»", "city": "Воронеж", "externalId": "af-vrn-maksimir"},
+  {"name": "Alex Fitness Восход", "address": "г. Воронеж, ул. 45-й Стрелковой Дивизии, д. 275а", "city": "Воронеж", "externalId": "af-vrn-voshod"},
+
+  {"name": "Alex Fitness Июнь", "address": "г. Череповец, ул. Годовикова, д. 37", "city": "Череповец", "externalId": "af-chv-iyun"}
+]

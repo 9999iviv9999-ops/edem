@@ -1,0 +1,17 @@
+{
+  "campaigns": [],
+  "transferConfirmations": [],
+  "subscriptions": [],
+  "subscriptionInvoices": [
+    {
+      "id": "sinv_1776774610575_35vz1j",
+      "ownerPhone": "+79990000000",
+      "plan": "monthly",
+      "amountRub": 299,
+      "status": "pending",
+      "paymentUrl": "/manual-subscription/+79990000000/1776774610575",
+      "createdAt": "2026-04-21T12:30:10.575Z",
+      "updatedAt": "2026-04-21T12:30:10.575Z"
+    }
+  ]
+}

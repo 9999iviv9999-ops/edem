@@ -1,0 +1,170 @@
+[
+  {
+    "name": "XFIT Чистые пруды",
+    "address": "г. Москва, ул. Жуковского, д. 14",
+    "city": "Москва",
+    "externalId": "xfit-msk-chistye-prudy"
+  },
+  {
+    "name": "XFIT Алтуфьево",
+    "address": "г. Москва, ул. Угличская, д. 13",
+    "city": "Москва",
+    "externalId": "xfit-msk-altufevo"
+  },
+  {
+    "name": "XFIT Сердце столицы",
+    "address": "г. Москва, Шелепихинская наб., д. 34",
+    "city": "Москва",
+    "externalId": "xfit-msk-serdtse-stolitsy"
+  },
+  {
+    "name": "XFIT Мосфильм",
+    "address": "г. Москва, ул. Мосфильмовская, д. 88, корп. 2",
+    "city": "Москва",
+    "externalId": "xfit-msk-mosfilm"
+  },
+  {
+    "name": "XFIT Парк Победы",
+    "address": "г. Москва, ул. Василисы Кожиной, д. 1",
+    "city": "Москва",
+    "externalId": "xfit-msk-park-pobedy"
+  },
+  {
+    "name": "XFIT Фьюжн",
+    "address": "г. Москва, ул. Усачева, д. 2, стр. 3",
+    "city": "Москва",
+    "externalId": "xfit-msk-fyuzhn"
+  },
+  {
+    "name": "XFIT Монарх",
+    "address": "г. Москва, Ленинградский пр-т, д. 31А, стр. 1",
+    "city": "Москва",
+    "externalId": "xfit-msk-monarkh"
+  },
+  {
+    "name": "XFIT Нагатинская",
+    "address": "г. Москва, 1-й Нагатинский проезд, д. 10, корп. 1",
+    "city": "Москва",
+    "externalId": "xfit-msk-nagatinskaya"
+  },
+  {
+    "name": "XFIT Бутово",
+    "address": "г. Москва, ул. Южнобутовская, д. 44",
+    "city": "Москва",
+    "externalId": "xfit-msk-butovo"
+  },
+  {
+    "name": "XFIT Зиларт",
+    "address": "г. Москва, б-р Братьев Весниных, д. 1",
+    "city": "Москва",
+    "externalId": "xfit-msk-zilart"
+  },
+  {
+    "name": "XFIT Федосьино",
+    "address": "г. Москва, ул. Федосьино, д. 12",
+    "city": "Москва",
+    "externalId": "xfit-msk-fedosino"
+  },
+  {
+    "name": "XFIT Планета Бибирево",
+    "address": "г. Москва, Алтуфьевское ш., д. 70",
+    "city": "Москва",
+    "externalId": "xfit-msk-planeta"
+  },
+  {
+    "name": "XFIT Авиамоторная",
+    "address": "г. Москва, ул. Авиамоторная, д. 10, корп. 1",
+    "city": "Москва",
+    "externalId": "xfit-msk-aviamotornaya"
+  },
+  {
+    "name": "XFIT Отрадное",
+    "address": "г. Москва, ул. Отрадная, д. 8",
+    "city": "Москва",
+    "externalId": "xfit-msk-otradnoe"
+  },
+  {
+    "name": "XFIT Правда",
+    "address": "г. Москва, ул. Правды, д. 21, стр. 2",
+    "city": "Москва",
+    "externalId": "xfit-msk-pravda"
+  },
+  {
+    "name": "XFIT Флотская",
+    "address": "г. Москва, ул. Флотская, д. 5В",
+    "city": "Москва",
+    "externalId": "xfit-msk-flotskaya"
+  },
+  {
+    "name": "XFIT Довиль",
+    "address": "г. Москва, ул. Озёрная, д. 125",
+    "city": "Москва",
+    "externalId": "xfit-msk-dovil"
+  },
+  {
+    "name": "XFIT Химки Юбилейный",
+    "address": "г. Химки, Юбилейный пр-т, д. 1А",
+    "city": "Химки",
+    "externalId": "xfit-khimki-yubileyny"
+  },
+  {
+    "name": "XFIT Клевер",
+    "address": "г. Екатеринбург, ул. Ткачей, д. 17",
+    "city": "Екатеринбург",
+    "externalId": "xfit-ekb-klever"
+  },
+  {
+    "name": "XFIT Гагаринский",
+    "address": "г. Санкт-Петербург, пр-т Юрия Гагарина, д. 71",
+    "city": "Санкт-Петербург",
+    "externalId": "xfit-spb-gagarinskiy"
+  },
+  {
+    "name": "XFIT Морской фасад",
+    "address": "г. Санкт-Петербург, ул. Кораблестроителей, д. 32/2",
+    "city": "Санкт-Петербург",
+    "externalId": "xfit-spb-morskoy-fasad"
+  },
+  {
+    "name": "XFIT Плаза",
+    "address": "г. Новосибирск, ул. Кирова, д. 23",
+    "city": "Новосибирск",
+    "externalId": "xfit-nsk-plaza"
+  },
+  {
+    "name": "XFIT Сан-сити",
+    "address": "г. Новосибирск, пл. Карла Маркса (ТЦ Сан Сити)",
+    "city": "Новосибирск",
+    "externalId": "xfit-nsk-san-siti"
+  },
+  {
+    "name": "XFIT Олимп",
+    "address": "г. Воронеж, ул. Карла Маркса, д. 67",
+    "city": "Воронеж",
+    "externalId": "xfit-vrn-olimp"
+  },
+  {
+    "name": "XFIT Чернавский",
+    "address": "г. Воронеж, ул. Короленко, д. 5",
+    "city": "Воронеж",
+    "externalId": "xfit-vrn-chernavskiy"
+  },
+  {
+    "name": "XFIT Жемчужина",
+    "address": "г. Пермь, ул. Газеты «Звезда», д. 46А",
+    "city": "Пермь",
+    "externalId": "xfit-perm-zhemchuzhina"
+  },
+  {
+    "name": "XFIT Волгоград",
+    "address": "г. Волгоград, ул. Маршала Рокоссовского, д. 62",
+    "city": "Волгоград",
+    "externalId": "xfit-vlg-volgograd"
+  },
+  {
+    "name": "XFIT Меридиан",
+    "address": "г. Краснодар, ул. Стасова, д. 182/1",
+    "city": "Краснодар",
+    "externalId": "xfit-krd-meridian"
+  }
+]

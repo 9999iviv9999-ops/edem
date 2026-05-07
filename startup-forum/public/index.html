@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>STARTFLOW Forum</title>
+    <link rel="stylesheet" href="/public/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand-mark">SF</div>
+        <div class="brand">
+          <strong>STARTFLOW</strong>
+          <span>Founder Club x Marketplace</span>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button id="create-post-btn" class="primary">+ Создать объявление</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="hero">
+        <h1>Форум для фаундеров, инвесторов и покупателей стартапов</h1>
+        <p>
+          Независимые разделы без обязательной этапности: публикуй идею, релиз,
+          краудфандинг или продажу проекта как отдельное объявление.
+        </p>
+        <div class="hero-grid">
+          <div class="hero-stats">
+            <article><strong id="stat-total">0</strong><span>объявлений</span></article>
+            <article><strong id="stat-open">0</strong><span>активных</span></article>
+            <article><strong id="stat-closed">0</strong><span>закрытых</span></article>
+          </div>
+          <article class="featured-card" id="featured-card">
+            <div class="featured-label">Объявление дня</div>
+            <h3 id="featured-title">Пока нет объявлений</h3>
+            <p id="featured-summary">Создай первое объявление, чтобы оно появилось в витрине.</p>
+            <div class="featured-meta">
+              <span id="featured-section">-</span>
+              <span id="featured-goal">-</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="filters">
+        <label>
+          Раздел
+          <select id="filter-section">
+            <option value="all">Все разделы</option>
+            <option value="startup-idea">Стартап в виде идеи</option>
+            <option value="startup-release">Релиз стартапов</option>
+            <option value="crowdfunding">Краудфандинг</option>
+            <option value="startup-sale">Продажа стартапов</option>
+          </select>
+        </label>
+        <label>
+          Статус
+          <select id="filter-status">
+            <option value="all">Любой статус</option>
+            <option value="open">Открыт</option>
+            <option value="in-progress">В процессе</option>
+            <option value="resolved">Успешно</option>
+            <option value="closed">Закрыт</option>
+          </select>
+        </label>
+        <label>
+          Поиск
+          <input id="filter-query" placeholder="название, цель, автор..." />
+        </label>
+      </section>
+
+      <section class="compliance">
+        <article class="disclaimer">
+          <h2>Важно: модель расчетов</h2>
+          <p>
+            STARTFLOW не участвует в сборе средств, не выступает платежным агентом
+            и не хранит активы пользователей. Любые переводы и расчеты идут
+            напрямую между участниками сделки или кампании.
+          </p>
+        </article>
+        <article class="pricing">
+          <h2>Платный доступ (криптовалюта)</h2>
+          <div class="plan-grid">
+            <div class="plan-card">
+              <strong>Обычный пользователь</strong>
+              <span>$10</span>
+              <small>Базовый доступ к публикациям и ответам</small>
+            </div>
+            <div class="plan-card">
+              <strong>Gold</strong>
+              <span>$50</span>
+              <small>Приоритет в ленте и расширенный профиль</small>
+            </div>
+            <div class="plan-card">
+              <strong>Premium</strong>
+              <span>$70</span>
+              <small>VIP-бейдж и расширенная витрина объявлений</small>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="rules">
+        <h2>Правила разделов</h2>
+        <div class="rules-grid">
+          <article class="rule-card">
+            <h3>💡 Стартап в виде идеи</h3>
+            <ul>
+              <li>Публикуйте оригинальные идеи с проблемой и целевой аудиторией.</li>
+              <li>Указывайте, какой фидбек нужен от сообщества.</li>
+              <li>Спам и копирование чужих концепций запрещены.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>🚀 Релиз стартапов</h3>
+            <ul>
+              <li>Обязательно давайте ссылку на продукт, демо или публичный релиз.</li>
+              <li>Фиксируйте текущий статус запуска: beta/public/pivot.</li>
+              <li>Посты без фактического релиза удаляются.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>💸 Краудфандинг</h3>
+            <ul>
+              <li>Публикуйте цель, дедлайн и прозрачные условия кампании.</li>
+              <li>Форум не принимает деньги и не выступает посредником.</li>
+              <li>Все платежи проходят напрямую между сторонами.</li>
+            </ul>
+          </article>
+          <article class="rule-card">
+            <h3>🤝 Продажа стартапов</h3>
+            <ul>
+              <li>Четко указывайте предмет продажи и формат сделки.</li>
+              <li>Финансовые данные должны быть корректными и проверяемыми.</li>
+              <li>Сделки заключаются напрямую между продавцом и покупателем.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="cards" id="board"></section>
+    </main>
+
+    <dialog id="create-dialog">
+      <form id="create-form" method="dialog">
+        <h2>Новое объявление</h2>
+        <label>Заголовок<input name="title" required minlength="6" /></label>
+        <label>Автор<input name="author" required minlength="2" /></label>
+        <label>
+          Раздел
+          <select name="section" required>
+            <option value="startup-idea">Стартап в виде идеи</option>
+            <option value="startup-release">Релиз стартапов</option>
+            <option value="crowdfunding">Краудфандинг</option>
+            <option value="startup-sale">Продажа стартапов</option>
+          </select>
+        </label>
+        <label>
+          Статус
+          <select name="status" required>
+            <option value="open">Открыт</option>
+            <option value="in-progress">В процессе</option>
+            <option value="resolved">Успешно</option>
+            <option value="closed">Закрыт</option>
+          </select>
+        </label>
+        <label>Цель<input name="goal" required minlength="5" /></label>
+        <label>
+          Описание
+          <textarea name="summary" rows="5" required minlength="20"></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="cancel-btn">Отмена</button>
+          <button type="submit" class="primary">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="post-template">
+      <article class="post-card">
+        <span class="section-badge"></span>
+        <div class="post-head">
+          <h3 class="post-title"></h3>
+          <span class="status"></span>
+        </div>
+        <p class="post-summary"></p>
+        <div class="post-meta">
+          <span class="post-author"></span>
+          <span class="post-goal"></span>
+        </div>
+        <div class="post-actions">
+          <button data-action="section">Перенести в раздел</button>
+          <button data-action="status">Сменить статус</button>
+        </div>
+      </article>
+    </template>
+
+    <script src="/public/app.js" defer></script>
+  </body>
+</html>

@@ -93,7 +93,6 @@ export function RegisterPage() {
           >
             <option value="male">Мужчина</option>
             <option value="female">Женщина</option>
-            <option value="other">Другое</option>
           </select>
           <input
             placeholder="Город"

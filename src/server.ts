@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -9,6 +9,7 @@ import { authRouter } from "./routes/auth";
 import { gymsRouter } from "./routes/gyms";
 import { profilesRouter } from "./routes/profiles";
 import { interactionsRouter } from "./routes/interactions";
+import { pushRouter } from "./routes/push";
 import { mediaRouter } from "./routes/media";
 import { moderationRouter } from "./routes/moderation";
 import { errorHandler } from "./middleware/error-handler";
@@ -22,12 +23,30 @@ app.set("trust proxy", 1);
 const explicitOrigins = env.CORS_ALLOW_ORIGINS.split(",")
   .map((v) => v.trim())
   .filter(Boolean);
-const defaultOrigins = [env.WEB_BASE_URL, "https://edem.press", "https://www.edem.press", "https://app.edem.press"];
+const defaultOrigins = [
+  env.WEB_BASE_URL,
+  "https://edem.press",
+  "https://www.edem.press",
+  "https://app.edem.press",
+  "https://staging.edem.press"
+];
 const allowedOrigins = new Set([...defaultOrigins, ...explicitOrigins]);
+
+const isProduction = process.env.NODE_ENV === "production";
 
 app.use(
   helmet({
-    crossOriginResourcePolicy: false
+    crossOriginResourcePolicy: false,
+    crossOriginEmbedderPolicy: false,
+    hsts: isProduction
+      ? {
+          maxAge: 15552000,
+          includeSubDomains: true,
+          preload: false
+        }
+      : false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
+    permittedCrossDomainPolicies: false
   })
 );
 app.use(
@@ -36,11 +55,13 @@ app.use(
       if (!origin) return cb(null, true);
       if (allowedOrigins.has(origin)) return cb(null, true);
       if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return cb(null, true);
-      try {
-        const host = new URL(origin).hostname;
-        if (host === "edem-web.vercel.app" || host.endsWith(".vercel.app")) return cb(null, true);
-      } catch {
-        /* ignore */
+      if (env.CORS_ALLOW_VERCEL_APP) {
+        try {
+          const host = new URL(origin).hostname;
+          if (host === "edem-web.vercel.app" || host.endsWith(".vercel.app")) return cb(null, true);
+        } catch {
+          /* ignore */
+        }
       }
       return cb(new Error("CORS origin blocked"));
     },
@@ -48,8 +69,14 @@ app.use(
   })
 );
 app.use(express.json({ limit: "1mb" }));
-app.use(morgan("dev"));
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use(morgan(isProduction ? "combined" : "dev"));
+
+function uploadsSecurityHeaders(_req: Request, res: Response, next: NextFunction) {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cache-Control", "private, max-age=3600");
+  next();
+}
+app.use("/uploads", uploadsSecurityHeaders, express.static(path.join(process.cwd(), "uploads")));
 app.use(
   createRequestThrottle({
     keyPrefix: "global-by-ip",
@@ -96,6 +123,7 @@ app.get("/api/health", healthHandler);
 app.use("/api/auth", authRouter);
 app.use("/api/gyms", gymsRouter);
 app.use("/api/profiles", profilesRouter);
+app.use("/api/push", pushRouter);
 app.use("/api", interactionsRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/moderation", moderationRouter);

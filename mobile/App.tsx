@@ -1,8 +1,12 @@
 import { StatusBar } from "expo-status-bar";
+import * as Notifications from "expo-notifications";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AppState,
+  type AppStateStatus,
   Image,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   SafeAreaView,
@@ -13,6 +17,7 @@ import {
   TextInput,
   View
 } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { BottomTabs } from "./src/components/BottomTabs";
 import {
   apiRequest,
@@ -23,21 +28,22 @@ import {
   setAuthExpiredHandler,
   setCurrentAuthPhone
 } from "./src/api";
-import { isVipPhone, normalizePhone, vipConfig } from "./src/config";
+import { isVipPhone, normalizePhone, privacyPolicyUrl, vipConfig } from "./src/config";
+import { ensurePushRegistration, unregisterPushDevice } from "./src/lib/pushNotifications";
 import { MessagesScreen } from "./src/screens/BidsScreen";
+import { LikesScreen } from "./src/screens/LikesScreen";
 import { FeedScreen } from "./src/screens/MarketplaceScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SafetyScreen } from "./src/screens/SafetyScreen";
-import { TabKey } from "./src/types";
+import type { Match, TabKey } from "./src/types";
 
-const BUILD_MARKER = "MOBILE V2.1 BUILD v30";
 const TOP_INSET = Platform.OS === "android" ? (NativeStatusBar.currentHeight ?? 0) : 0;
 const TAB_SAFE_BOTTOM = Platform.OS === "android" ? 28 : 14;
 const TAB_CONTENT_PADDING = 86 + TAB_SAFE_BOTTOM;
 
 type AuthMode = "login" | "register";
 
-export default function App() {
+function App() {
   const [tab, setTab] = useState<TabKey>("feed");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -49,9 +55,19 @@ export default function App() {
   const [password, setPassword] = useState("");
   const [regName, setRegName] = useState("");
   const [regAge, setRegAge] = useState("22");
-  const [regGender, setRegGender] = useState<"male" | "female" | "other">("male");
+  const [regGender, setRegGender] = useState<"male" | "female">("male");
   const [regCity, setRegCity] = useState("Москва");
+  const [regPrivacyCheck, setRegPrivacyCheck] = useState(false);
+  const [regPrivacyGatePassed, setRegPrivacyGatePassed] = useState(false);
   const [pendingChatMatchId, setPendingChatMatchId] = useState<string | null>(null);
+  const [messagesUnread, setMessagesUnread] = useState(0);
+
+  useEffect(() => {
+    if (authMode === "login") {
+      setRegPrivacyCheck(false);
+      setRegPrivacyGatePassed(false);
+    }
+  }, [authMode]);
 
   const goToChatWithMatch = useCallback((matchId: string) => {
     setPendingChatMatchId(matchId);
@@ -62,13 +78,26 @@ export default function App() {
     setPendingChatMatchId(null);
   }, []);
 
+  const refreshMessagesUnread = useCallback(async () => {
+    try {
+      const dialogs = await apiRequest<Match[]>("/api/matches");
+      setMessagesUnread(dialogs.reduce((a, m) => a + (m.unreadCount ?? 0), 0));
+    } catch {
+      setMessagesUnread(0);
+    }
+  }, []);
+
   useEffect(() => {
     void (async () => {
       const session = await hydrateSessionFromStorage();
       const authPhone = await getCurrentAuthPhone();
       setIsVipAccount(isVipPhone(authPhone));
-      setIsAuthorized(Boolean(session.accessToken && session.refreshToken));
+      const ok = Boolean(session.accessToken && session.refreshToken);
+      setIsAuthorized(ok);
       setLoadingSession(false);
+      if (ok) {
+        setTimeout(() => void ensurePushRegistration(), 800);
+      }
     })();
   }, []);
 
@@ -82,6 +111,49 @@ export default function App() {
       setAuthExpiredHandler(null);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    void ensurePushRegistration();
+  }, [isAuthorized]);
+
+  useEffect(() => {
+    if (!isAuthorized) {
+      setMessagesUnread(0);
+      return;
+    }
+    void refreshMessagesUnread();
+    const id = setInterval(() => void refreshMessagesUnread(), 20000);
+    return () => clearInterval(id);
+  }, [isAuthorized, refreshMessagesUnread]);
+
+  useEffect(() => {
+    if (isAuthorized && tab === "messages") void refreshMessagesUnread();
+  }, [tab, isAuthorized, refreshMessagesUnread]);
+
+  /** Повторная регистрация: разрешение могли включить в настройках Android после входа. */
+  useEffect(() => {
+    if (!isAuthorized) return;
+    const sub = AppState.addEventListener("change", (state: AppStateStatus) => {
+      if (state === "active") void ensurePushRegistration();
+    });
+    return () => sub.remove();
+  }, [isAuthorized]);
+
+  useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+      const type = typeof data?.type === "string" ? data.type : "";
+      if ((type === "message" || type === "match") && typeof data?.matchId === "string") {
+        goToChatWithMatch(data.matchId);
+        return;
+      }
+      if (type === "like") {
+        setTab("likes");
+      }
+    });
+    return () => sub.remove();
+  }, [goToChatWithMatch]);
 
   async function finishAuth(tokens: { accessToken: string; refreshToken: string }) {
     await persistSession(tokens.accessToken, tokens.refreshToken);
@@ -165,7 +237,8 @@ export default function App() {
           name: regName.trim(),
           age: ageNum,
           gender: regGender,
-          city: regCity
+          city: regCity,
+          acceptPrivacyPolicy: true
         },
         requireAuth: false
       });
@@ -180,6 +253,7 @@ export default function App() {
   }
 
   async function onLogout() {
+    await unregisterPushDevice();
     await clearSession();
     setIsAuthorized(false);
     setTab("feed");
@@ -187,11 +261,18 @@ export default function App() {
 
   const content = useMemo(() => {
     if (tab === "feed") return <FeedScreen onNavigateToChat={goToChatWithMatch} />;
+    if (tab === "likes") return <LikesScreen onStartChat={goToChatWithMatch} />;
     if (tab === "messages")
-      return <MessagesScreen openMatchId={pendingChatMatchId} onOpenMatchConsumed={clearPendingChatMatch} />;
+      return (
+        <MessagesScreen
+          openMatchId={pendingChatMatchId}
+          onOpenMatchConsumed={clearPendingChatMatch}
+          onInboxUpdated={refreshMessagesUnread}
+        />
+      );
     if (tab === "safety") return <SafetyScreen />;
     return <ProfileScreen onLogout={() => void onLogout()} />;
-  }, [tab, pendingChatMatchId, goToChatWithMatch, clearPendingChatMatch]);
+  }, [tab, pendingChatMatchId, goToChatWithMatch, clearPendingChatMatch, refreshMessagesUnread]);
 
   if (loadingSession) {
     return (
@@ -217,7 +298,6 @@ export default function App() {
                 />
               </View>
               <Text style={styles.authTitle}>ЭДЕМ</Text>
-              <Text style={styles.buildMarker}>{BUILD_MARKER}</Text>
 
               <View style={styles.modeRow}>
                 <Pressable style={[styles.modeBtn, authMode === "login" && styles.modeBtnActive]} onPress={() => setAuthMode("login")}>
@@ -228,51 +308,90 @@ export default function App() {
                 </Pressable>
               </View>
 
-              {authMode === "register" ? (
+              {authMode === "register" && !regPrivacyGatePassed ? (
                 <>
-                  <TextInput style={styles.input} placeholder="Имя" placeholderTextColor="#7f93bd" value={regName} onChangeText={setRegName} />
+                  <Text style={styles.authPolicyLead}>
+                    Ознакомься с политикой конфиденциальности. Без согласия регистрация недоступна.
+                  </Text>
+                  <Pressable onPress={() => void Linking.openURL(privacyPolicyUrl)}>
+                    <Text style={styles.authLink}>Открыть политику в браузере</Text>
+                  </Pressable>
+                  <Pressable style={styles.authCheckRow} onPress={() => setRegPrivacyCheck((c) => !c)}>
+                    <View style={[styles.authCheckBox, regPrivacyCheck && styles.authCheckBoxOn]}>
+                      {regPrivacyCheck ? <Text style={styles.authCheckMark}>✓</Text> : null}
+                    </View>
+                    <Text style={styles.authCheckLabel}>
+                      Я прочитал(а) политику конфиденциальности и принимаю условия обработки персональных данных.
+                    </Text>
+                  </Pressable>
+                  {authError ? <Text style={styles.error}>{authError}</Text> : null}
+                  <Pressable
+                    style={[styles.loginBtn, (!regPrivacyCheck || authBusy) && styles.loginBtnDisabled]}
+                    onPress={() => {
+                      setAuthError("");
+                      setRegPrivacyGatePassed(true);
+                    }}
+                    disabled={!regPrivacyCheck || authBusy}
+                  >
+                    <Text style={styles.loginBtnText}>Продолжить к регистрации</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  {authMode === "register" ? (
+                    <>
+                      <TextInput style={styles.input} placeholder="Имя" placeholderTextColor="#7f93bd" value={regName} onChangeText={setRegName} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Возраст (18-80)"
+                        placeholderTextColor="#7f93bd"
+                        keyboardType="number-pad"
+                        value={regAge}
+                        onChangeText={setRegAge}
+                      />
+                      <View style={styles.genderRow}>
+                        <Pressable style={[styles.genderBtn, regGender === "male" && styles.genderBtnActive]} onPress={() => setRegGender("male")}>
+                          <Text style={styles.genderText}>М</Text>
+                        </Pressable>
+                        <Pressable style={[styles.genderBtn, regGender === "female" && styles.genderBtnActive]} onPress={() => setRegGender("female")}>
+                          <Text style={styles.genderText}>Ж</Text>
+                        </Pressable>
+                      </View>
+                      <TextInput style={styles.input} placeholder="Город" placeholderTextColor="#7f93bd" value={regCity} onChangeText={setRegCity} />
+                      <Pressable
+                        style={styles.authBackToPolicy}
+                        onPress={() => {
+                          setRegPrivacyGatePassed(false);
+                          setRegPrivacyCheck(false);
+                          setAuthError("");
+                        }}
+                      >
+                        <Text style={styles.authLink}>← Назад к политике</Text>
+                      </Pressable>
+                    </>
+                  ) : null}
+
+                  <TextInput style={styles.input} placeholder="+79991234567" placeholderTextColor="#7f93bd" value={phone} onChangeText={setPhone} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Возраст (18-80)"
+                    placeholder="Пароль"
                     placeholderTextColor="#7f93bd"
-                    keyboardType="number-pad"
-                    value={regAge}
-                    onChangeText={setRegAge}
+                    secureTextEntry
+                    value={password}
+                    onChangeText={setPassword}
                   />
-                  <View style={styles.genderRow}>
-                    <Pressable style={[styles.genderBtn, regGender === "male" && styles.genderBtnActive]} onPress={() => setRegGender("male")}>
-                      <Text style={styles.genderText}>М</Text>
-                    </Pressable>
-                    <Pressable style={[styles.genderBtn, regGender === "female" && styles.genderBtnActive]} onPress={() => setRegGender("female")}>
-                      <Text style={styles.genderText}>Ж</Text>
-                    </Pressable>
-                    <Pressable style={[styles.genderBtn, regGender === "other" && styles.genderBtnActive]} onPress={() => setRegGender("other")}>
-                      <Text style={styles.genderText}>Др</Text>
-                    </Pressable>
-                  </View>
-                  <TextInput style={styles.input} placeholder="Город" placeholderTextColor="#7f93bd" value={regCity} onChangeText={setRegCity} />
+                  {authError ? <Text style={styles.error}>{authError}</Text> : null}
+                  <Pressable
+                    style={[styles.loginBtn, authBusy && styles.loginBtnDisabled]}
+                    onPress={() => void (authMode === "login" ? onLogin() : onRegister())}
+                    disabled={authBusy}
+                  >
+                    <Text style={styles.loginBtnText}>
+                      {authBusy ? "Подождите..." : authMode === "login" ? "Войти" : "Создать аккаунт"}
+                    </Text>
+                  </Pressable>
                 </>
-              ) : null}
-
-              <TextInput style={styles.input} placeholder="+79991234567" placeholderTextColor="#7f93bd" value={phone} onChangeText={setPhone} />
-              <TextInput
-                style={styles.input}
-                placeholder="Пароль"
-                placeholderTextColor="#7f93bd"
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-              {authError ? <Text style={styles.error}>{authError}</Text> : null}
-              <Pressable
-                style={[styles.loginBtn, authBusy && styles.loginBtnDisabled]}
-                onPress={() => void (authMode === "login" ? onLogin() : onRegister())}
-                disabled={authBusy}
-              >
-                <Text style={styles.loginBtnText}>
-                  {authBusy ? "Подождите..." : authMode === "login" ? "Войти" : "Создать аккаунт"}
-                </Text>
-              </Pressable>
+              )}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -290,14 +409,10 @@ export default function App() {
           <Text style={styles.brandHeaderText}>ЭДЕМ</Text>
           {isVipAccount ? <Text style={styles.vipBadgeHeader}>{vipConfig.status}</Text> : null}
         </View>
-        <Text style={styles.buildMarkerHeader}>{BUILD_MARKER}</Text>
-      </View>
-      <View style={styles.releaseBanner}>
-        <Text style={styles.releaseBannerText}>v30 — вход только по номеру</Text>
       </View>
       <View style={[styles.container, { paddingBottom: TAB_CONTENT_PADDING }]}>{content}</View>
       <View style={styles.tabsContainer}>
-        <BottomTabs active={tab} onChange={setTab} />
+        <BottomTabs active={tab} onChange={setTab} messagesUnread={messagesUnread} />
       </View>
       <StatusBar style="light" />
     </SafeAreaView>
@@ -370,26 +485,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
     textTransform: "uppercase"
   },
-  buildMarkerHeader: {
-    marginLeft: "auto",
-    color: "#9fb7e4",
-    fontSize: 10,
-    fontWeight: "700"
-  },
-  releaseBanner: {
-    backgroundColor: "#314b8c",
-    borderBottomWidth: 1,
-    borderBottomColor: "#6f8dff",
-    paddingVertical: 6,
-    paddingHorizontal: 12
-  },
-  releaseBannerText: {
-    color: "#f4f7ff",
-    fontSize: 12,
-    fontWeight: "800",
-    textAlign: "center",
-    letterSpacing: 0.4
-  },
   authCard: {
     marginHorizontal: 20,
     padding: 18,
@@ -425,11 +520,6 @@ const styles = StyleSheet.create({
   authLogo: {
     width: "92%",
     height: "92%"
-  },
-  buildMarker: {
-    color: "#9fb7e4",
-    fontSize: 12,
-    fontWeight: "700"
   },
   authSub: {
     color: "#9fb1d7",
@@ -493,6 +583,53 @@ const styles = StyleSheet.create({
   error: {
     color: "#f3a7a7"
   },
+  authPolicyLead: {
+    color: "#9fb1d7",
+    fontSize: 14,
+    lineHeight: 20
+  },
+  authLink: {
+    color: "#6f8dff",
+    fontSize: 14,
+    fontWeight: "700",
+    textDecorationLine: "underline"
+  },
+  authCheckRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginTop: 8
+  },
+  authCheckBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: "#5f79ae",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+    backgroundColor: "#0f1a2d"
+  },
+  authCheckBoxOn: {
+    borderColor: "#6f8dff",
+    backgroundColor: "#314b8c"
+  },
+  authCheckMark: {
+    color: "#f4f7ff",
+    fontSize: 14,
+    fontWeight: "800"
+  },
+  authCheckLabel: {
+    flex: 1,
+    color: "#d6e2ff",
+    fontSize: 13,
+    lineHeight: 19
+  },
+  authBackToPolicy: {
+    alignSelf: "flex-start",
+    marginBottom: 4
+  },
   loginBtn: {
     marginTop: 6,
     borderRadius: 10,
@@ -508,3 +645,11 @@ const styles = StyleSheet.create({
     fontWeight: "700"
   }
 });
+
+export default function AppRoot() {
+  return (
+    <SafeAreaProvider>
+      <App />
+    </SafeAreaProvider>
+  );
+}

@@ -7,7 +7,11 @@ type AccessPayload = {
 };
 
 export function signAccessToken(userId: string): string {
-  return jwt.sign({ userId, tokenType: "access" }, env.JWT_SECRET, {
+  const payload = { userId, tokenType: "access" as const };
+  if (env.ACCESS_TOKEN_TTL_MINUTES <= 0) {
+    return jwt.sign(payload, env.JWT_SECRET);
+  }
+  return jwt.sign(payload, env.JWT_SECRET, {
     expiresIn: `${env.ACCESS_TOKEN_TTL_MINUTES}m`
   });
 }

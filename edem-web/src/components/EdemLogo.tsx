@@ -9,9 +9,9 @@ type Props = {
 };
 
 /**
- * Edem mark: garden arch + leaf + light — «вход в райский сад».
+ * ЭДЕМ mark: arch + leaf + light accent.
  */
-export function EdemLogo({ size = 44, className = "", labeled = false }: Props) {
+export function EDEMLogo({ size = 44, className = "", labeled = false }: Props) {
   const raw = useId().replace(/:/g, "");
   const gradStroke = `edem-stroke-${raw}`;
   const gradFill = `edem-fill-${raw}`;
@@ -24,9 +24,9 @@ export function EdemLogo({ size = 44, className = "", labeled = false }: Props) 
       viewBox="0 0 56 56"
       role={labeled ? "img" : "presentation"}
       aria-hidden={labeled ? undefined : true}
-      aria-label={labeled ? "Edem" : undefined}
+      aria-label={labeled ? "ЭДЕМ" : undefined}
     >
-      {labeled && <title>Edem</title>}
+      {labeled && <title>ЭДЕМ</title>}
       <defs>
         <linearGradient id={gradStroke} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#f5efe4" />

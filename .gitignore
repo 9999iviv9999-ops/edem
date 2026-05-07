@@ -1,9 +1,12 @@
+uploads/
 node_modules/
 dist/
 web/node_modules/
 web/dist/
 .env
+.env.staging
 web/.env
+uploads-staging/
 .DS_Store
 *.log
 coverage/
@@ -13,3 +16,5 @@ coverage/
 scripts/russia-cities-full.json
 # прогресс пошаговой выгрузки OSM (локально)
 scripts/_fetch_gyms_batch_progress.json
+
+.vercel

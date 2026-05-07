@@ -1,0 +1,64 @@
+# Staging на VPS, где прод крутится как vprok-* (см. docker-compose.yml на сервере).
+# Запуск из каталога репозитория на сервере:
+#   docker compose -f docker-compose.staging.vps.yml --env-file .env.staging up -d --build
+#
+# Порты: API 127.0.0.1:3001, веб 127.0.0.1:8081. Отдельная БД vprok_staging в контейнере.
+
+name: vprok-staging
+
+services:
+  db:
+    image: postgres:16
+    container_name: vprok-db-staging
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vprok_staging
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD}
+    volumes:
+      - vprok_staging_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d vprok_staging"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vprok-api-staging
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env.staging
+    environment:
+      DATABASE_URL: postgresql://postgres:${STAGING_POSTGRES_PASSWORD}@db:5432/vprok_staging?schema=public
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - ./uploads-staging:/app/uploads
+
+  web:
+    build:
+      context: ./edem-web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ""
+        VITE_BASE_PATH: /stg/
+        VITE_APP_ENV: staging
+    container_name: vprok-web-staging
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:8081:80"
+
+volumes:
+  vprok_staging_pg:
+
+networks:
+  default:
+    name: vprok_staging_net

@@ -5,7 +5,7 @@ This project is the **Vprok web app** only (all routes, including `/vprok-previe
 ## Domains (important)
 
 - **vprok.club** → this project (`web/` root) — верно.
-- **app.edem.press** → отдельный Vercel-проект с root **`edem-web/`** (см. [`edem-web/DEPLOY_VERCEL.md`](../edem-web/DEPLOY_VERCEL.md)). Убери `app.edem.press` с этого Vprok-проекта, иначе на Edem-домене будет Vprok.
+- **app.edem.press** → отдельный Vercel-проект с root **`edem-web/`** (см. [`edem-web/DEPLOY_VERCEL.md`](../edem-web/DEPLOY_VERCEL.md)). Убери `app.edem.press` с этого Vprok-проекта, иначе на домене ЭДЕМ будет Vprok.
 
 ## Build settings
 

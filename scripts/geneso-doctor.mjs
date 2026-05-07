@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const contractsEnv = join(root, "contracts", ".env");
 const nftWebEnv = join(root, "nft-web", ".env");
+const ethereumDeployment = join(root, "contracts", "deployments", "ethereum.json");
 
 const args = new Set(process.argv.slice(2));
 const strict = args.has("--strict");
@@ -82,13 +83,13 @@ function warn(msg) {
 console.log("Geneso doctor\n");
 
 if (showDeploy) {
-  console.log("- Contracts (deploy to Base mainnet) -\n");
+  console.log("- Contracts (Ethereum mainnet deploy) -\n");
   if (!existsSync(contractsEnv)) {
     err(`Missing ${contractsEnv} (copy contracts/.env.example)`);
   } else {
     const e = loadEnv(contractsEnv);
-    if (!e.BASE_MAINNET_RPC_URL?.trim()) {
-      warn("BASE_MAINNET_RPC_URL is empty (set a reliable RPC for mainnet deploy)");
+    if (!e.ETH_MAINNET_RPC_URL?.trim()) {
+      warn("ETH_MAINNET_RPC_URL is empty — set a reliable RPC for mainnet deploy");
     }
     if (isPlaceholderPrivateKey(e.DEPLOYER_PRIVATE_KEY)) {
       err("DEPLOYER_PRIVATE_KEY missing or still a placeholder");
@@ -111,21 +112,50 @@ if (showDeploy) {
 
 if (showWeb) {
   console.log("- nft-web (local / Vercel) -\n");
+  let depMp;
+  let depCol;
+  if (existsSync(ethereumDeployment)) {
+    try {
+      const dep = JSON.parse(readFileSync(ethereumDeployment, "utf8"));
+      if (dep.network === "ethereum" && dep.chainId === 1) {
+        depMp = dep.marketplace?.trim();
+        depCol = dep.nftCollection?.trim();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   if (!existsSync(nftWebEnv)) {
-    err(`Missing ${nftWebEnv} (copy nft-web/.env.example)`);
+    if (isNonZeroAddress(depMp) && isNonZeroAddress(depCol)) {
+      err(`Missing ${nftWebEnv} — run: npm run geneso:sync-nft-env`);
+    } else {
+      err(`Missing ${nftWebEnv} (copy nft-web/.env.example or run npm run geneso:bootstrap)`);
+    }
   } else {
     const e = loadEnv(nftWebEnv);
     const mp = e.VITE_MARKETPLACE_ADDRESS?.trim();
     const col = e.VITE_NFT_COLLECTION_ADDRESS?.trim();
-    if (!isNonZeroAddress(mp)) {
-      err("VITE_MARKETPLACE_ADDRESS missing, zero, or not a valid address");
-    } else if (/yourmarketplace/i.test(mp)) {
-      err("VITE_MARKETPLACE_ADDRESS still looks like a placeholder");
+    const mpOk = isNonZeroAddress(mp) && !/yourmarketplace/i.test(mp);
+    const colOk = isNonZeroAddress(col) && !/yournftcollection/i.test(col);
+    if (!mpOk) {
+      if (isNonZeroAddress(depMp)) {
+        err("VITE_MARKETPLACE_ADDRESS invalid — run: npm run geneso:sync-nft-env");
+      } else {
+        err("VITE_MARKETPLACE_ADDRESS missing, zero, or not a valid address");
+      }
     }
-    if (!isNonZeroAddress(col)) {
-      err("VITE_NFT_COLLECTION_ADDRESS missing, zero, or not a valid address");
-    } else if (/yournftcollection/i.test(col)) {
-      err("VITE_NFT_COLLECTION_ADDRESS still looks like a placeholder");
+    if (!colOk) {
+      if (isNonZeroAddress(depCol)) {
+        err("VITE_NFT_COLLECTION_ADDRESS invalid — run: npm run geneso:sync-nft-env");
+      } else {
+        err("VITE_NFT_COLLECTION_ADDRESS missing, zero, or not a valid address");
+      }
+    }
+    if (mpOk && colOk && isNonZeroAddress(depMp) && isNonZeroAddress(depCol)) {
+      if (mp.toLowerCase() !== depMp.toLowerCase() || col.toLowerCase() !== depCol.toLowerCase()) {
+        warn("nft-web/.env VITE_* differ from contracts/deployments/ethereum.json (OK if intentional)");
+      }
     }
     if (!e.VITE_WALLETCONNECT_PROJECT_ID?.trim()) {
       warn("VITE_WALLETCONNECT_PROJECT_ID unset (WalletConnect QR optional)");

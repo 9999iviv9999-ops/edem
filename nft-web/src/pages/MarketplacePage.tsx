@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { FormEvent, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { parseEther } from "viem";
+import { isAddress, parseEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { erc721Abi } from "../web3/abis/erc721Abi";
 import { marketplaceAbi } from "../web3/abis/marketplaceAbi";
@@ -31,9 +31,35 @@ export function MarketplacePage() {
   const [bidEth, setBidEth] = useState("0.01");
   const [tokenIdToList, setTokenIdToList] = useState("");
   const [listingPriceEth, setListingPriceEth] = useState("0.02");
+  const [mintRecipient, setMintRecipient] = useState("");
+  const [mintTokenUri, setMintTokenUri] = useState("");
+  const [isMinting, setIsMinting] = useState(false);
+  const [isMintAndListing, setIsMintAndListing] = useState(false);
+  const [mintedTokenId, setMintedTokenId] = useState<bigint | null>(null);
   const [submittingId, setSubmittingId] = useState<bigint | null>(null);
   const [isListing, setIsListing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const ownerQuery = useReadContract({
+    address: NFT_COLLECTION_ADDRESS,
+    abi: erc721Abi,
+    functionName: "owner",
+    query: { enabled: Boolean(NFT_COLLECTION_ADDRESS) },
+  });
+  const nextTokenIdQuery = useReadContract({
+    address: NFT_COLLECTION_ADDRESS,
+    abi: erc721Abi,
+    functionName: "nextTokenId",
+    query: { enabled: Boolean(NFT_COLLECTION_ADDRESS) },
+  });
+
+  const collectionOwner = ownerQuery.data as `0x${string}` | undefined;
+  const nextTokenId = nextTokenIdQuery.data as bigint | undefined;
+  const isOwner = Boolean(
+    address &&
+      collectionOwner &&
+      address.toLowerCase() === collectionOwner.toLowerCase()
+  );
 
   async function onBuy(listingId: bigint, price: bigint) {
     if (!MARKETPLACE_ADDRESS) return;
@@ -122,6 +148,78 @@ export function MarketplacePage() {
     }
   }
 
+  async function onMintNft(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!NFT_COLLECTION_ADDRESS) return;
+    const to = mintRecipient.trim();
+    const tokenUri = mintTokenUri.trim();
+    if (!isAddress(to) || !tokenUri) {
+      setError(t("errors.mintInvalidInput"));
+      return;
+    }
+    try {
+      setError(null);
+      setIsMinting(true);
+      const predictedTokenId = nextTokenId;
+      await writeContractAsync({
+        address: NFT_COLLECTION_ADDRESS,
+        abi: erc721Abi,
+        functionName: "mintTo",
+        args: [to as `0x${string}`, tokenUri],
+      });
+      if (predictedTokenId !== undefined) {
+        setMintedTokenId(predictedTokenId);
+        setTokenIdToList(predictedTokenId.toString());
+      }
+    } catch (err) {
+      setError(formatUserError(err, t("errors.mint"), t));
+    } finally {
+      setIsMinting(false);
+    }
+  }
+
+  async function onMintAndList(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!MARKETPLACE_ADDRESS || !NFT_COLLECTION_ADDRESS) return;
+    const to = mintRecipient.trim();
+    const tokenUri = mintTokenUri.trim();
+    if (!isAddress(to) || !tokenUri) {
+      setError(t("errors.mintInvalidInput"));
+      return;
+    }
+    try {
+      setError(null);
+      setIsMintAndListing(true);
+      const predictedTokenId = nextTokenId;
+      const price = parseEther(listingPriceEth || "0");
+      await writeContractAsync({
+        address: NFT_COLLECTION_ADDRESS,
+        abi: erc721Abi,
+        functionName: "mintTo",
+        args: [to as `0x${string}`, tokenUri],
+      });
+      if (predictedTokenId === undefined) return;
+      await writeContractAsync({
+        address: NFT_COLLECTION_ADDRESS,
+        abi: erc721Abi,
+        functionName: "approve",
+        args: [MARKETPLACE_ADDRESS, predictedTokenId],
+      });
+      await writeContractAsync({
+        address: MARKETPLACE_ADDRESS,
+        abi: marketplaceAbi,
+        functionName: "createListing",
+        args: [NFT_COLLECTION_ADDRESS, predictedTokenId, price],
+      });
+      setMintedTokenId(predictedTokenId);
+      setTokenIdToList(predictedTokenId.toString());
+    } catch (err) {
+      setError(formatUserError(err, t("errors.mintAndList"), t));
+    } finally {
+      setIsMintAndListing(false);
+    }
+  }
+
   return (
     <>
       <header className="nft-page-head">
@@ -152,6 +250,54 @@ export function MarketplacePage() {
         <p className="error">{t("errors.missingMarketplace")}</p>
       )}
       {error && <p className="error">{error}</p>}
+
+      <section className="nft-panel">
+        <h2 className="nft-panel-title nft-panel-title--lg">{t("market.mintTitle")}</h2>
+        <p className="page-sub">{t("market.mintLede")}</p>
+        {!isOwner && <p className="nft-muted">{t("market.mintOwnerOnly")}</p>}
+        <form className="row" onSubmit={onMintNft}>
+          <input
+            value={mintRecipient}
+            onChange={(e) => setMintRecipient(e.target.value)}
+            placeholder={t("market.mintRecipient")}
+            required
+          />
+          <input
+            value={mintTokenUri}
+            onChange={(e) => setMintTokenUri(e.target.value)}
+            placeholder={t("market.mintTokenUri")}
+            required
+          />
+          <button
+            className="nft-btn nft-btn--primary"
+            type="submit"
+            disabled={isMinting || isMintAndListing || !isOwner}
+          >
+            {isMinting ? t("market.minting") : t("market.mintAction")}
+          </button>
+        </form>
+        <form className="row" onSubmit={onMintAndList}>
+          <input
+            value={listingPriceEth}
+            onChange={(e) => setListingPriceEth(e.target.value)}
+            placeholder={t("market.priceEth")}
+            inputMode="decimal"
+            required
+          />
+          <button
+            className="nft-btn nft-btn--outline"
+            type="submit"
+            disabled={isMinting || isMintAndListing || !isOwner}
+          >
+            {isMintAndListing ? t("market.mintAndListing") : t("market.mintAndListAction")}
+          </button>
+        </form>
+        {mintedTokenId !== null && (
+          <p className="nft-success">
+            {t("market.mintSuccess", { tokenId: mintedTokenId.toString() })}
+          </p>
+        )}
+      </section>
 
       <section className="nft-panel">
         <h2 className="nft-panel-title nft-panel-title--lg">{t("market.listTitle")}</h2>

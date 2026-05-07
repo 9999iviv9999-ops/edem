@@ -1,0 +1,120 @@
+openapi: 3.0.3
+info:
+  title: Skinulis API
+  version: 0.1.0
+  description: MVP API for paid campaign placement and micro-contributions
+servers:
+  - url: https://api.skinulis.example
+paths:
+  /v1/auth/phone/start:
+    post:
+      summary: Start phone verification flow
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone:
+                  type: string
+      responses:
+        "200":
+          description: OTP requested
+  /v1/auth/phone/verify:
+    post:
+      summary: Verify OTP and create session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone:
+                  type: string
+                code:
+                  type: string
+      responses:
+        "200":
+          description: Authenticated
+  /v1/campaigns:
+    post:
+      summary: Create campaign draft
+      responses:
+        "201":
+          description: Campaign created
+    get:
+      summary: List active campaigns
+      responses:
+        "200":
+          description: List returned
+  /v1/campaigns/{id}:
+    get:
+      summary: Get campaign details
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Campaign details
+  /v1/campaigns/{id}/publish-payment:
+    post:
+      summary: Create payment session for campaign placement
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment session created
+  /v1/campaigns/{id}/donations:
+    post:
+      summary: Create donation payment
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Donation accepted
+  /v1/campaigns/{id}/reports:
+    post:
+      summary: Submit usage report after payout
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Report uploaded
+  /v1/campaigns/{id}/complaints:
+    post:
+      summary: Send complaint for campaign
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Complaint accepted
+  /v1/payouts/request:
+    post:
+      summary: Request payout for owner campaign
+      responses:
+        "202":
+          description: Payout queued
+

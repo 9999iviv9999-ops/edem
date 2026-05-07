@@ -1,0 +1,58 @@
+# Сборка и проверки без Docker: prisma validate + TypeScript + edem-web.
+# Секреты не нужны — подставляются фиктивные значения только для прохождения preflight (не подключение к БД).
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://edem_app:ci_preflight_only@127.0.0.1:5432/edem?schema=public
+      JWT_SECRET: ci_jwt_secret_16_chars_min
+      ADMIN_MODERATION_KEY: ci_admin_moderation_key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Preflight (env checks + prisma validate)
+        run: npm run preflight
+
+      - name: Build API
+        run: npm run build
+
+      - name: Install & build edem-web
+        run: |
+          npm --prefix edem-web ci
+          npm --prefix edem-web run build
+
+  geneso:
+    runs-on: ubuntu-latest
+    name: Geneso NFT (contracts + nft-web)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Bootstrap (install, compile, test, sync .env, build nft-web)
+        run: npm run geneso:bootstrap
+
+      - name: Doctor (nft-web)
+        run: npm run geneso:doctor -- --web

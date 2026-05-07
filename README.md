@@ -27,44 +27,33 @@ Ready-to-run fullstack platform for delayed retail purchases ("buy now, pick up 
 
 - API: `./`
 - Web (Vprok only): `./web` — прод обычно **vprok.club**
-- Web (Edem — лента, профиль, залы): `./edem-web` — прод обычно **app.edem.press** (отдельный Vercel-проект, см. `edem-web/DEPLOY_VERCEL.md`)
+- Web (ЭДЕМ — лента, профиль, залы): `./edem-web` — прод обычно **app.edem.press** (отдельный Vercel-проект, см. `edem-web/DEPLOY_VERCEL.md`)
 - Geneso NFT marketplace (standalone web): `./nft-web`
 - Smart contracts: `./contracts`
 - Mobile (Expo shell): `./mobile`
 - Vprok module docs: `./docs/VPROK.md`
+- ЭДЕМ админка (как работать): `./docs/ADMIN_PANEL_GUIDE.md`
 
-## Geneso NFT quickstart (ready-to-work)
+## Geneso NFT — готовый маркетплейс (Ethereum mainnet)
 
-**Chain:** **Base mainnet** (chain id `8453`) only — deploy contracts there, then point `nft-web` and Vercel at those addresses. No testnet in the default path.
+**Сеть:** Ethereum mainnet (`1`). В репозитории лежит `contracts/deployments/ethereum.json` с адресами контрактов; фронт подставляет их в `nft-web/.env` автоматически.
 
-**Long-term context (product, deploy, mobile strategy):** see [`docs/GENESO_PROJECT_MEMORY.md`](docs/GENESO_PROJECT_MEMORY.md).
+**Один проход с корня репозитория:**
 
-Run from repository root:
+```bash
+npm run geneso:bootstrap
+npm run geneso:web:dev
+```
 
-**Fast path:** `npm run geneso:bootstrap` (installs `contracts` + `nft-web`, compile, smoke test, web build). Then copy env files and run `npm run geneso:doctor` (use `npm run geneso:doctor -- --strict` in CI to fail on warnings too). Use `npm run geneso:doctor -- --deploy` or `-- --web` to check only one side.
+`geneso:bootstrap` ставит зависимости в `contracts/` и `nft-web/`, компилирует контракты, гоняет smoke-тест, **заполняет `nft-web/.env` из `deployments/ethereum.json`**, собирает `nft-web`.
 
-1. Install dependencies:
-   - `npm install` (API + shared tooling)
-   - `npm run geneso:contracts:install`
-   - `npm run geneso:web:install`
-2. Configure env files:
-   - `copy contracts\\.env.example contracts\\.env`
-   - `copy nft-web\\.env.example nft-web\\.env`
-3. Build and validate contracts:
-   - `npm run geneso:contracts:compile`
-   - `npm run geneso:contracts:test`
-4. Deploy contracts (Base mainnet):
-   - `npm run geneso:contracts:deploy:base`
-5. Export ABIs to frontend:
-   - `npm run geneso:contracts:export:abi`
-6. Set deployed addresses in `nft-web/.env`:
-   - `VITE_MARKETPLACE_ADDRESS=0x...`
-   - `VITE_NFT_COLLECTION_ADDRESS=0x...`
-   - optional `VITE_WALLETCONNECT_PROJECT_ID=...`
-7. Run web locally:
-   - `npm run geneso:web:dev`
-8. Production build:
-   - `npm run geneso:web:build`
+Проверка: `npm run geneso:doctor` (только веб: `-- --web`, строгий CI: `-- --strict`). Подставить адреса вручную: `npm run geneso:sync-nft-env`.
+
+**Новый деплой контрактов:** `copy contracts\\.env.example contracts\\.env` (ключ, RPC, `FEE_RECIPIENT`), затем `npm run geneso:contracts:deploy:ethereum`, `npm run geneso:contracts:export:abi`, `npm run geneso:sync-nft-env`. Те же `VITE_*` — в Vercel.
+
+**Свой сервер (Docker):** `nft-web/DEPLOY_SERVER.md` — `docker compose`, скрипт `scripts/geneso-vps-docker-up.sh`. Рядом с ЭДЕМ на VPS: **`ops/nginx-geneso.edem.press.conf`** → поддомен **geneso.edem.press** (прокси на контейнер, порт по умолчанию **18473**). После A-записи в DNS: `certbot --nginx -d geneso.edem.press`.
+
+**Контекст продукта:** [`docs/GENESO_PROJECT_MEMORY.md`](docs/GENESO_PROJECT_MEMORY.md).
 
 ## Run locally (without Docker)
 
@@ -74,11 +63,11 @@ Run from repository root:
 3. Create env files:
    - API: `copy .env.example .env`
    - Web: `copy web\\.env.example web\\.env`
-4. Start PostgreSQL and configure `DATABASE_URL` in `.env`
+4. Start PostgreSQL and configure `DATABASE_URL` in `.env` (use dedicated app user, not `postgres`)
 5. Apply schema: `npx prisma migrate dev --name init`
 6. Seed data (optional): `npm run prisma:seed`
 7. Start API:
-   - Legacy mixed mode (Edem + Vprok): `npm run dev`
+   - Legacy mixed mode (ЭДЕМ + Vprok): `npm run dev`
    - Vprok-only mode: `npm run dev:vprok`
 8. In a second terminal run web:
    - `cd web`
@@ -87,11 +76,13 @@ Run from repository root:
 ## Run with Docker
 
 1. Create env file: `copy .env.example .env`
-2. (Optional) set `VITE_API_URL` in `web/.env` for build-time URL
-3. Start services: `docker compose up -d --build`
-3. Apply schema in API container:
+2. Create dedicated DB role once:
+   - `psql -U postgres -d postgres -f scripts/db/create-app-role.sql`
+3. (Optional) set `VITE_API_URL` in `web/.env` for build-time URL
+4. Start services: `docker compose up -d --build`
+5. Apply schema in API container:
    - `docker exec -it vprok-api npx prisma migrate dev --name init`
-4. Seed data (optional):
+6. Seed data (optional):
    - `docker exec -it vprok-api npm run prisma:seed`
 
 Services:
@@ -100,14 +91,14 @@ Services:
 - PostgreSQL: `localhost:5432`
 - pgAdmin: `http://localhost:5050`
 
-### Dual server isolation (Edem + Vprok in parallel)
+### Dual server isolation (ЭДЕМ + Vprok in parallel)
 
 If you want hard isolation on one host (two separate API processes):
 
 1. Start dedicated dual stack:
    - `docker compose -f docker-compose.dual.yml up -d --build`
 2. Endpoints:
-   - Edem mixed API: `http://localhost:3000`
+   - ЭДЕМ mixed API: `http://localhost:3000`
    - Vprok-only API: `http://localhost:3001`
 3. For web deployment, set:
    - `VITE_API_URL=https://api.vprok.club` (mapped to the Vprok-only service)

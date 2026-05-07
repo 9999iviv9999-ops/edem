@@ -4,16 +4,13 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
-if [[ ! -f ".env" ]]; then
-  echo "ERROR: .env not found in $ROOT_DIR"
-  exit 1
+if [[ ! -d node_modules ]]; then
+  echo "npm ci (нет node_modules, нужен для preflight / prisma validate)..."
+  npm ci
 fi
 
-if ! grep -Eq '^DATABASE_URL=.*edem_app' ".env"; then
-  echo "ERROR: DATABASE_URL must use dedicated app user (edem_app), not postgres."
-  echo "Expected example: DATABASE_URL=postgresql://edem_app:PASSWORD@db:5432/edem?schema=public"
-  exit 1
-fi
+echo "Preflight (env + prisma + compose)..."
+npm run preflight -- --compose
 
 echo "Pulling latest changes..."
 git pull --ff-only

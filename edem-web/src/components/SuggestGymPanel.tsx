@@ -67,7 +67,7 @@ export function SuggestGymPanel({ city, okrug, district }: Props) {
       {open && (
         <form className="suggest-gym-form" onSubmit={(e) => void onSubmit(e)}>
           <p className="suggest-gym-lede">
-            Укажи название и адрес — мы проверим и добавим в каталог Edem. Город в заявке:{" "}
+            Укажи название и адрес — мы проверим и добавим в каталог ЭДЕМ. Город в заявке:{" "}
             <strong>{city || "—"}</strong>
             {okrug ? (
               <>

@@ -1,5 +1,6 @@
 /**
- * Logo at site root (`public/geneso-logo.jpg`, synced from `src/assets/geneso-logo.jpg` on build).
- * Fixed URL works the same on Vercel, VPS, and Tor; replace the JPG in both folders to rebrand.
+ * Logo at site root (`public/geneso-logo.png`, synced from `src/assets` on build).
+ * PNG = artwork on transparent backdrop → sits cleanly on solid `--nft-header-logo-strip`.
+ * Fallback JPG remains in assets for reference / tooling.
  */
-export const GENESO_LOGO_SRC = `${import.meta.env.BASE_URL}geneso-logo.jpg`;
+export const GENESO_LOGO_SRC = `${import.meta.env.BASE_URL}geneso-logo.png`;

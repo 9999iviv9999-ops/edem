@@ -5,7 +5,14 @@ import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
 
 type Gym = { id: string; name: string; city: string; address?: string | null; chainName?: string | null };
-type Profile = { id: string; name: string; age: number; description?: string; photos: string[] };
+type Profile = {
+  id: string;
+  name: string;
+  age: number;
+  description?: string;
+  photos: string[];
+  profileBadge?: string | null;
+};
 
 function normalizePhotoUrl(url?: string) {
   const value = (url || "").trim();
@@ -100,7 +107,7 @@ export function FeedPage() {
         const citiesRes = await api.get("/api/gyms/cities");
         cities = Array.isArray(citiesRes.data) ? citiesRes.data : [];
       } catch {
-        const allGymsRes = await api.get("/api/gyms");
+        const allGymsRes = await api.get("/api/gyms", { params: { limit: 5000 } });
         cities = extractCitiesFromGyms(allGymsRes.data as Gym[]);
       }
       setAvailableCities(cities);
@@ -108,10 +115,11 @@ export function FeedPage() {
       const cityToUse = cities.includes(nextCity) ? nextCity : cities[0] || "Москва";
       if (cityToUse !== nextCity) await persistLocation(cityToUse);
       setCity(cityToUse);
-      const gymsRes = await api.get("/api/gyms", { params: { city: cityToUse } });
-      setGyms(gymsRes.data);
-      const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
       const main = memberships.find((m) => m.isPrimary)?.gymId;
+      const gymsRes = await api.get("/api/gyms", { params: { city: cityToUse } });
+      const list = gymsRes.data as Gym[];
+      setGyms(list);
+      const gymIds = new Set(list.map((g) => g.id));
       if (main && gymIds.has(main)) {
         setHasPrimaryGym(true);
         setGymId(main);
@@ -280,6 +288,9 @@ export function FeedPage() {
               <h3>
                 {p.name}, {p.age}
               </h3>
+              {p.profileBadge?.trim() ? (
+                <span className="profile-badge-chip">{p.profileBadge.trim()}</span>
+              ) : null}
               <p>{p.description || "Люблю тренировки и активный образ жизни."}</p>
               <button className="primary-btn" onClick={() => like(p.id)}>
                 Лайк

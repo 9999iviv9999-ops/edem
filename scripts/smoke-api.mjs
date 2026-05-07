@@ -63,7 +63,8 @@ async function main() {
     password: "smoke12345",
     age: 25,
     gender: "male",
-    city
+    city,
+    acceptPrivacyPolicy: true
   };
   const reg = await expectJson("/api/auth/register", {
     method: "POST",

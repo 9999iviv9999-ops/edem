@@ -1,0 +1,36 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "This folder contains a minimal smart-contract baseline for the NFT marketplace MVP:",
+  "main": "index.js",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "hardhat compile",
+    "deploy:ethereum": "node scripts/deploy-ethereum.mjs",
+    "deploy:base": "node scripts/deploy-base.mjs",
+    "export:abi": "node scripts/export-abi.mjs",
+    "index:events": "node scripts/index-events.mjs",
+    "sync:nft-web-env": "node scripts/write-nft-web-env.mjs",
+    "deploy:ethereum:full": "npm run deploy:ethereum && npm run export:abi && npm run sync:nft-web-env",
+    "deploy:base:full": "npm run deploy:base && npm run export:abi",
+    "deploy:marketplace": "node scripts/deploy-marketplace-only.mjs",
+    "deploy:marketplace:base": "node scripts/deploy-marketplace-only.mjs",
+    "test:smoke": "hardhat run scripts/smoke-test.ts",
+    "test": "npm run test:smoke"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^4.0.7",
+    "hardhat": "^3.3.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "dotenv": "^17.4.1",
+    "viem": "^2.47.11"
+  }
+}

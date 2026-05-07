@@ -5,11 +5,12 @@ WORKDIR /app
 RUN apk add --no-cache openssl
 
 COPY package*.json ./
+COPY scripts/postinstall-prisma.mjs ./scripts/postinstall-prisma.mjs
 RUN npm install
 
 COPY . .
 
-RUN npm run prisma:generate
+# prebuild → prisma generate (см. package.json)
 RUN npm run build
 
 COPY docker-entrypoint-api.sh /app/docker-entrypoint-api.sh

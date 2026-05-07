@@ -4,6 +4,7 @@ import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 import { env } from "../lib/env";
+import { hexDigestsEqual, secretsEqual } from "../lib/safe-compare";
 import { computeVprokSettlement } from "../lib/vprok-settlement";
 
 export const vprokRouter = Router();
@@ -67,7 +68,8 @@ async function requireCompanyAccess(userId: string, companyId: string) {
 }
 
 function requireModerationKey(headerValue?: string): boolean {
-  return headerValue === env.ADMIN_MODERATION_KEY;
+  if (!headerValue) return false;
+  return secretsEqual(headerValue, env.ADMIN_MODERATION_KEY);
 }
 
 function signWebhookPayload(payload: unknown): string {
@@ -613,7 +615,7 @@ vprokRouter.post("/payments/webhook", async (req, res, next) => {
   try {
     const signature = req.header("x-vprok-signature");
     const expected = signWebhookPayload(req.body);
-    if (!signature || signature !== expected) {
+    if (!signature || !hexDigestsEqual(signature, expected)) {
       return res.status(401).json({ error: "Invalid webhook signature" });
     }
 

@@ -1,27 +1,28 @@
 import type { Prisma } from "@prisma/client";
 import { Router } from "express";
 import { z } from "zod";
+import { gymCatalogChainsFilter } from "../lib/gym-catalog";
 import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 import { mapsKeysConfigured, searchMapsCombined } from "../services/mapsDirectory";
 
 const createGymSchema = z.object({
-  name: z.string().min(1),
-  address: z.string().min(1),
-  city: z.string().min(1),
-  okrug: z.string().optional(),
-  district: z.string().optional(),
-  region: z.string().optional(),
+  name: z.string().min(1).max(200),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(120),
+  okrug: z.string().max(200).optional(),
+  district: z.string().max(200).optional(),
+  region: z.string().max(200).optional(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   externalProvider: z.enum(["yandex", "dgis", "other"]).optional(),
-  externalId: z.string().optional(),
-  chainName: z.string().optional()
+  externalId: z.string().max(190).optional(),
+  chainName: z.string().max(200).optional()
 });
 
 export const gymsRouter = Router();
 
-gymsRouter.post("/", async (req, res, next) => {
+gymsRouter.post("/", requireAuth, async (req, res, next) => {
   try {
     const data = createGymSchema.parse(req.body);
 
@@ -45,44 +46,52 @@ gymsRouter.post("/", async (req, res, next) => {
 gymsRouter.get("/", async (req, res, next) => {
   try {
     const querySchema = z.object({
-      city: z.string().optional(),
-      okrug: z.string().optional(),
-      district: z.string().optional(),
-      region: z.string().optional(),
-      chainName: z.string().optional(),
-      q: z.string().optional(),
-      /** Макс. число строк (по умолчанию без лимита при фильтре по городу). */
-      limit: z.coerce.number().int().min(1).max(100000).optional()
+      city: z.string().max(120).optional(),
+      okrug: z.string().max(200).optional(),
+      district: z.string().max(200).optional(),
+      region: z.string().max(200).optional(),
+      chainName: z.string().max(200).optional(),
+      /** Ограничить сеть по префиксу chainName (например DDX для ленты и профиля). */
+      onlyChainPrefix: z.string().max(40).optional(),
+      q: z.string().max(200).optional(),
+      /** Макс. число строк (защита от тяжёлых выборок). */
+      limit: z.coerce.number().int().min(1).max(5000).optional()
     });
     const q = querySchema.parse(req.query);
 
-    const where: Prisma.GymWhereInput = {};
+    const andParts: Prisma.GymWhereInput[] = [gymCatalogChainsFilter()];
 
     /** Без mode: insensitive — для кириллицы в PostgreSQL LOWER/ILIKE иногда даёт нулевую выборку при несовпадении локали. */
     if (q.city?.trim()) {
-      where.city = q.city.trim();
+      andParts.push({ city: q.city.trim() });
     }
     if (q.okrug?.trim()) {
-      where.okrug = q.okrug.trim();
+      andParts.push({ okrug: q.okrug.trim() });
     }
     if (q.district?.trim()) {
-      where.district = { contains: q.district.trim() };
+      andParts.push({
+        OR: [{ district: { contains: q.district.trim() } }, { district: null }]
+      });
     }
     if (q.region?.trim()) {
-      where.region = { contains: q.region.trim() };
+      andParts.push({ region: { contains: q.region.trim() } });
     }
-    // В текущем этапе каталога показываем только DDX во всех городах.
     if (q.chainName?.trim()) {
-      where.chainName = { contains: q.chainName.trim() };
-    } else {
-      where.chainName = { startsWith: "DDX" };
+      andParts.push({ chainName: { contains: q.chainName.trim() } });
+    }
+    if (q.onlyChainPrefix?.trim()) {
+      andParts.push({ chainName: { startsWith: q.onlyChainPrefix.trim() } });
     }
     if (q.q?.trim()) {
-      where.OR = [
-        { name: { contains: q.q.trim() } },
-        { address: { contains: q.q.trim() } }
-      ];
+      andParts.push({
+        OR: [
+          { name: { contains: q.q.trim() } },
+          { address: { contains: q.q.trim() } }
+        ]
+      });
     }
+
+    const where: Prisma.GymWhereInput = { AND: andParts };
 
     const hasCity = Boolean(q.city?.trim());
     const hasQ = Boolean(q.q?.trim());
@@ -104,6 +113,25 @@ gymsRouter.get("/", async (req, res, next) => {
     });
 
     return res.json(gyms);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+gymsRouter.get("/cities", async (req, res, next) => {
+  try {
+    const qs = z.object({ onlyChainPrefix: z.string().max(40).optional() }).parse(req.query);
+    const andParts: Prisma.GymWhereInput[] = [{ city: { not: "" } }, gymCatalogChainsFilter()];
+    if (qs.onlyChainPrefix?.trim()) {
+      andParts.push({ chainName: { startsWith: qs.onlyChainPrefix.trim() } });
+    }
+    const rows = await prisma.gym.findMany({
+      where: { AND: andParts },
+      select: { city: true },
+      distinct: ["city"],
+      orderBy: { city: "asc" }
+    });
+    return res.json(rows.map((r) => r.city));
   } catch (err) {
     return next(err);
   }
@@ -146,8 +174,8 @@ gymsRouter.get("/maps/search", requireAuth, async (req, res, next) => {
   try {
     const qs = z
       .object({
-        city: z.string().min(1),
-        q: z.string().optional()
+        city: z.string().trim().min(1).max(120),
+        q: z.string().trim().max(200).optional()
       })
       .parse(req.query);
 
@@ -168,14 +196,14 @@ gymsRouter.get("/maps/search", requireAuth, async (req, res, next) => {
 
 const importFromMapSchema = z.object({
   provider: z.enum(["dgis", "yandex"]),
-  externalId: z.string().min(1),
-  name: z.string().min(1),
-  address: z.string().min(1),
-  city: z.string().min(1),
-  district: z.string().optional(),
+  externalId: z.string().min(1).max(190),
+  name: z.string().min(1).max(200),
+  address: z.string().min(1).max(500),
+  city: z.string().min(1).max(120),
+  district: z.string().max(200).optional(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
-  category: z.string().optional()
+  category: z.string().max(200).optional()
 });
 
 gymsRouter.post("/import-from-map", requireAuth, async (req, res, next) => {

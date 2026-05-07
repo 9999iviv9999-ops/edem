@@ -61,6 +61,10 @@ export function ProfilePage() {
     confirmPassword: ""
   });
   const [snoozedCount, setSnoozedCount] = useState(0);
+  const [profileBadge, setProfileBadge] = useState<string | null>(null);
+  const [inGym, setInGym] = useState(false);
+  const [inGymMinutes, setInGymMinutes] = useState(0);
+  const [inGymSaving, setInGymSaving] = useState(false);
 
   const profileCompletion = (() => {
     let score = 0;
@@ -118,11 +122,17 @@ export function ProfilePage() {
         city?: string;
         description?: string | null;
         photos?: string[];
+        profileBadge?: string | null;
+        inGym?: boolean;
+        inGymMinutes?: number;
         memberships?: Array<{ isPrimary?: boolean; gymId?: string }>;
         goals?: Array<{ goal?: string }>;
         trainingSlots?: Array<{ slot?: string }>;
         trainingTypes?: Array<{ type?: string }>;
       };
+      setProfileBadge(me.profileBadge?.trim() || null);
+      setInGym(Boolean(me.inGym));
+      setInGymMinutes(Number.isFinite(me.inGymMinutes) ? Number(me.inGymMinutes) : 0);
       const memberships = Array.isArray(me.memberships) ? me.memberships : [];
       const goals = Array.isArray(me.goals) ? me.goals : [];
       const trainingSlots = Array.isArray(me.trainingSlots) ? me.trainingSlots : [];
@@ -133,16 +143,17 @@ export function ProfilePage() {
         const citiesRes = await api.get("/api/gyms/cities");
         cities = Array.isArray(citiesRes.data) ? citiesRes.data : [];
       } catch {
-        const allGymsRes = await api.get("/api/gyms");
+        const allGymsRes = await api.get("/api/gyms", { params: { limit: 5000 } });
         cities = extractCitiesFromGyms(allGymsRes.data as Gym[]);
       }
       setAvailableCities(cities);
       const city = me.city || "Москва";
       const cityToUse = cities.includes(city) ? city : cities[0] || "Москва";
-      const gymsRes = await api.get("/api/gyms", { params: { city: cityToUse } });
-      setGyms(gymsRes.data);
-      const gymIds = new Set((gymsRes.data as Array<{ id: string }>).map((g) => g.id));
       const mainRaw = memberships.find((m) => m.isPrimary)?.gymId || "";
+      const gymsRes = await api.get("/api/gyms", { params: { city: cityToUse } });
+      const mergedGyms = gymsRes.data as Gym[];
+      setGyms(mergedGyms);
+      const gymIds = new Set(mergedGyms.map((g) => g.id));
       const main = mainRaw && gymIds.has(mainRaw) ? mainRaw : "";
       const extra = memberships
         .filter((m) => !m.isPrimary)
@@ -152,7 +163,7 @@ export function ProfilePage() {
       setForm({
         name: me.name || "",
         age: me.age || 22,
-        gender: (me.gender as "male" | "female" | "other") || "male",
+        gender: me.gender === "female" ? "female" : "male",
         city: cityToUse,
         okrug: "",
         district: "",
@@ -171,12 +182,31 @@ export function ProfilePage() {
           : ["strength"]
       });
     } catch (err: unknown) {
+      setProfileBadge(null);
+      setInGym(false);
+      setInGymMinutes(0);
       const ax = err as { response?: { data?: { error?: string } }; message?: string };
       setLoadError(
         ax.response?.data?.error ||
           ax.message ||
           "Не удалось загрузить профиль. Проверь вход или обнови страницу."
       );
+    }
+  }
+
+  async function toggleInGym(nextInGym: boolean) {
+    setInGymSaving(true);
+    setMessage("");
+    try {
+      const { data } = await api.patch("/api/profiles/me/in-gym", { inGym: nextInGym });
+      setInGym(Boolean(data?.inGym));
+      setInGymMinutes(Number.isFinite(data?.inGymMinutes) ? Number(data.inGymMinutes) : 0);
+      setMessage(nextInGym ? "Статус «Я в зале» включен" : "Статус «Я в зале» выключен");
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setMessage(ax.response?.data?.error || "Не удалось обновить статус «Я в зале»");
+    } finally {
+      setInGymSaving(false);
     }
   }
 
@@ -268,6 +298,20 @@ export function ProfilePage() {
       <div className="profile-page-glow" aria-hidden />
       <div className="profile-page-inner">
         <h2 className="page-title">Мой профиль</h2>
+        {profileBadge ? <span className="profile-badge-chip">{profileBadge}</span> : null}
+        <div className="row" style={{ alignItems: "center", gap: 10 }}>
+          <span className={inGym ? "in-gym-chip in-gym-chip--active" : "in-gym-chip"}>
+            {inGym ? (inGymMinutes > 0 ? `Я в зале ${inGymMinutes} мин` : "Я в зале сейчас") : "Не в зале"}
+          </span>
+          <button
+            type="button"
+            className="ghost-btn"
+            disabled={inGymSaving}
+            onClick={() => void toggleInGym(!inGym)}
+          >
+            {inGymSaving ? "Сохраняем..." : inGym ? "Выйти из статуса" : "Я в зале"}
+          </button>
+        </div>
         <p className="page-sub">
           Расскажи о себе и привяжи зал, чтобы ЭДЕМ показывал подходящих людей в твоем городе и клубе.
         </p>
@@ -321,7 +365,6 @@ export function ProfilePage() {
                 <select value={form.gender} onChange={(e) => setForm((s) => ({ ...s, gender: e.target.value }))}>
                   <option value="male">Мужчина</option>
                   <option value="female">Женщина</option>
-                  <option value="other">Другое</option>
                 </select>
               </label>
               <div className="full">

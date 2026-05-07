@@ -14,14 +14,25 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     const payload = verifyAccessToken(token);
     const user = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { id: true, isBanned: true }
+      select: { id: true, isBanned: true, isAdmin: true }
     });
     if (!user || user.isBanned) {
       return res.status(403).json({ error: "Account is banned or unavailable" });
     }
     req.userId = payload.userId;
+    req.isAdmin = user.isAdmin;
     return next();
   } catch {
     return res.status(401).json({ error: "Invalid token" });
   }
+}
+
+export async function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  if (!req.isAdmin) {
+    return res.status(403).json({ error: "Admin access required" });
+  }
+  return next();
 }

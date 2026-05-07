@@ -2,61 +2,90 @@ import { Router } from "express";
 import { Goal, TrainingTimeSlot, TrainingType } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
+import { env } from "../lib/env";
 import { requireAuth } from "../middleware/auth";
+import { zCommaList, zCuid } from "../lib/validation";
 
 const photoUrlSchema = z
   .string()
   .trim()
+  .max(2048)
   .refine((value) => /^https?:\/\//i.test(value) || value.startsWith("/uploads/"), {
     message: "Photo must be an absolute URL or local /uploads path"
   });
 
 const updateProfileSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(120),
   age: z.number().int().min(18).max(80),
-  gender: z.enum(["male", "female", "other"]),
-  city: z.string().min(1),
+  gender: z.enum(["male", "female"]),
+  city: z.string().min(1).max(120),
   okrug: z.string().max(200).optional(),
   district: z.string().max(200).optional(),
   description: z.string().max(500).optional(),
   photos: z.array(photoUrlSchema).max(6),
-  mainGymId: z.string().optional().default(""),
-  extraGymIds: z.array(z.string()).max(4).default([]),
+  mainGymId: z.union([z.literal(""), zCuid]).default(""),
+  extraGymIds: z.array(zCuid).max(4).default([]),
   goals: z.array(z.enum(["relationship", "communication", "workout_partner"])).min(1),
   trainingTimeSlots: z.array(z.enum(["morning", "day", "evening", "weekends"])).min(1),
   trainingTypes: z.array(z.enum(["strength", "cardio", "crossfit", "yoga"])).min(1)
 });
 
 const patchLocationSchema = z.object({
-  city: z.string().min(1),
+  city: z.string().min(1).max(120),
   okrug: z.string().max(200).optional().default(""),
   district: z.string().max(200).optional().default("")
 });
 
 const patchPrimaryGymSchema = z.object({
-  gymId: z.string().min(1)
+  gymId: zCuid
 });
 const patchBasicProfileSchema = z.object({
   name: z.string().trim().min(1).max(120),
   city: z.string().trim().min(1).max(120),
   description: z.string().trim().max(500).optional().default(""),
-  primaryGymId: z.string().trim().min(1).optional()
+  primaryGymId: zCuid.optional()
 });
 
 const patchPhotosSchema = z.object({
   photos: z.array(photoUrlSchema).max(6)
 });
+const patchInGymSchema = z.object({
+  inGym: z.boolean()
+});
 
 const filterSchema = z.object({
   minAge: z.coerce.number().int().optional(),
   maxAge: z.coerce.number().int().optional(),
-  gender: z.enum(["male", "female", "other"]).optional(),
-  goals: z.string().optional(),
-  trainingTimeSlots: z.string().optional()
+  gender: z.enum(["male", "female"]).optional(),
+  goals: zCommaList(400),
+  trainingTimeSlots: zCommaList(120)
 });
 const createProfileCommentSchema = z.object({
-  text: z.string().trim().min(1).max(400)
+  text: z.string().trim().min(1).max(400),
+  photoIndex: z.number().int().min(0).max(5).nullable().optional()
 });
+
+const IN_GYM_ACTIVE_MS = Math.max(5, env.IN_GYM_ACTIVE_MINUTES) * 60 * 1000;
+
+function inGymState(inGymAt: Date | string | null | undefined) {
+  if (!inGymAt) {
+    return { inGym: false, inGymAt: null as string | null, inGymMinutes: 0, expired: false };
+  }
+  const date = inGymAt instanceof Date ? inGymAt : new Date(inGymAt);
+  if (Number.isNaN(date.getTime())) {
+    return { inGym: false, inGymAt: null as string | null, inGymMinutes: 0, expired: true };
+  }
+  const ageMs = Date.now() - date.getTime();
+  if (ageMs >= IN_GYM_ACTIVE_MS) {
+    return { inGym: false, inGymAt: null as string | null, inGymMinutes: 0, expired: true };
+  }
+  return {
+    inGym: true,
+    inGymAt: date.toISOString(),
+    inGymMinutes: Math.max(1, Math.floor(ageMs / 60_000)),
+    expired: false
+  };
+}
 
 export const profilesRouter = Router();
 
@@ -79,7 +108,19 @@ profilesRouter.get("/me", requireAuth, async (req, res, next) => {
       }
     });
     if (!user) return res.status(404).json({ error: "User not found" });
-    return res.json(user);
+    const gymState = inGymState(user.inGymAt);
+    if (gymState.expired && user.inGymAt) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { inGymAt: null }
+      });
+    }
+    return res.json({
+      ...user,
+      inGym: gymState.inGym,
+      inGymAt: gymState.inGymAt,
+      inGymMinutes: gymState.inGymMinutes
+    });
   } catch (err) {
     return next(err);
   }
@@ -212,6 +253,26 @@ profilesRouter.patch("/me/photos", requireAuth, async (req, res, next) => {
   }
 });
 
+profilesRouter.patch("/me/in-gym", requireAuth, async (req, res, next) => {
+  try {
+    const { inGym } = patchInGymSchema.parse(req.body);
+    const updated = await prisma.user.update({
+      where: { id: req.userId! },
+      data: { inGymAt: inGym ? new Date() : null },
+      select: { inGymAt: true }
+    });
+    const gymState = inGymState(updated.inGymAt);
+    return res.json({
+      ok: true,
+      inGym: gymState.inGym,
+      inGymAt: gymState.inGymAt,
+      inGymMinutes: gymState.inGymMinutes
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 profilesRouter.put("/me", requireAuth, async (req, res, next) => {
   try {
     const data = updateProfileSchema.parse(req.body);
@@ -336,6 +397,8 @@ profilesRouter.get("/gyms/:gymId", requireAuth, async (req, res, next) => {
         photos: true,
         city: true,
         isVerified: true,
+        profileBadge: true,
+        inGymAt: true,
         goals: true,
         trainingSlots: true,
         trainingTypes: true
@@ -343,7 +406,17 @@ profilesRouter.get("/gyms/:gymId", requireAuth, async (req, res, next) => {
       take: 100
     });
 
-    return res.json(profiles);
+    return res.json(
+      profiles.map((profile) => {
+        const gymState = inGymState(profile.inGymAt);
+        return {
+          ...profile,
+          inGym: gymState.inGym,
+          inGymAt: gymState.inGymAt,
+          inGymMinutes: gymState.inGymMinutes
+        };
+      })
+    );
   } catch (err) {
     return next(err);
   }
@@ -363,6 +436,8 @@ profilesRouter.get("/:userId", requireAuth, async (req, res, next) => {
         photos: true,
         city: true,
         isVerified: true,
+        profileBadge: true,
+        inGymAt: true,
         memberships: {
           select: {
             isPrimary: true,
@@ -385,8 +460,21 @@ profilesRouter.get("/:userId", requireAuth, async (req, res, next) => {
       take: 100
     });
 
+    const gymState = inGymState(user.inGymAt);
+    if (gymState.expired && user.inGymAt) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { inGymAt: null }
+      });
+    }
+
     return res.json({
-      profile: user,
+      profile: {
+        ...user,
+        inGym: gymState.inGym,
+        inGymAt: gymState.inGymAt,
+        inGymMinutes: gymState.inGymMinutes
+      },
       comments
     });
   } catch (err) {
@@ -403,10 +491,15 @@ profilesRouter.post("/:userId/comments", requireAuth, async (req, res, next) => 
     }
     const targetExists = await prisma.user.findUnique({
       where: { id: targetUserId },
-      select: { id: true }
+      select: { id: true, photos: true }
     });
     if (!targetExists) {
       return res.status(404).json({ error: "User not found" });
+    }
+
+    const normalizedPhotoIndex = body.photoIndex ?? null;
+    if (normalizedPhotoIndex !== null && normalizedPhotoIndex >= targetExists.photos.length) {
+      return res.status(400).json({ error: "Photo not found" });
     }
 
     const blocked = await prisma.block.findFirst({
@@ -425,6 +518,7 @@ profilesRouter.post("/:userId/comments", requireAuth, async (req, res, next) => 
       data: {
         authorId: req.userId!,
         targetUserId,
+        photoIndex: normalizedPhotoIndex,
         text: body.text
       },
       include: {
@@ -443,12 +537,9 @@ profilesRouter.delete("/comments/:commentId", requireAuth, async (req, res, next
   try {
     const comment = await prisma.profileComment.findUnique({
       where: { id: req.params.commentId },
-      select: { id: true, authorId: true }
+      select: { id: true }
     });
     if (!comment) return res.status(404).json({ error: "Comment not found" });
-    if (comment.authorId !== req.userId) {
-      return res.status(403).json({ error: "You can delete only your own comment" });
-    }
     await prisma.profileComment.delete({ where: { id: comment.id } });
     return res.json({ ok: true });
   } catch (err) {
@@ -460,7 +551,7 @@ profilesRouter.post("/comments/:commentId/report", requireAuth, async (req, res,
   try {
     const comment = await prisma.profileComment.findUnique({
       where: { id: req.params.commentId },
-      select: { id: true, authorId: true, targetUserId: true, text: true }
+      select: { id: true, authorId: true, targetUserId: true, photoIndex: true, text: true }
     });
     if (!comment) return res.status(404).json({ error: "Comment not found" });
     if (comment.authorId === req.userId) {
@@ -480,9 +571,10 @@ profilesRouter.post("/comments/:commentId/report", requireAuth, async (req, res,
     }
 
     const details = JSON.stringify({
-      source: "profile_comment",
+      source: comment.photoIndex === null ? "profile_comment" : "profile_photo_comment",
       commentId: comment.id,
-      targetUserId: comment.targetUserId
+      targetUserId: comment.targetUserId,
+      photoIndex: comment.photoIndex ?? null
     });
     const existing = await prisma.report.findFirst({
       where: {

@@ -43,27 +43,29 @@ export function MarketplaceLayout({ children }: Props) {
   return (
     <div className="nft-market">
       <header className="nft-header">
-        <NavLink
-          to="/"
-          className={`nft-header__brandbar${logoFailed ? " nft-header__brandbar--fallback" : ""}`}
-          aria-label={t("brand.logoAlt")}
-        >
-          {logoFailed ? (
-            <span className="nft-header__brandbar-fallback">Geneso</span>
-          ) : (
-            <img
-              className="nft-header__brandbar-img"
-              src={GENESO_LOGO_SRC}
-              alt=""
-              width={1024}
-              height={643}
-              decoding="async"
-              fetchPriority="high"
-              draggable={false}
-              onError={() => setLogoFailed(true)}
-            />
-          )}
-        </NavLink>
+        <div className="nft-header__brandplate">
+          <NavLink
+            to="/"
+            className={`nft-header__brandbar${logoFailed ? " nft-header__brandbar--fallback" : ""}`}
+            aria-label={t("brand.logoAlt")}
+          >
+            {logoFailed ? (
+              <span className="nft-header__brandbar-fallback">Geneso</span>
+            ) : (
+              <img
+                className="nft-header__brandbar-img"
+                src={GENESO_LOGO_SRC}
+                alt=""
+                width={1024}
+                height={643}
+                decoding="async"
+                fetchPriority="high"
+                draggable={false}
+                onError={() => setLogoFailed(true)}
+              />
+            )}
+          </NavLink>
+        </div>
         <div className="nft-header__inner">
           <div className="nft-header__spacer" aria-hidden />
           <nav className="nft-nav" aria-label={t("nav.primary")}>

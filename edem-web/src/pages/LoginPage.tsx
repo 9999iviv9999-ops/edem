@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
 import { normalizePhoneRu } from "../lib/phone";
+import { useOAuthExchangeFromUrl } from "../lib/useOAuthExchangeFromUrl";
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const oauthError = useOAuthExchangeFromUrl("/");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -62,7 +64,7 @@ export function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
           />
-          {error && <div className="error">{error}</div>}
+          {(error || oauthError) && <div className="error">{error || oauthError}</div>}
           <button className="primary-btn">Войти</button>
         </form>
         <Link to="/register">Нет аккаунта? Регистрация</Link>
