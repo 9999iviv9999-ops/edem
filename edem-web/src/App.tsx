@@ -76,6 +76,7 @@ function App() {
           }
         />
         <Route path="/matches" element={<Navigate to="/messages" replace />} />
+        <Route path="/message" element={<Navigate to="/messages" replace />} />
         <Route
           path="/catalog-import"
           element={

@@ -33,7 +33,8 @@ export function Shell({ children }: Props) {
   const navigate = useNavigate();
   /** Pathname без basename; trailing slash не должен снимать layout--messages. */
   const { pathname } = useLocation();
-  const isMessagesRoute = (pathname.replace(/\/+$/, "") || "/") === "/messages";
+  const pathNorm = pathname.replace(/\/+$/, "") || "/";
+  const isMessagesRoute = pathNorm === "/messages";
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("edem_is_admin") === "1");
   const [messagesUnread, setMessagesUnread] = useState(0);
 
@@ -99,6 +100,7 @@ export function Shell({ children }: Props) {
   }
 
   return (
+    <>
     <div className={`layout${isMessagesRoute ? " layout--messages" : ""}`}>
       <header className="topbar">
         <div className="brand-lockup">
@@ -150,35 +152,36 @@ export function Shell({ children }: Props) {
           Выйти
         </button>
       </div>
-      <nav className="bottom-nav" aria-label="Мобильная навигация">
-        <NavLink className={navClass} end to="/">
-          <BottomNavIcon name="feed" />
-          <span className="bottom-nav-label">Лента</span>
-        </NavLink>
-        <NavLink className={navClass} to="/likes">
-          <BottomNavIcon name="likes" />
-          <span className="bottom-nav-label">Лайки</span>
-        </NavLink>
-        <NavLink className={navClass} to="/messages">
-          <BottomNavIcon name="messages" />
-          <span className="bottom-nav-label">Чаты</span>
-          {unreadBadge}
-        </NavLink>
-        <NavLink className={navClass} to="/profile">
-          <BottomNavIcon name="profile" />
-          <span className="bottom-nav-label">Профиль</span>
-        </NavLink>
-        <NavLink className={navClass} to="/trainers">
-          <BottomNavIcon name="trainers" />
-          <span className="bottom-nav-label">Тренеры</span>
-        </NavLink>
-        {isAdmin ? (
-          <NavLink className={navClass} to="/admin">
-            <BottomNavIcon name="admin" />
-            <span className="bottom-nav-label">Админ</span>
-          </NavLink>
-        ) : null}
-      </nav>
     </div>
+    <nav className="bottom-nav" aria-label="Мобильная навигация">
+      <NavLink className={navClass} end to="/">
+        <BottomNavIcon name="feed" />
+        <span className="bottom-nav-label">Лента</span>
+      </NavLink>
+      <NavLink className={navClass} to="/likes">
+        <BottomNavIcon name="likes" />
+        <span className="bottom-nav-label">Лайки</span>
+      </NavLink>
+      <NavLink className={navClass} to="/messages">
+        <BottomNavIcon name="messages" />
+        <span className="bottom-nav-label">Чаты</span>
+        {unreadBadge}
+      </NavLink>
+      <NavLink className={navClass} to="/profile">
+        <BottomNavIcon name="profile" />
+        <span className="bottom-nav-label">Профиль</span>
+      </NavLink>
+      <NavLink className={navClass} to="/trainers">
+        <BottomNavIcon name="trainers" />
+        <span className="bottom-nav-label">Тренеры</span>
+      </NavLink>
+      {isAdmin ? (
+        <NavLink className={navClass} to="/admin">
+          <BottomNavIcon name="admin" />
+          <span className="bottom-nav-label">Админ</span>
+        </NavLink>
+      ) : null}
+    </nav>
+    </>
   );
 }

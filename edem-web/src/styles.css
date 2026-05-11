@@ -151,7 +151,7 @@ button {
 }
 
 .layout.layout--messages > main.container {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -165,12 +165,8 @@ button {
   flex-shrink: 0;
 }
 
-.layout.layout--messages > .bottom-nav {
-  flex-shrink: 0;
-}
-
 .layout.layout--messages .match-layout.tg-layout {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-height: 0;
   width: 100%;
   box-sizing: border-box;
@@ -194,6 +190,12 @@ button {
 @media (min-width: 921px) {
   .layout.layout--messages .match-layout.tg-layout {
     grid-template-columns: minmax(280px, 33%) 1fr;
+  }
+}
+
+@supports (selector(:has(*))) {
+  body:has(.layout.layout--messages) {
+    overflow: hidden;
   }
 }
 
@@ -2429,6 +2431,11 @@ textarea:focus {
   /* Как у .container: запас над фиксированной нижней навигацией, иначе композер уезжает под таб-бар. */
   .layout.layout--messages > main.container {
     padding-bottom: calc(92px + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  /* Как в Expo: на чатах не тратим высоту на Telegram/VK/Выйти — выход из «Профиль». */
+  .layout.layout--messages > .logout-bottom {
+    display: none;
   }
 
   /* Совпадает с моментом показа .bottom-nav (≤760px), иначе 521–760px контент уезжает под фикс-панель. */
