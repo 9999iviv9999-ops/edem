@@ -1,4 +1,5 @@
-const CACHE_NAME = "edem-shell-v3";
+// Bump при выкладке важных правок в CSS/JS — иначе PWA держит старые /assets/* в Cache Storage.
+const CACHE_NAME = "edem-shell-v4";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/edem-hero.png"];
 
 self.addEventListener("install", (event) => {
