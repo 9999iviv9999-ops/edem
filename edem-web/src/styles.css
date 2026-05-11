@@ -131,17 +131,13 @@ button {
 }
 
 /*
- * /messages: жёсткая высота окна + overflow:hidden — иначе скроллится document
- * и «гуляет» поле ввода; крутится только .tg-chat-box / .list внутри карточек.
+ * /messages: высота сетки чата — calc(100dvh − chrome), не height:100% от flex-цепочки
+ * (иначе родитель даёт ~0 и видна «полоска» на один диалог). Скролл — в .list / .tg-chat-box.
  */
 .layout.layout--messages {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  max-height: 100dvh;
   min-height: 100dvh;
-  overflow: hidden;
-  box-sizing: border-box;
 }
 
 .layout.layout--messages > .topbar {
@@ -149,11 +145,10 @@ button {
 }
 
 .layout.layout--messages > main.container {
-  flex: 1 1 0;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  /* margin/padding у .container иначе сумма > 100dvh → скролл body */
   margin: 0 auto;
   padding-top: 8px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
@@ -168,41 +163,42 @@ button {
 }
 
 .layout.layout--messages .match-layout.tg-layout {
-  flex: 1 1 0;
-  min-height: 0;
+  --tg-msg-chrome: 11.75rem;
+  flex: 0 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 320px;
+  height: calc(100dvh - var(--tg-msg-chrome));
+  max-height: calc(100dvh - 4.5rem);
   overflow: hidden;
   display: grid;
   align-items: stretch;
+  align-content: stretch;
   grid-template-columns: 1fr;
-  grid-template-rows: minmax(0, 1fr);
+  grid-template-rows: 1fr;
   gap: 14px;
 }
 
-.layout.layout--messages .tg-chat-card {
+/* Прямые дети сетки заполняют ячейку (у родителя уже задана высота в px). */
+.layout.layout--messages .match-layout.tg-layout > .tg-sidebar,
+.layout.layout--messages .match-layout.tg-layout > .tg-chat-card {
+  height: 100%;
+  max-height: none;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
-@supports selector(:has(*)) {
-  body:has(.layout.layout--messages) {
-    overflow: hidden;
-    height: 100dvh;
-    max-height: 100dvh;
-    overscroll-behavior-y: none;
+@media (max-width: 760px) {
+  .layout.layout--messages .match-layout.tg-layout {
+    --tg-msg-chrome: 15.75rem;
   }
 }
 
 @media (min-width: 921px) {
   .layout.layout--messages .match-layout.tg-layout {
     grid-template-columns: minmax(280px, 33%) 1fr;
-  }
-
-  .layout.layout--messages .tg-sidebar,
-  .layout.layout--messages .tg-chat-card {
-    height: 100%;
-    max-height: none;
   }
 }
 
@@ -1998,28 +1994,6 @@ textarea {
   .tg-chat-card {
     height: calc(100dvh - 180px);
     max-height: none;
-  }
-
-  /* Список диалогов (/messages, ≤920): ячейка grid с ограниченной высотой; скролл внутри .list. */
-  .layout.layout--messages .tg-sidebar {
-    min-height: 0;
-    max-height: none;
-    height: 100%;
-    align-self: stretch;
-  }
-
-  /*
-   * Карточка чата: без height:auto — иначе блок растягивается на все сообщения,
-   * .tg-chat-box не получает overflow и нельзя пролистать историю снизу вверх.
-   */
-  .layout.layout--messages .tg-chat-card {
-    min-height: 0;
-    max-height: none;
-    height: 100%;
-    align-self: stretch;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
   }
 
   .tg-layout.mobile-chat-active .tg-sidebar {
