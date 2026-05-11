@@ -4,6 +4,8 @@
 
 В репозитории включён **GitHub Actions** [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): на push/PR в `main`/`master` — `preflight`, сборка API и `edem-web` (без Docker).
 
+**Автодеплой (Vercel hook и/или VPS по SSH)** — см. [docs/ops/GITHUB_DEPLOY.md](ops/GITHUB_DEPLOY.md) (секреты в GitHub; без них шаги просто пропускаются).
+
 После `npm ci` / `npm install` автоматически вызывается **`prisma generate`**, если в дереве уже есть `prisma/schema.prisma` (скрипт `scripts/postinstall-prisma.mjs`; в Docker до `COPY .` шаг пропускается). Перед `npm run build` то же через **`prebuild`**, чтобы клиент не устаревал относительно схемы. Ниже — блок **готовых команд для VPS** (скопировать в каталог репозитория на сервере).
 
 ## VPS: один проход после `git pull`
@@ -22,13 +24,14 @@ npm run build
 npm --prefix edem-web ci
 npm --prefix edem-web run build
 
-# контейнеры
+# контейнеры — всегда полная пересборка API+web из текущего дерева (не подменять вручную только dist/*.js)
 docker compose up -d --build
 
 # проверки (локально на сервере, API на 127.0.0.1:3000)
 set -a && [ -f ./.env ] && . ./.env && set +a
 npm run ops:doctor
 npm run api:smoke
+# Полный смоук с регистрацией (создаёт User): SMOKE_REGISTER=1 npm run api:smoke
 
 # cron (подхватывает .env для Telegram и имён контейнеров)
 npm run ops:cron:setup
@@ -111,7 +114,10 @@ npm run ops:smoke:alert
 - `GET /health` → `status: ok`
 - `GET /health?deep=1` → `db: ok`
 - `GET /api/gyms/cities` — непустой массив
-- `npm run api:smoke` — успешная регистрация смоук-пользователя (лучше на стенде; на проде — реже или отдельный флаг)
+- `npm run api:smoke` — health + города/залы + **проверка каталога Челябинска** (нет урезанного `gym-catalog`); **регистрация пользователя не выполняется**, пока не задано `SMOKE_REGISTER=1`. На стенде без импортов залов: `SMOKE_SKIP_CATALOG_GUARD=1`.
+- `npm run verify:gym-catalog-build` — в CI после `npm run build`: в `dist/lib/gym-catalog.js` есть все ключевые сети (ловит «старый» whitelist до деплоя).
+- `npm run ops:edem-gym-catalog-guard` — только проверка API (удобно с `SMOKE_API_URL=https://edem.press`).
+- Одноразовая чистка старых смоук-аккаунтов: `npm run ops:cleanup-smoke-users` (на сервере: `docker compose exec -T api npm run ops:cleanup-smoke-users`). Проверка без удаления: `DRY_RUN=1 npm run ops:cleanup-smoke-users`.
 
 ## 6) Рекомендации по продукту
 

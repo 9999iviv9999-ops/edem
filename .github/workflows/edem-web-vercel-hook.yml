@@ -1,0 +1,29 @@
+# После пуша в edem-web дергает Vercel Deploy Hook (production).
+# Без секрета шаг пропускается — CI не падает.
+#
+# Настройка: Vercel → проект ЭДЕМ (root edem-web) → Settings → Git → Deploy Hooks
+# → hook для branch main → URL в GitHub: Settings → Secrets → VERCEL_DEPLOY_HOOK_EDEM
+
+name: Vercel edem-web deploy hook
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "edem-web/**"
+      - ".github/workflows/edem-web-vercel-hook.yml"
+
+jobs:
+  hook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger production deploy on Vercel
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_EDEM }}
+        run: |
+          if [ -z "${HOOK:-}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_EDEM not set — skipping (add Deploy Hook URL in repo secrets)."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK"
+          echo "Deploy hook OK"

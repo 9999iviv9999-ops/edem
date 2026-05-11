@@ -1,0 +1,66 @@
+# Опционально: SSH на VPS → git pull → docker compose up --build.
+# Нужны секреты (см. docs/ops/GITHUB_DEPLOY.md). Иначе job завершается без деплоя.
+#
+# Срабатывает: вручную (workflow_dispatch) или push в main при изменении кода/API/веба.
+
+name: Deploy EDEM (VPS via SSH)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths:
+      - "edem-web/**"
+      - "src/**"
+      - "prisma/**"
+      - "Dockerfile"
+      - "docker-compose.yml"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/edem-vps-deploy.yml"
+
+concurrency:
+  group: deploy-edem-vps
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy: ${{ steps.set.outputs.deploy }}
+    steps:
+      - id: set
+        env:
+          H: ${{ secrets.DEPLOY_SSH_HOST }}
+        run: |
+          if [ -n "${H:-}" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+            echo "VPS deploy: secrets present, will run SSH step."
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "VPS deploy: DEPLOY_SSH_HOST not set — skip (see docs/ops/GITHUB_DEPLOY.md)."
+          fi
+
+  ssh-deploy:
+    needs: check
+    if: needs.check.outputs.deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull and rebuild Docker stack
+        uses: appleboy/ssh-action@v1.2.1
+        env:
+          DEPLOY_REPO_PATH: ${{ secrets.DEPLOY_SSH_PATH }}
+        with:
+          host: ${{ secrets.DEPLOY_SSH_HOST }}
+          username: ${{ secrets.DEPLOY_SSH_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: DEPLOY_REPO_PATH
+          command_timeout: 25m
+          script: |
+            set -euo pipefail
+            if [ -z "${DEPLOY_REPO_PATH:-}" ]; then
+              echo "DEPLOY_SSH_PATH secret is empty"; exit 1
+            fi
+            cd "$DEPLOY_REPO_PATH"
+            git pull --ff-only
+            docker compose up -d --build
