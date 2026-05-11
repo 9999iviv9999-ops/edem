@@ -152,6 +152,7 @@ export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInbo
         </Text>
         {error ? <Text style={styles.errorBanner}>{error}</Text> : null}
         <FlatList
+          style={styles.threadListFlex}
           data={threads}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.threadListPad}
@@ -289,7 +290,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 6
   },
+  threadListFlex: {
+    flex: 1,
+    minHeight: 120
+  },
   threadListPad: {
+    flexGrow: 1,
     paddingBottom: 24
   },
   threadSep: {

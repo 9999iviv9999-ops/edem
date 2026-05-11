@@ -377,7 +377,7 @@ export function MatchesPage() {
         ) : (
           <h3>Выбери диалог</h3>
         )}
-        <div className="chat-box tg-chat-box" ref={chatBoxRef}>
+        <div className="tg-chat-box" ref={chatBoxRef}>
           {loadingMessages ? <div className="page-sub">Загрузка сообщений...</div> : null}
           {messages.map((m, idx) => {
             const isOwn = m.fromUserId === me?.id;

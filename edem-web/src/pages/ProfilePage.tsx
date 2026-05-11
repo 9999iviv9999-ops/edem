@@ -2,8 +2,16 @@ import { FormEvent, useEffect, useState } from "react";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
+import { TRAINER_SPECIALIZATIONS } from "../lib/trainerSpecializations";
 
 type Gym = { id: string; name: string; city: string; address?: string | null; chainName?: string | null };
+
+/** Как на бэкенде `photoUrlSchema`: только http(s) или путь `/uploads/` (без blob/data превью). */
+function isValidProfilePhotoUrl(url: string) {
+  const value = url.trim();
+  if (!value || value.startsWith("blob:") || value.startsWith("data:")) return false;
+  return /^https?:\/\//i.test(value) || value.startsWith("/uploads/");
+}
 
 function normalizePhotoUrl(url: string) {
   const value = url.trim();
@@ -50,7 +58,15 @@ export function ProfilePage() {
     extraGymIds: [] as string[],
     goals: ["communication"],
     trainingTimeSlots: ["evening"],
-    trainingTypes: ["strength"]
+    trainingTypes: ["strength"],
+    isTrainer: false,
+    trainerHeadline: "",
+    trainerBio: "",
+    trainerExperienceYears: "",
+    trainerSpecializations: [] as string[],
+    trainerFormats: "",
+    trainerPriceFrom: "",
+    trainerContacts: ""
   });
   const [message, setMessage] = useState("");
   const [loadError, setLoadError] = useState("");
@@ -129,6 +145,14 @@ export function ProfilePage() {
         goals?: Array<{ goal?: string }>;
         trainingSlots?: Array<{ slot?: string }>;
         trainingTypes?: Array<{ type?: string }>;
+        isTrainer?: boolean;
+        trainerHeadline?: string | null;
+        trainerBio?: string | null;
+        trainerExperienceYears?: number | null;
+        trainerSpecializations?: string[];
+        trainerFormats?: string[];
+        trainerPriceFrom?: number | null;
+        trainerContacts?: string | null;
       };
       setProfileBadge(me.profileBadge?.trim() || null);
       setInGym(Boolean(me.inGym));
@@ -179,7 +203,18 @@ export function ProfilePage() {
           : ["evening"],
         trainingTypes: trainingTypes.map((x) => x.type).filter(Boolean).length
           ? (trainingTypes.map((x) => x.type).filter(Boolean) as string[])
-          : ["strength"]
+          : ["strength"],
+        isTrainer: Boolean(me.isTrainer),
+        trainerHeadline: me.trainerHeadline || "",
+        trainerBio: me.trainerBio || "",
+        trainerExperienceYears:
+          typeof me.trainerExperienceYears === "number" ? String(me.trainerExperienceYears) : "",
+        trainerSpecializations: Array.isArray(me.trainerSpecializations)
+          ? me.trainerSpecializations
+          : [],
+        trainerFormats: Array.isArray(me.trainerFormats) ? me.trainerFormats.join(", ") : "",
+        trainerPriceFrom: typeof me.trainerPriceFrom === "number" ? String(me.trainerPriceFrom) : "",
+        trainerContacts: me.trainerContacts || ""
       });
     } catch (err: unknown) {
       setProfileBadge(null);
@@ -213,18 +248,59 @@ export function ProfilePage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setMessage("");
+    const ageNum = Number(form.age);
+    if (!Number.isFinite(ageNum) || ageNum < 18 || ageNum > 80) {
+      setMessage("Укажите возраст от 18 до 80 лет — иначе сервер отклонит сохранение.");
+      return;
+    }
+    const photos = form.photos.map((p) => normalizePhotoUrl(p)).filter(isValidProfilePhotoUrl);
+    if (photos.length !== form.photos.length) {
+      setMessage("Удали превью без загрузки (blob) или исправь ссылки на фото — допустимы только http(s) и /uploads/…");
+      return;
+    }
     try {
       const payload = {
-        ...form,
+        name: form.name.trim(),
+        age: ageNum,
+        gender: form.gender as "male" | "female",
+        city: form.city.trim(),
+        okrug: form.okrug.trim() || undefined,
+        district: form.district.trim() || undefined,
+        description: form.description.trim() || undefined,
+        photos,
+        mainGymId: form.mainGymId || "",
+        extraGymIds: form.extraGymIds,
         goals: form.goals.length ? form.goals : ["communication"],
         trainingTimeSlots: form.trainingTimeSlots.length ? form.trainingTimeSlots : ["evening"],
         trainingTypes: form.trainingTypes.length ? form.trainingTypes : ["strength"]
       };
       await api.put("/api/profiles/me", payload);
+      await api.patch("/api/profiles/me/trainer", {
+        isTrainer: form.isTrainer,
+        trainerHeadline: form.trainerHeadline,
+        trainerBio: form.trainerBio,
+        trainerExperienceYears: form.trainerExperienceYears
+          ? Number(form.trainerExperienceYears)
+          : null,
+        trainerSpecializations: form.trainerSpecializations,
+        trainerFormats: form.trainerFormats
+          .split(",")
+          .map((v) => v.trim())
+          .filter(Boolean),
+        trainerPriceFrom: form.trainerPriceFrom ? Number(form.trainerPriceFrom) : null,
+        trainerContacts: form.trainerContacts
+      });
       setMessage("Профиль сохранен");
     } catch (err: unknown) {
-      const ax = err as { response?: { data?: { error?: string } } };
-      setMessage(ax.response?.data?.error || "Не удалось сохранить профиль");
+      const ax = err as {
+        response?: { data?: { error?: string; details?: Array<{ path: (string | number)[]; message: string }> } };
+      };
+      const d = ax.response?.data;
+      const zodHint =
+        Array.isArray(d?.details) && d.details.length
+          ? d.details.map((x) => `${x.path.join(".")}: ${x.message}`).join("; ")
+          : "";
+      setMessage([d?.error, zodHint].filter(Boolean).join(" — ") || "Не удалось сохранить профиль");
     }
   }
 
@@ -458,6 +534,94 @@ export function ProfilePage() {
                 </select>
               </label>
             </div>
+          </div>
+
+          <div className="profile-section full">
+            <h3 className="profile-section-title">Режим тренера</h3>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={form.isTrainer}
+                onChange={(e) => setForm((s) => ({ ...s, isTrainer: e.target.checked }))}
+              />
+              <span>Я тренер и хочу предлагать услуги в EDEM</span>
+            </label>
+            {form.isTrainer ? (
+              <div className="grid two-col">
+                <label className="field full">
+                  <span className="field-label">Краткий оффер</span>
+                  <input
+                    value={form.trainerHeadline}
+                    onChange={(e) => setForm((s) => ({ ...s, trainerHeadline: e.target.value }))}
+                    placeholder="Например: Персональный тренер по снижению веса"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">Стаж (лет)</span>
+                  <input
+                    type="number"
+                    value={form.trainerExperienceYears}
+                    onChange={(e) =>
+                      setForm((s) => ({ ...s, trainerExperienceYears: e.target.value }))
+                    }
+                    placeholder="5"
+                  />
+                </label>
+                <label className="field">
+                  <span className="field-label">Цена от (руб)</span>
+                  <input
+                    type="number"
+                    value={form.trainerPriceFrom}
+                    onChange={(e) => setForm((s) => ({ ...s, trainerPriceFrom: e.target.value }))}
+                    placeholder="1500"
+                  />
+                </label>
+                <label className="field full">
+                  <span className="field-label">Специализации</span>
+                  <select
+                    multiple
+                    className="multi"
+                    value={form.trainerSpecializations}
+                    onChange={(e) =>
+                      setForm((s) => ({
+                        ...s,
+                        trainerSpecializations: Array.from(e.target.selectedOptions).map((o) => o.value)
+                      }))
+                    }
+                  >
+                    {TRAINER_SPECIALIZATIONS.map((spec) => (
+                      <option key={spec} value={spec}>
+                        {spec}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field full">
+                  <span className="field-label">Форматы работы</span>
+                  <input
+                    value={form.trainerFormats}
+                    onChange={(e) => setForm((s) => ({ ...s, trainerFormats: e.target.value }))}
+                    placeholder="Зал, онлайн, выезд"
+                  />
+                </label>
+                <label className="field full">
+                  <span className="field-label">Контакты</span>
+                  <input
+                    value={form.trainerContacts}
+                    onChange={(e) => setForm((s) => ({ ...s, trainerContacts: e.target.value }))}
+                    placeholder="VK/TG/телефон для записи"
+                  />
+                </label>
+                <label className="field full">
+                  <span className="field-label">О тренерских услугах</span>
+                  <textarea
+                    value={form.trainerBio}
+                    onChange={(e) => setForm((s) => ({ ...s, trainerBio: e.target.value }))}
+                    placeholder="Опиши свой опыт и кому ты полезен"
+                  />
+                </label>
+              </div>
+            ) : null}
           </div>
 
           <div className="profile-section full">
