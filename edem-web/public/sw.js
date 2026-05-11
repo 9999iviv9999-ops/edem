@@ -1,5 +1,5 @@
-// Bump при выкладке важных правок в CSS/JS — иначе PWA держит старые /assets/* в Cache Storage.
-const CACHE_NAME = "edem-shell-v4";
+// Bump при изменении APP_SHELL / логики SW (сброс старых Cache Storage).
+const CACHE_NAME = "edem-shell-v5";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/edem-hero.png"];
 
 self.addEventListener("install", (event) => {
@@ -21,6 +21,13 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // Сборка Vite: URL /assets/*.css|*.js иногда не меняется при мелких правках — из Cache Storage
+  // отдавался старый бандл (Opera/Chrome). Хэш в имени не гарантирует смену файла.
+  if (url.pathname.startsWith("/assets/")) {
     event.respondWith(fetch(event.request));
     return;
   }
