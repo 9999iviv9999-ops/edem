@@ -1,0 +1,15 @@
+# Подключить edem-api к сети, где крутится контейнер Postgres vprok (имя хоста vprok-db в DATABASE_URL).
+# Только для VPS, где эта сеть уже есть. Локально без неё: не подключать этот файл.
+#
+#   docker compose -f docker-compose.yml -f ops/docker-compose.vprok-db-network.yml up -d --build
+
+services:
+  api:
+    networks:
+      - default
+      - vprok_db_net
+
+networks:
+  vprok_db_net:
+    external: true
+    name: edem-backend_default
