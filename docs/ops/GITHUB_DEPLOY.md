@@ -39,7 +39,9 @@
 - В каталоге `$DEPLOY_SSH_PATH` — `git remote` с доступом к GitHub (`git pull` без пароля: deploy key или HTTPS с credential).
 - Установлены **Docker** и **docker compose v2**, команда `docker compose` в PATH.
 
-Триггеры: push в `main` при изменениях в `edem-web/`, `src/`, `prisma/`, `Dockerfile`, `docker-compose.yml`, `package.json`, `package-lock.json`, или кнопка **Run workflow** в GitHub Actions.
+Ручной деплой на том же хосте, что и vprok: из корня репозитория выполни **`bash ops/vps-up.sh`** (скрипт сам подключит `ops/docker-compose.vprok-db-network.yml`, если существует Docker-сеть **`edem-backend_default`**). Workflow **Deploy EDEM (VPS via SSH)** после `git pull` вызывает этот же скрипт.
+
+Триггеры: push в `main` при изменениях в `edem-web/`, `src/`, `prisma/`, `Dockerfile`, `docker-compose.yml`, `ops/docker-compose.vprok-db-network.yml`, `ops/vps-up.sh`, `package.json`, `package-lock.json`, или кнопка **Run workflow** в GitHub Actions.
 
 ## Проверка
 

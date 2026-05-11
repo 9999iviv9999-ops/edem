@@ -16,7 +16,7 @@ echo "Pulling latest changes..."
 git pull --ff-only
 
 echo "Rebuilding and restarting containers (migrations run in api entrypoint)..."
-docker compose up -d --build
+bash ops/vps-up.sh
 
 echo "Verifying prisma migration status in api container..."
 docker compose exec -T api npx prisma migrate status
