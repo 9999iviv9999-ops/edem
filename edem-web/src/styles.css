@@ -2061,6 +2061,50 @@ textarea {
     border-top: none;
   }
 
+  /* Компактнее как в Telegram: плотнее список диалогов */
+  .layout.layout--messages .tg-sidebar .list {
+    gap: 6px;
+  }
+
+  .layout.layout--messages .list-item {
+    padding: 8px 10px;
+  }
+
+  .layout.layout--messages .tg-dialog-item {
+    grid-template-columns: 38px 1fr;
+    gap: 6px;
+    min-height: 48px;
+    padding: 5px 6px;
+  }
+
+  .layout.layout--messages .tg-dialog-avatar {
+    width: 38px;
+    height: 38px;
+  }
+
+  .layout.layout--messages .tg-dialog-subrow {
+    gap: 6px;
+  }
+
+  .layout.layout--messages .tg-dialog-time {
+    font-size: 0.68rem;
+  }
+
+  .layout.layout--messages .chat-list-name {
+    font-size: 0.88rem;
+  }
+
+  .layout.layout--messages .chat-list-preview {
+    font-size: 0.76rem;
+  }
+
+  .layout.layout--messages .chat-unread-badge {
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.68rem;
+  }
+
   .three-prefs {
     grid-template-columns: 1fr;
   }
