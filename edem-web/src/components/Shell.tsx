@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useMatch, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
 
@@ -31,8 +31,9 @@ function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profil
 
 export function Shell({ children }: Props) {
   const navigate = useNavigate();
-  /** Не matchPath(pathname): при basename (/stg) и trailing slash класс не вешался — ломался flex и «пропадал» чат. */
-  const isMessagesRoute = useMatch({ path: "/messages", end: true }) != null;
+  /** Pathname без basename; trailing slash не должен снимать layout--messages. */
+  const { pathname } = useLocation();
+  const isMessagesRoute = (pathname.replace(/\/+$/, "") || "/") === "/messages";
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("edem_is_admin") === "1");
   const [messagesUnread, setMessagesUnread] = useState(0);
 

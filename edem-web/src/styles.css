@@ -131,13 +131,19 @@ button {
 }
 
 /*
- * /messages: высота сетки чата — calc(100dvh − chrome), не height:100% от flex-цепочки
- * (иначе родитель даёт ~0 и видна «полоска» на один диалог). Скролл — в .list / .tg-chat-box.
+ * /messages: весь экран — flex-колонка с фикс. 100dvh, чтобы main реально получал «остаток» высоты.
+ * Важно: не задавать display:flex на .tg-chat-card/.tg-sidebar с высокой специфичностью — иначе
+ * перебивается .tg-layout:not(.mobile-chat-active) .tg-chat-card { display:none } и на мобиле
+ * видны два блока в одной колонке («полоски»). Скролл — в .list / .tg-chat-box.
  */
 .layout.layout--messages {
   display: flex;
   flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .layout.layout--messages > .topbar {
@@ -147,6 +153,7 @@ button {
 .layout.layout--messages > main.container {
   flex: 1 1 auto;
   min-height: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   margin: 0 auto;
@@ -163,37 +170,25 @@ button {
 }
 
 .layout.layout--messages .match-layout.tg-layout {
-  --tg-msg-chrome: 11.75rem;
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
   width: 100%;
   box-sizing: border-box;
-  min-height: 320px;
-  height: calc(100dvh - var(--tg-msg-chrome));
-  max-height: calc(100dvh - 4.5rem);
   overflow: hidden;
   display: grid;
   align-items: stretch;
   align-content: stretch;
   grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   gap: 14px;
 }
 
-/* Прямые дети сетки заполняют ячейку (у родителя уже задана высота в px). */
+/* Только размеры — без display, чтобы не ломать display:none на мобиле. */
 .layout.layout--messages .match-layout.tg-layout > .tg-sidebar,
 .layout.layout--messages .match-layout.tg-layout > .tg-chat-card {
   height: 100%;
   max-height: none;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-@media (max-width: 760px) {
-  .layout.layout--messages .match-layout.tg-layout {
-    --tg-msg-chrome: 15.75rem;
-  }
 }
 
 @media (min-width: 921px) {
@@ -1996,11 +1991,12 @@ textarea {
     max-height: none;
   }
 
-  .tg-layout.mobile-chat-active .tg-sidebar {
+  /* Только внутри /messages и с запасом по специфичности (не перебивать display из других блоков). */
+  .layout.layout--messages .tg-layout.mobile-chat-active .tg-sidebar {
     display: none;
   }
 
-  .tg-layout:not(.mobile-chat-active) .tg-chat-card {
+  .layout.layout--messages .tg-layout:not(.mobile-chat-active) .tg-chat-card {
     display: none;
   }
 
