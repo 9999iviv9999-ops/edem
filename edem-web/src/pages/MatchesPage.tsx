@@ -19,6 +19,33 @@ type Match = {
 type Me = { id: string };
 type Message = { id: string; fromUserId: string; text: string; createdAt: string; readAt?: string | null };
 
+function DeliveryTicks({ read, title }: { read: boolean; title: string }) {
+  return (
+    <span className={`tg-read-ticks${read ? " tg-read-ticks--read" : ""}`} title={title} aria-hidden>
+      <svg className="tg-read-svg" viewBox="0 0 22 12" width="19" height="11">
+        <path
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M1.5 6.5l3 3.2L9 2.8"
+        />
+        {read ? (
+          <path
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M7 6.5l3 3.2L15 2.8"
+          />
+        ) : null}
+      </svg>
+    </span>
+  );
+}
+
 export function MatchesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -382,13 +409,14 @@ export function MatchesPage() {
           {messages.map((m, idx) => {
             const isOwn = m.fromUserId === me?.id;
             const isLastOwn = isOwn && messages.slice(idx + 1).every((next) => next.fromUserId !== me?.id);
-            const readState = m.readAt ? "✓✓" : "✓";
             return (
               <div key={m.id} className={`bubble ${isOwn ? "own" : ""}`}>
                 <div>{m.text}</div>
                 <div className="bubble-meta">
                   <span>{formatTime(m.createdAt)}</span>
-                  {isLastOwn ? <span title={m.readAt ? "Прочитано" : "Отправлено"}>{readState}</span> : null}
+                  {isLastOwn ? (
+                    <DeliveryTicks read={Boolean(m.readAt)} title={m.readAt ? "Прочитано" : "Отправлено"} />
+                  ) : null}
                 </div>
               </div>
             );

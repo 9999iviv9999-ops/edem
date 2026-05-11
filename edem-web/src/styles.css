@@ -1329,6 +1329,32 @@ a.tg-chat-header-profile:focus-visible {
   align-items: center;
 }
 
+.tg-read-ticks {
+  display: inline-flex;
+  align-items: flex-end;
+  flex-shrink: 0;
+  margin-left: 2px;
+  color: rgba(200, 214, 245, 0.5);
+  line-height: 1;
+}
+
+.tg-read-ticks--read {
+  color: rgba(125, 211, 252, 0.95);
+}
+
+.bubble.own .tg-read-ticks {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.bubble.own .tg-read-ticks--read {
+  color: rgba(186, 240, 255, 0.95);
+}
+
+.tg-read-svg {
+  display: block;
+  overflow: visible;
+}
+
 .typing-indicator {
   width: fit-content;
   padding: 6px 10px;
