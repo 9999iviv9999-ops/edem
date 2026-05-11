@@ -2061,9 +2061,79 @@ textarea {
     border-top: none;
   }
 
+  /* Уточняем компактность "панели" под набор текста (скрепка/смайл/фон) */
+  .layout.layout--messages .tg-composer-tools {
+    gap: 3px;
+  }
+
+  .layout.layout--messages .tg-composer-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    font-size: 1rem;
+  }
+
+  .layout.layout--messages .tg-composer {
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 10px 2px;
+  }
+
+  /* Делает поле ввода шире за счёт уменьшения горизонтальных отступов и тулов */
+  .layout.layout--messages .tg-composer-input {
+    min-height: 40px;
+    border-radius: 20px;
+    padding: 10px 14px;
+  }
+
+  /* Уменьшаем размеры поповера (эмодзи/фон) */
+  .layout.layout--messages .tg-composer-popover {
+    padding: 8px;
+    min-width: 200px;
+    max-width: min(92vw, 300px);
+    border-radius: 12px;
+  }
+
+  .layout.layout--messages .tg-emoji-grid {
+    gap: 3px;
+  }
+
+  .layout.layout--messages .tg-emoji-cell {
+    min-height: 30px;
+    font-size: 1.25rem;
+    border-radius: 8px;
+  }
+
+  .layout.layout--messages .tg-wallpaper-list {
+    gap: 6px;
+  }
+
+  .layout.layout--messages .tg-wallpaper-option {
+    padding: 6px 8px;
+    font-size: 0.84rem;
+    gap: 8px;
+  }
+
+  .layout.layout--messages .tg-wallpaper-swatch {
+    width: 32px;
+    height: 24px;
+    border-radius: 7px;
+  }
+
   /* Компактнее как в Telegram: плотнее список диалогов */
   .layout.layout--messages .tg-sidebar .list {
     gap: 6px;
+  }
+
+  /* Похожий на Telegram вид: полосу прокрутки лучше не показывать, но скролл оставить */
+  .layout.layout--messages .tg-sidebar .list {
+    scrollbar-gutter: auto;
+    scrollbar-width: none;
+  }
+
+  .layout.layout--messages .tg-sidebar .list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
 
   .layout.layout--messages .list-item {
