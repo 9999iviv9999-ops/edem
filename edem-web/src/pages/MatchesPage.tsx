@@ -338,7 +338,7 @@ export function MatchesPage() {
           {visibleMatches.length === 0 ? <div className="page-sub">Диалогов пока нет.</div> : null}
         </div>
       </aside>
-      <section className="card tg-chat-card">
+      <section className="tg-chat-card">
         {selected ? (
           <div className="tg-chat-header">
             <button type="button" className="tg-mobile-back" onClick={() => setSelectedMatchId("")} aria-label="Назад к диалогам">
