@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
+import { normalizePhotoUrl } from "../lib/photoUrl";
 
 type IncomingLikeRow = {
   id: string;
@@ -14,14 +15,6 @@ type IncomingLikeRow = {
   };
   gym: { id: string; name: string; city: string };
 };
-
-function normalizePhotoUrl(url?: string) {
-  const value = (url || "").trim();
-  if (!value) return "";
-  if (value.startsWith("/")) return `${window.location.origin}${value}`;
-  if (/^https?:\/\//i.test(value)) return value;
-  return value;
-}
 
 export function LikesPage() {
   const [rows, setRows] = useState<IncomingLikeRow[]>([]);

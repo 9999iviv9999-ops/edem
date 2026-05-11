@@ -1,5 +1,5 @@
 // Bump при изменении APP_SHELL / логики SW (сброс старых Cache Storage).
-const CACHE_NAME = "edem-shell-v5";
+const CACHE_NAME = "edem-shell-v8";
 const APP_SHELL = ["/", "/index.html", "/manifest.webmanifest", "/edem-hero.png"];
 
 self.addEventListener("install", (event) => {
@@ -21,6 +21,12 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   if (url.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  /* Фото профиля: не кэшировать — иначе в Cache попадает 404/HTML и картинки «не грузятся». */
+  if (url.pathname.startsWith("/uploads/")) {
     event.respondWith(fetch(event.request));
     return;
   }

@@ -4,6 +4,7 @@ import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, Text
 import { SearchablePickerModal } from "../components/SearchablePickerModal";
 import { apiRequest, getCurrentAuthPhone, uploadProfilePhoto } from "../api";
 import { appConfig, isVipPhone, vipConfig } from "../config";
+import { TRAINER_SPECIALIZATIONS } from "../lib/trainerSpecializations";
 
 type CatalogGym = { id: string; name: string; city: string; chainName?: string | null; address?: string | null };
 
@@ -36,6 +37,14 @@ export function ProfileScreen({ onLogout }: Props) {
     trainingSlots: Array<{ slot: "morning" | "day" | "evening" | "weekends" }>;
     trainingTypes: Array<{ type: "strength" | "cardio" | "crossfit" | "yoga" }>;
     memberships: Array<{ gymId: string; isPrimary: boolean; gym: { id: string; name: string } }>;
+    isTrainer?: boolean;
+    trainerHeadline?: string | null;
+    trainerBio?: string | null;
+    trainerExperienceYears?: number | null;
+    trainerSpecializations?: string[];
+    trainerFormats?: string[];
+    trainerPriceFrom?: number | null;
+    trainerContacts?: string | null;
   } | null>(null);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
@@ -52,6 +61,14 @@ export function ProfileScreen({ onLogout }: Props) {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [isVipAccount, setIsVipAccount] = useState(false);
   const [inGymSaving, setInGymSaving] = useState(false);
+  const [isTrainer, setIsTrainer] = useState(false);
+  const [trainerHeadline, setTrainerHeadline] = useState("");
+  const [trainerBio, setTrainerBio] = useState("");
+  const [trainerExperienceYears, setTrainerExperienceYears] = useState("");
+  const [trainerSpecializations, setTrainerSpecializations] = useState<string[]>([]);
+  const [trainerFormats, setTrainerFormats] = useState("");
+  const [trainerPriceFrom, setTrainerPriceFrom] = useState("");
+  const [trainerContacts, setTrainerContacts] = useState("");
 
   const cityPickerItems = useMemo(() => cities.map((c) => ({ id: c, label: c })), [cities]);
 
@@ -116,6 +133,14 @@ export function ProfileScreen({ onLogout }: Props) {
           trainingSlots: Array<{ slot: "morning" | "day" | "evening" | "weekends" }>;
           trainingTypes: Array<{ type: "strength" | "cardio" | "crossfit" | "yoga" }>;
           memberships: Array<{ gymId: string; isPrimary: boolean; gym: { id: string; name: string } }>;
+          isTrainer?: boolean;
+          trainerHeadline?: string | null;
+          trainerBio?: string | null;
+          trainerExperienceYears?: number | null;
+          trainerSpecializations?: string[];
+          trainerFormats?: string[];
+          trainerPriceFrom?: number | null;
+          trainerContacts?: string | null;
         }>("/api/profiles/me");
         if (!active) return;
         setMe(profile);
@@ -127,6 +152,16 @@ export function ProfileScreen({ onLogout }: Props) {
         setDescription(profile.description || "");
         const primaryId = profile.memberships.find((m) => m.isPrimary)?.gymId;
         await loadCatalogForCity(cityToUse, primaryId);
+        setIsTrainer(Boolean(profile.isTrainer));
+        setTrainerHeadline(profile.trainerHeadline || "");
+        setTrainerBio(profile.trainerBio || "");
+        setTrainerExperienceYears(
+          typeof profile.trainerExperienceYears === "number" ? String(profile.trainerExperienceYears) : ""
+        );
+        setTrainerSpecializations(Array.isArray(profile.trainerSpecializations) ? profile.trainerSpecializations : []);
+        setTrainerFormats(Array.isArray(profile.trainerFormats) ? profile.trainerFormats.join(", ") : "");
+        setTrainerPriceFrom(typeof profile.trainerPriceFrom === "number" ? String(profile.trainerPriceFrom) : "");
+        setTrainerContacts(profile.trainerContacts || "");
         if (!active) return;
         setLoadError("");
       } catch {
@@ -230,6 +265,22 @@ export function ProfileScreen({ onLogout }: Props) {
           city: city.trim() || me.city,
           description: description.trim(),
           primaryGymId: selectedPrimaryGymId || undefined
+        }
+      });
+      await apiRequest("/api/profiles/me/trainer", {
+        method: "PATCH",
+        body: {
+          isTrainer,
+          trainerHeadline,
+          trainerBio,
+          trainerExperienceYears: trainerExperienceYears ? Number(trainerExperienceYears) : null,
+          trainerSpecializations,
+          trainerFormats: trainerFormats
+            .split(",")
+            .map((v) => v.trim())
+            .filter(Boolean),
+          trainerPriceFrom: trainerPriceFrom ? Number(trainerPriceFrom) : null,
+          trainerContacts
         }
       });
       setStatus("Профиль сохранен");
@@ -377,6 +428,78 @@ export function ProfileScreen({ onLogout }: Props) {
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Действия</Text>
+        <Text style={styles.cardTitle}>Режим тренера</Text>
+        <Pressable style={[styles.btn, isTrainer && styles.gymBtnActive]} onPress={() => setIsTrainer((v) => !v)}>
+          <Text style={styles.btnText}>{isTrainer ? "Режим тренера включен" : "Включить режим тренера"}</Text>
+        </Pressable>
+        {isTrainer ? (
+          <>
+            <TextInput
+              style={styles.input}
+              value={trainerHeadline}
+              onChangeText={setTrainerHeadline}
+              placeholder="Краткий оффер"
+              placeholderTextColor="#7f93bd"
+            />
+            <TextInput
+              style={styles.input}
+              value={trainerExperienceYears}
+              onChangeText={setTrainerExperienceYears}
+              placeholder="Стаж (лет)"
+              placeholderTextColor="#7f93bd"
+              keyboardType="number-pad"
+            />
+            <TextInput
+              style={styles.input}
+              value={trainerPriceFrom}
+              onChangeText={setTrainerPriceFrom}
+              placeholder="Цена от (руб)"
+              placeholderTextColor="#7f93bd"
+              keyboardType="number-pad"
+            />
+            <Text style={styles.fieldLabel}>Специализации</Text>
+            <View style={styles.tagsWrap}>
+              {TRAINER_SPECIALIZATIONS.map((spec) => {
+                const active = trainerSpecializations.includes(spec);
+                return (
+                  <Pressable
+                    key={spec}
+                    style={[styles.tagBtn, active && styles.tagBtnActive]}
+                    onPress={() =>
+                      setTrainerSpecializations((prev) =>
+                        prev.includes(spec) ? prev.filter((item) => item !== spec) : [...prev, spec]
+                      )
+                    }
+                  >
+                    <Text style={[styles.tagText, active && styles.tagTextActive]}>{spec}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <TextInput
+              style={styles.input}
+              value={trainerFormats}
+              onChangeText={setTrainerFormats}
+              placeholder="Форматы через запятую"
+              placeholderTextColor="#7f93bd"
+            />
+            <TextInput
+              style={styles.input}
+              value={trainerContacts}
+              onChangeText={setTrainerContacts}
+              placeholder="Контакты для записи"
+              placeholderTextColor="#7f93bd"
+            />
+            <TextInput
+              style={[styles.input, styles.multiline]}
+              value={trainerBio}
+              onChangeText={setTrainerBio}
+              placeholder="О тренерских услугах"
+              placeholderTextColor="#7f93bd"
+              multiline
+            />
+          </>
+        ) : null}
         <Pressable style={[styles.btn, saving && styles.btnDisabled]} onPress={() => void saveProfile()} disabled={saving}>
           <Text style={styles.btnText}>{saving ? "Сохраняем..." : "Сохранить профиль"}</Text>
         </Pressable>
@@ -575,5 +698,30 @@ const styles = StyleSheet.create({
   addPhotoBtnText: {
     color: "#f4f7ff",
     fontWeight: "700"
+  },
+  tagsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8
+  },
+  tagBtn: {
+    borderWidth: 1,
+    borderColor: "#2a3f63",
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: "#0f1a2d"
+  },
+  tagBtnActive: {
+    borderColor: "#6f8dff",
+    backgroundColor: "#314b8c"
+  },
+  tagText: {
+    color: "#c8d8ff",
+    fontWeight: "600",
+    fontSize: 12
+  },
+  tagTextActive: {
+    color: "#f4f7ff"
   }
 });

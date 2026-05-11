@@ -31,6 +31,7 @@ server {
     server_name edem.press;
 
     client_max_body_size 20m;
+    include /etc/nginx/snippets/edem-press-stg-path.conf;
 
     ssl_certificate /etc/letsencrypt/live/edem.press/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/edem.press/privkey.pem;
@@ -39,7 +40,7 @@ server {
 
     # Жёсткий лимит на брутфорс: подключи ops/nginx-http-snippet-edem.conf в http {}, затем раскомментируй limit_req.
     location /api/auth/ {
-        # limit_req zone=edem_api_auth burst=45 nodelay;
+        limit_req zone=edem_api_auth burst=45 nodelay;
         proxy_pass http://127.0.0.1:3000/api/auth/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -53,6 +54,19 @@ server {
 
     location /api/ {
         proxy_pass http://127.0.0.1:3000/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_connect_timeout 75s;
+        proxy_send_timeout 75s;
+        proxy_read_timeout 75s;
+    }
+
+    # Фото с диска API — напрямую на Node (и без кэша SW на другом origin-path).
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:3000/uploads/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -78,68 +92,3 @@ server {
 
 # Если с ПК открывается, а с мобильного «нет соединения»: проверьте запись AAAA у edem.press
 # (битый IPv6 часто даёт таймаут только с части сетей), fail2ban/ufw и что контейнер edem-web пересобран.
-
-# ========== staging.edem.press — копия стенда (docker compose + docker-compose.staging.yml) ==========
-# Ссылка: https://staging.edem.press
-# 1) DNS: A (и при необходимости AAAA) staging.edem.press → IP этого сервера.
-# 2) Поднять стек: docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env.staging up -d --build
-# 3) В .env.staging: WEB_BASE_URL=https://staging.edem.press и CORS_ALLOW_ORIGINS=https://staging.edem.press
-# 4) TLS: certbot certonly --nginx -d staging.edem.press
-#    (или расширьте основной сертификат и замените пути ssl_certificate* на live/edem.press)
-# 5) nginx -t && systemctl reload nginx
-
-server {
-    listen 80;
-    listen [::]:80;
-    server_name staging.edem.press;
-    return 301 https://staging.edem.press$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name staging.edem.press;
-
-    client_max_body_size 20m;
-
-    ssl_certificate /etc/letsencrypt/live/staging.edem.press/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/staging.edem.press/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-    location /api/auth/ {
-        proxy_pass http://127.0.0.1:3001/api/auth/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_connect_timeout 75s;
-        proxy_send_timeout 75s;
-        proxy_read_timeout 75s;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:3001/api/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_connect_timeout 75s;
-        proxy_send_timeout 75s;
-        proxy_read_timeout 75s;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:8081/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_connect_timeout 75s;
-        proxy_send_timeout 75s;
-        proxy_read_timeout 75s;
-    }
-}

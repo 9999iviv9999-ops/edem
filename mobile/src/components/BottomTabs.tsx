@@ -16,7 +16,7 @@ const tabs: Array<{ key: TabKey; label: string; icon: IconName; activeIcon: Icon
   { key: "feed", label: "Лента", icon: "home-outline", activeIcon: "home" },
   { key: "likes", label: "Лайки", icon: "heart-outline", activeIcon: "heart" },
   { key: "messages", label: "Чаты", icon: "chatbubble-ellipses-outline", activeIcon: "chatbubble-ellipses" },
-  { key: "safety", label: "Безопасность", icon: "shield-outline", activeIcon: "shield" },
+  { key: "trainers", label: "Тренеры", icon: "barbell-outline", activeIcon: "barbell" },
   { key: "profile", label: "Профиль", icon: "person-outline", activeIcon: "person" },
 ];
 const SAFE_BOTTOM = Platform.OS === "android" ? 28 : 14;

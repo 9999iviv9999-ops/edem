@@ -1,6 +1,7 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { normalizePhotoUrl } from "../lib/photoUrl";
 
 type Match = {
   id: string;
@@ -13,11 +14,149 @@ type Match = {
   userA: { id: string; name: string; photos: string[]; profileBadge?: string | null };
   userB: { id: string; name: string; photos: string[]; profileBadge?: string | null };
   gym?: { id: string; name: string };
-  messages?: Array<{ id: string; text: string; createdAt: string; fromUserId: string; readAt?: string | null }>;
+  messages?: Array<{
+    id: string;
+    text: string;
+    createdAt: string;
+    fromUserId: string;
+    readAt?: string | null;
+    attachmentUrl?: string | null;
+    attachmentMime?: string | null;
+    attachmentFilename?: string | null;
+    attachmentSize?: number | null;
+  }>;
 };
 
 type Me = { id: string };
-type Message = { id: string; fromUserId: string; text: string; createdAt: string; readAt?: string | null };
+type Message = {
+  id: string;
+  fromUserId: string;
+  text: string;
+  createdAt: string;
+  readAt?: string | null;
+  attachmentUrl?: string | null;
+  attachmentMime?: string | null;
+  attachmentFilename?: string | null;
+  attachmentSize?: number | null;
+};
+
+type PendingChatAttachment = { url: string; mimeType: string; filename: string; size: number };
+
+const CHAT_BG_STORAGE_KEY = "edem_match_wallpaper_v1";
+
+type ChatBgId = "default" | "aurora" | "ember" | "ocean" | "rose" | "midnight";
+
+const CHAT_BG_PRESETS: { id: ChatBgId; label: string }[] = [
+  { id: "default", label: "Стандартный" },
+  { id: "aurora", label: "Северное сияние" },
+  { id: "ember", label: "Закат" },
+  { id: "ocean", label: "Океан" },
+  { id: "rose", label: "Рассвет" },
+  { id: "midnight", label: "Полночь" }
+];
+
+const CHAT_EMOJIS = [
+  "😀",
+  "😁",
+  "😂",
+  "🤣",
+  "😊",
+  "😍",
+  "🥰",
+  "😘",
+  "😉",
+  "😎",
+  "🤔",
+  "👍",
+  "👎",
+  "❤️",
+  "🔥",
+  "🎉",
+  "👏",
+  "🙏",
+  "💪",
+  "✨",
+  "⭐",
+  "😢",
+  "😮",
+  "🤝",
+  "☕",
+  "🙌",
+  "💯",
+  "🤗",
+  "😅",
+  "🙂",
+  "👋",
+  "💬"
+];
+
+function readChatBgMap(): Record<string, ChatBgId> {
+  try {
+    const raw = localStorage.getItem(CHAT_BG_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    if (!parsed || typeof parsed !== "object") return {};
+    const allowed = new Set(CHAT_BG_PRESETS.map((p) => p.id));
+    const out: Record<string, ChatBgId> = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (allowed.has(v as ChatBgId)) out[k] = v as ChatBgId;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+function getChatBgForMatch(matchId: string): ChatBgId {
+  return readChatBgMap()[matchId] ?? "default";
+}
+
+function saveChatBgForMatch(matchId: string, bg: ChatBgId) {
+  const map = readChatBgMap();
+  if (bg === "default") delete map[matchId];
+  else map[matchId] = bg;
+  localStorage.setItem(CHAT_BG_STORAGE_KEY, JSON.stringify(map));
+}
+
+function messagesListEqual(a: Message[], b: Message[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (
+      x.id !== y.id ||
+      x.text !== y.text ||
+      x.readAt !== y.readAt ||
+      x.fromUserId !== y.fromUserId ||
+      x.attachmentUrl !== y.attachmentUrl ||
+      x.attachmentMime !== y.attachmentMime ||
+      x.attachmentFilename !== y.attachmentFilename ||
+      x.attachmentSize !== y.attachmentSize
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function formatDialogListPreview(msg: {
+  text: string;
+  attachmentUrl?: string | null;
+  attachmentFilename?: string | null;
+}): string {
+  const has = Boolean(msg.attachmentUrl || msg.attachmentFilename);
+  const t = (msg.text || "").trim();
+  if (has && !t) return `📎 ${msg.attachmentFilename || "Файл"}`;
+  if (has && t) return `${t.length > 56 ? `${t.slice(0, 56)}…` : t} · 📎`;
+  if (t) return t;
+  return "Сообщение";
+}
+
+function stringArrayEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
 
 function DeliveryTicks({ read, title }: { read: boolean; title: string }) {
   return (
@@ -69,6 +208,25 @@ export function MatchesPage() {
   });
   const lastTypingSentRef = useRef(false);
   const chatBoxRef = useRef<HTMLDivElement | null>(null);
+  const composerInputRef = useRef<HTMLInputElement | null>(null);
+  const composerShellRef = useRef<HTMLDivElement | null>(null);
+  /** Как в мессенджерах: автоскролл только если пользователь уже у нижнего края (не дёргать при опросе 3 с вверху истории). */
+  const stickToBottomRef = useRef(true);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [bgPopoverOpen, setBgPopoverOpen] = useState(false);
+  /** Смена фона для текущего диалога: перечитать из localStorage в том же матче. */
+  const [chatBgRevision, setChatBgRevision] = useState(0);
+  const [pendingAttachment, setPendingAttachment] = useState<PendingChatAttachment | null>(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const chatFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const NEAR_BOTTOM_PX = 100;
+  function updateStickToBottomFromScroll() {
+    const el = chatBoxRef.current;
+    if (!el) return;
+    const slack = el.scrollHeight - el.scrollTop - el.clientHeight;
+    stickToBottomRef.current = slack <= NEAR_BOTTOM_PX;
+  }
 
   useEffect(() => {
     void load();
@@ -84,9 +242,45 @@ export function MatchesPage() {
   }, [selectedMatchId]);
 
   useEffect(() => {
-    if (!chatBoxRef.current) return;
-    chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
-  }, [messages, selectedMatchId]);
+    stickToBottomRef.current = true;
+  }, [selectedMatchId]);
+
+  useEffect(() => {
+    setEmojiOpen(false);
+    setBgPopoverOpen(false);
+    setPendingAttachment(null);
+  }, [selectedMatchId]);
+
+  useEffect(() => {
+    if (!emojiOpen && !bgPopoverOpen) return;
+    function onDocMouseDown(e: MouseEvent) {
+      if (composerShellRef.current?.contains(e.target as Node)) return;
+      setEmojiOpen(false);
+      setBgPopoverOpen(false);
+    }
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [emojiOpen, bgPopoverOpen]);
+
+  useEffect(() => {
+    if (!emojiOpen && !bgPopoverOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setEmojiOpen(false);
+        setBgPopoverOpen(false);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [emojiOpen, bgPopoverOpen]);
+
+  useLayoutEffect(() => {
+    const el = chatBoxRef.current;
+    if (!el || !selectedMatchId) return;
+    if (stickToBottomRef.current) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [messages, selectedMatchId, typingUserIds]);
 
   useEffect(() => {
     if (!selectedMatchId) return;
@@ -146,8 +340,15 @@ export function MatchesPage() {
     if (!silent) setLoadingMessages(true);
     try {
       const { data } = await api.get(`/api/messages/${matchId}`);
-      setMessages(Array.isArray(data?.messages) ? data.messages : []);
-      setTypingUserIds(Array.isArray(data?.typingUserIds) ? data.typingUserIds : []);
+      const rawMsgs: Message[] = Array.isArray(data?.messages) ? data.messages : [];
+      const rawTyping: string[] = Array.isArray(data?.typingUserIds) ? data.typingUserIds : [];
+      if (silent) {
+        setMessages((prev) => (messagesListEqual(prev, rawMsgs) ? prev : rawMsgs));
+        setTypingUserIds((prev) => (stringArrayEqual(prev, rawTyping) ? prev : rawTyping));
+      } else {
+        setMessages(rawMsgs);
+        setTypingUserIds(rawTyping);
+      }
       setPageError("");
     } catch (err: unknown) {
       const status = (err as { response?: { status?: number } })?.response?.status;
@@ -163,10 +364,22 @@ export function MatchesPage() {
 
   async function sendMessage(e: FormEvent) {
     e.preventDefault();
-    if (!selectedMatchId || !text.trim()) return;
+    if (!selectedMatchId || (!text.trim() && !pendingAttachment) || uploadBusy) return;
     try {
-      await api.post("/api/messages", { matchId: selectedMatchId, text });
+      await api.post("/api/messages", {
+        matchId: selectedMatchId,
+        text: text.trim(),
+        ...(pendingAttachment
+          ? {
+              attachmentUrl: pendingAttachment.url,
+              attachmentMime: pendingAttachment.mimeType,
+              attachmentFilename: pendingAttachment.filename,
+              attachmentSize: pendingAttachment.size
+            }
+          : {})
+      });
       setText("");
+      setPendingAttachment(null);
       lastTypingSentRef.current = false;
       await api.post("/api/messages/typing", { matchId: selectedMatchId, isTyping: false });
       await loadMessages(selectedMatchId);
@@ -181,10 +394,44 @@ export function MatchesPage() {
     }
   }
 
+  async function onChatFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !selectedMatchId) return;
+    setUploadBusy(true);
+    setPageError("");
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const { data } = await api.post<PendingChatAttachment & { mimeType: string }>("/api/media/upload-chat-file", fd);
+      setPendingAttachment({
+        url: data.url,
+        mimeType: data.mimeType,
+        filename: data.filename,
+        size: data.size
+      });
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
+        navigate("/login");
+        return;
+      }
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setPageError(msg || "Не удалось загрузить файл");
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
   const selected = useMemo(
     () => matches.find((m) => m.id === selectedMatchId),
     [matches, selectedMatchId]
   );
+
+  const chatBgId = useMemo(() => {
+    if (!selectedMatchId) return "default" as ChatBgId;
+    return getChatBgForMatch(selectedMatchId);
+  }, [selectedMatchId, chatBgRevision]);
   const sortedMatches = useMemo(() => {
     const pinnedSet = new Set(pinnedMatchIds);
     const sorted = [...matches].sort((a, b) => {
@@ -261,10 +508,28 @@ export function MatchesPage() {
     );
   }
 
+  function insertEmoji(ch: string) {
+    const el = composerInputRef.current;
+    const start = el?.selectionStart ?? text.length;
+    const end = el?.selectionEnd ?? text.length;
+    const next = text.slice(0, start) + ch + text.slice(end);
+    if (next.length > 1000) return;
+    setText(next);
+    window.requestAnimationFrame(() => {
+      el?.focus();
+      const pos = start + ch.length;
+      try {
+        el?.setSelectionRange(pos, pos);
+      } catch {
+        /* noop */
+      }
+    });
+  }
+
   function renderDialogItem(m: Match) {
     const peer = otherUser(m);
     const lastMessage = m.messages?.[0];
-    const preview = lastMessage?.text || "Начните диалог";
+    const preview = lastMessage ? formatDialogListPreview(lastMessage) : "Начните диалог";
     const gymLabel = m.gym?.name ? ` · ${m.gym.name}` : "";
     const avatar = peer.photos?.[0];
     const isPinned = pinnedMatchIds.includes(m.id);
@@ -288,7 +553,7 @@ export function MatchesPage() {
             className="tg-dialog-avatar-link"
             onClick={(e) => e.stopPropagation()}
           >
-            <img className="tg-dialog-avatar" src={avatar} alt={peer.name} />
+            <img className="tg-dialog-avatar" src={normalizePhotoUrl(avatar)} alt={peer.name} />
           </Link>
         ) : (
           <Link
@@ -377,7 +642,7 @@ export function MatchesPage() {
               className="tg-chat-header-profile"
             >
               {otherUser(selected).photos?.[0] ? (
-                <img className="tg-dialog-avatar" src={otherUser(selected).photos[0]} alt={otherName(selected)} />
+                <img className="tg-dialog-avatar" src={normalizePhotoUrl(otherUser(selected).photos[0])} alt={otherName(selected)} />
               ) : (
                 <div className="tg-dialog-avatar tg-dialog-avatar--fallback">
                   {otherName(selected).slice(0, 1).toUpperCase()}
@@ -404,14 +669,37 @@ export function MatchesPage() {
         ) : (
           <h3>Выбери диалог</h3>
         )}
-        <div className="tg-chat-box" ref={chatBoxRef}>
+        <div
+          className="tg-chat-box"
+          ref={chatBoxRef}
+          onScroll={updateStickToBottomFromScroll}
+          {...(chatBgId !== "default" ? { "data-bg": chatBgId } : {})}
+        >
           {loadingMessages ? <div className="page-sub">Загрузка сообщений...</div> : null}
           {messages.map((m, idx) => {
             const isOwn = m.fromUserId === me?.id;
             const isLastOwn = isOwn && messages.slice(idx + 1).every((next) => next.fromUserId !== me?.id);
+            const attUrl = m.attachmentUrl ? normalizePhotoUrl(m.attachmentUrl) : "";
+            const isImg = Boolean(m.attachmentMime?.toLowerCase().startsWith("image/") && attUrl);
             return (
               <div key={m.id} className={`bubble ${isOwn ? "own" : ""}`}>
-                <div>{m.text}</div>
+                {isImg ? (
+                  <a className="tg-attach-img-wrap" href={attUrl} target="_blank" rel="noopener noreferrer">
+                    <img className="tg-attach-img" src={attUrl} alt="" loading="lazy" />
+                  </a>
+                ) : null}
+                {m.attachmentUrl && !isImg ? (
+                  <a
+                    className="tg-attach-link"
+                    href={attUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={m.attachmentFilename || undefined}
+                  >
+                    📎 {m.attachmentFilename || "Скачать файл"}
+                  </a>
+                ) : null}
+                {(m.text || "").trim() ? <div className="tg-bubble-text">{m.text}</div> : null}
                 <div className="bubble-meta">
                   <span>{formatTime(m.createdAt)}</span>
                   {isLastOwn ? (
@@ -423,20 +711,133 @@ export function MatchesPage() {
           })}
           {selected && typingUserIds.length > 0 ? <div className="typing-indicator">{typingName()} печатает...</div> : null}
         </div>
-        <form onSubmit={sendMessage} className="tg-composer">
+        <input
+          ref={chatFileInputRef}
+          type="file"
+          className="tg-attach-input-hidden"
+          accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.pptx,.txt,application/pdf"
+          onChange={onChatFileChange}
+          aria-hidden
+          tabIndex={-1}
+        />
+        <div ref={composerShellRef} className="tg-composer-shell">
+          {pendingAttachment ? (
+            <div className="tg-composer-pending">
+              <span className="tg-composer-pending-name" title={pendingAttachment.filename}>
+                {uploadBusy ? "Загрузка…" : `📎 ${pendingAttachment.filename}`}
+              </span>
+              <button
+                type="button"
+                className="tg-composer-pending-remove"
+                disabled={uploadBusy}
+                onClick={() => setPendingAttachment(null)}
+                aria-label="Убрать вложение"
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
+          <form onSubmit={sendMessage} className="tg-composer">
+          <div className="tg-composer-tools">
+            <button
+              type="button"
+              className="tg-composer-icon-btn tg-composer-icon-btn--attach"
+              aria-label="Вложение"
+              title="Фото или документ"
+              disabled={!selectedMatchId || uploadBusy}
+              onClick={() => chatFileInputRef.current?.click()}
+            >
+              <svg className="tg-attach-svg" width="22" height="22" viewBox="0 0 24 24" aria-hidden>
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.49"
+                />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="tg-composer-icon-btn"
+              aria-label="Смайлики"
+              aria-expanded={emojiOpen}
+              disabled={!selectedMatchId}
+              onClick={() => {
+                setBgPopoverOpen(false);
+                setEmojiOpen((v) => !v);
+              }}
+            >
+              <span aria-hidden>😊</span>
+            </button>
+            <button
+              type="button"
+              className="tg-composer-icon-btn"
+              aria-label="Фон чата"
+              title="Фон только в этом браузере"
+              aria-expanded={bgPopoverOpen}
+              disabled={!selectedMatchId}
+              onClick={() => {
+                setEmojiOpen(false);
+                setBgPopoverOpen((v) => !v);
+              }}
+            >
+              <span aria-hidden>🎨</span>
+            </button>
+            {emojiOpen ? (
+              <div className="tg-composer-popover" role="dialog" aria-label="Выбор эмодзи">
+                <div className="tg-emoji-grid">
+                  {CHAT_EMOJIS.map((em) => (
+                    <button
+                      key={em}
+                      type="button"
+                      className="tg-emoji-cell"
+                      onClick={() => insertEmoji(em)}
+                    >
+                      {em}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            {bgPopoverOpen && selectedMatchId ? (
+              <div className="tg-composer-popover" role="dialog" aria-label="Фон переписки">
+                <p className="tg-composer-popover-hint">Сохраняется отдельно для каждого диалога на этом устройстве.</p>
+                <div className="tg-wallpaper-list">
+                  {CHAT_BG_PRESETS.map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className={`tg-wallpaper-option${chatBgId === p.id ? " tg-wallpaper-option--active" : ""}`}
+                      onClick={() => {
+                        saveChatBgForMatch(selectedMatchId, p.id);
+                        setChatBgRevision((r) => r + 1);
+                        setBgPopoverOpen(false);
+                      }}
+                    >
+                      <span className={`tg-wallpaper-swatch tg-wallpaper-swatch--${p.id}`} aria-hidden />
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
           <input
+            ref={composerInputRef}
             className="tg-composer-input"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Сообщение..."
-            disabled={!selectedMatchId}
+            placeholder={pendingAttachment ? "Подпись (необязательно)…" : "Сообщение..."}
+            disabled={!selectedMatchId || uploadBusy}
             maxLength={1000}
             autoComplete="off"
           />
           <button
             type="submit"
             className="tg-send-fab"
-            disabled={!selectedMatchId || !text.trim()}
+            disabled={!selectedMatchId || uploadBusy || (!text.trim() && !pendingAttachment)}
             aria-label="Отправить"
           >
             <svg className="tg-send-fab-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden>
@@ -447,6 +848,7 @@ export function MatchesPage() {
             </svg>
           </button>
         </form>
+        </div>
       </section>
     </div>
   );

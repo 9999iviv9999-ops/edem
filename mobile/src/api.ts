@@ -192,3 +192,49 @@ export async function uploadProfilePhoto(localUri: string, mimeType: string, fil
   if (!payload.url) throw new Error("Сервер не вернул адрес фото");
   return payload.url;
 }
+
+export type ChatUploadedFile = { url: string; mimeType: string; filename: string; size: number };
+
+/** Загрузка файла для чата (изображение, PDF, Office, txt). */
+export async function uploadChatAttachment(localUri: string, mimeType: string, fileName: string): Promise<ChatUploadedFile> {
+  const post = async () => {
+    const form = new FormData();
+    form.append("file", { uri: localUri, name: fileName, type: mimeType } as unknown as Blob);
+    const headers: Record<string, string> = {};
+    if (session.accessToken) headers.Authorization = `Bearer ${session.accessToken}`;
+    let res: Response;
+    try {
+      res = await fetch(`${appConfig.apiUrl}/api/media/upload-chat-file`, {
+        method: "POST",
+        headers,
+        body: form
+      });
+    } catch {
+      throw new Error("Нет сети или сервер недоступен.");
+    }
+    const payload = (await res.json().catch(() => ({}))) as ChatUploadedFile & { error?: string };
+    return { res, payload };
+  };
+
+  let { res, payload } = await post();
+  if (res.status === 401) {
+    const refreshed = await refreshSessionIfNeeded();
+    if (refreshed) ({ res, payload } = await post());
+  }
+  if (!res.ok) {
+    if (res.status === 401) {
+      await clearSession();
+      authExpiredHandler?.();
+    }
+    throw new Error(
+      payload?.error ? mapApiErrorMessage(payload.error, res.status) : "Не удалось загрузить файл"
+    );
+  }
+  if (!payload.url || !payload.mimeType) throw new Error("Сервер не вернул данные файла");
+  return {
+    url: payload.url,
+    mimeType: payload.mimeType,
+    filename: payload.filename || fileName,
+    size: typeof payload.size === "number" ? payload.size : 0
+  };
+}

@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
+import { canonicalPhotoForForm, normalizePhotoUrl } from "../lib/photoUrl";
 import { TRAINER_SPECIALIZATIONS } from "../lib/trainerSpecializations";
 
 type Gym = { id: string; name: string; city: string; address?: string | null; chainName?: string | null };
@@ -10,36 +11,7 @@ type Gym = { id: string; name: string; city: string; address?: string | null; ch
 function isValidProfilePhotoUrl(url: string) {
   const value = url.trim();
   if (!value || value.startsWith("blob:") || value.startsWith("data:")) return false;
-  return /^https?:\/\//i.test(value) || value.startsWith("/uploads/");
-}
-
-function normalizePhotoUrl(url: string) {
-  const value = url.trim();
-  if (!value) return value;
-  if (value.startsWith("blob:") || value.startsWith("data:")) {
-    return value;
-  }
-  if (value.startsWith("uploads/")) {
-    return `${window.location.origin}/${value}`;
-  }
-  if (value.startsWith("/")) {
-    return `${window.location.origin}${value}`;
-  }
-  if (/^https?:\/\//i.test(value)) {
-    try {
-      const parsed = new URL(value);
-      if (parsed.pathname.startsWith("/uploads/")) {
-        return `${window.location.origin}${parsed.pathname}`;
-      }
-    } catch {
-      // Keep original URL if it cannot be parsed.
-    }
-  }
-  const uploadMatch = value.match(/(\/uploads\/[^?#]+)/i);
-  if (uploadMatch?.[1]) {
-    return `${window.location.origin}${uploadMatch[1]}`;
-  }
-  return value;
+  return /^https?:\/\//i.test(value) || /^\/uploads\//i.test(value);
 }
 
 export function ProfilePage() {
@@ -192,7 +164,7 @@ export function ProfilePage() {
         okrug: "",
         district: "",
         description: me.description || "",
-        photos: (me.photos || []).map((photo: string) => normalizePhotoUrl(photo)),
+        photos: (me.photos || []).map((photo: string) => canonicalPhotoForForm(photo)),
         mainGymId: main,
         extraGymIds: extra,
         goals: goals.map((x) => x.goal).filter(Boolean).length
@@ -336,7 +308,7 @@ export function ProfilePage() {
       fd.append("photo", file);
       const { data } = await api.post("/api/media/upload-photo", fd);
       if (data?.url) {
-        setForm((s) => ({ ...s, photos: [...s.photos, normalizePhotoUrl(data.url)] }));
+        setForm((s) => ({ ...s, photos: [...s.photos, canonicalPhotoForForm(String(data.url))] }));
         setMessage("Фото загружено");
       } else {
         setMessage("Не удалось получить ссылку на фото");
@@ -641,17 +613,21 @@ export function ProfilePage() {
             {form.photos.length > 0 ? (
               <div className="full photo-grid">
                 {form.photos.map((url, index) => (
-                  <div className="photo-card" key={url}>
+                  <div className="photo-card" key={`${index}-${url}`}>
                     <img
                       className="photo-card-image"
                       src={normalizePhotoUrl(url)}
                       alt={`Фото ${index + 1}`}
                       onError={(e) => {
-                        const failedSrc = e.currentTarget.currentSrc || e.currentTarget.src;
+                        const el = e.currentTarget;
+                        if (el.dataset.fallbackTried === "1") return;
+                        const failedSrc = el.currentSrc || el.src;
                         const match = failedSrc.match(/(\/uploads\/[^?#]+)/i);
-                        if (match?.[1]) {
-                          e.currentTarget.src = `${window.location.origin}${match[1]}`;
-                        }
+                        if (!match?.[1]) return;
+                        const fixed = `${window.location.origin}${match[1]}`;
+                        if (fixed === failedSrc) return;
+                        el.dataset.fallbackTried = "1";
+                        el.src = fixed;
                       }}
                     />
                     <div className="photo-card-actions">

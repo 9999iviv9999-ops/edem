@@ -34,7 +34,7 @@ import { MessagesScreen } from "./src/screens/BidsScreen";
 import { LikesScreen } from "./src/screens/LikesScreen";
 import { FeedScreen } from "./src/screens/MarketplaceScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
-import { SafetyScreen } from "./src/screens/SafetyScreen";
+import { TrainersScreen } from "./src/screens/TrainersScreen";
 import type { Match, TabKey } from "./src/types";
 
 const TOP_INSET = Platform.OS === "android" ? (NativeStatusBar.currentHeight ?? 0) : 0;
@@ -270,7 +270,7 @@ function App() {
           onInboxUpdated={refreshMessagesUnread}
         />
       );
-    if (tab === "safety") return <SafetyScreen />;
+    if (tab === "trainers") return <TrainersScreen />;
     return <ProfileScreen onLogout={() => void onLogout()} />;
   }, [tab, pendingChatMatchId, goToChatWithMatch, clearPendingChatMatch, refreshMessagesUnread]);
 

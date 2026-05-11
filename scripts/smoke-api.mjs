@@ -1,8 +1,14 @@
 #!/usr/bin/env node
+import { assertProdlikeGymCatalog } from "./edem-gym-catalog-guard.mjs";
 import process from "node:process";
 
-const baseUrl = process.env.SMOKE_API_URL || process.env.API_URL || "http://127.0.0.1:3000";
+const baseUrl = (process.env.SMOKE_API_URL || process.env.API_URL || "http://127.0.0.1:3000").replace(/\/$/, "");
 const timeoutMs = Number(process.env.SMOKE_TIMEOUT_MS || 20000);
+/** Регистрация в смоуке создаёт мусор в User. На проде по умолчанию выключено. Включить: SMOKE_REGISTER=1 */
+const doRegister = process.env.SMOKE_REGISTER === "1" || process.env.SMOKE_REGISTER === "true";
+/** Отключить проверку полного каталога (Челябинск): стенд без импортов — SMOKE_SKIP_CATALOG_GUARD=1 */
+const skipCatalogGuard =
+  process.env.SMOKE_SKIP_CATALOG_GUARD === "1" || process.env.SMOKE_SKIP_CATALOG_GUARD === "true";
 
 function withTimeout(url, init = {}) {
   const controller = new AbortController();
@@ -55,26 +61,37 @@ async function main() {
   }
   checks.push(`gyms_in_${city}=${gyms.length}`);
 
-  const stamp = Date.now();
-  const registerPayload = {
-    name: "Smoke Test User",
-    email: `smoke-${stamp}@example.com`,
-    phone: `+7999${String(stamp).slice(-7)}`,
-    password: "smoke12345",
-    age: 25,
-    gender: "male",
-    city,
-    acceptPrivacyPolicy: true
-  };
-  const reg = await expectJson("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(registerPayload)
-  });
-  if (!reg?.accessToken || !reg?.refreshToken) {
-    throw new Error("/api/auth/register: missing auth tokens");
+  if (!skipCatalogGuard) {
+    await assertProdlikeGymCatalog(baseUrl, timeoutMs);
+    checks.push("catalog_guard=ok");
+  } else {
+    checks.push("catalog_guard=skipped");
   }
-  checks.push("register=ok");
+
+  if (doRegister) {
+    const stamp = Date.now();
+    const registerPayload = {
+      name: "Smoke Test User",
+      email: `smoke-${stamp}@example.com`,
+      phone: `+7999${String(stamp).slice(-7)}`,
+      password: "smoke12345",
+      age: 25,
+      gender: "male",
+      city,
+      acceptPrivacyPolicy: true
+    };
+    const reg = await expectJson("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(registerPayload)
+    });
+    if (!reg?.accessToken || !reg?.refreshToken) {
+      throw new Error("/api/auth/register: missing auth tokens");
+    }
+    checks.push("register=ok");
+  } else {
+    checks.push("register=skipped");
+  }
 
   console.log(`SMOKE OK (${checks.join(", ")})`);
 }

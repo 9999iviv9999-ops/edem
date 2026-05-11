@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../lib/api";
+import { normalizePhotoUrl } from "../lib/photoUrl";
 
 type Comment = {
   id: string;
@@ -23,30 +24,25 @@ type ProfilePayload = {
     inGymAt?: string | null;
     inGymMinutes?: number;
     memberships: Array<{ isPrimary: boolean; gym: { id: string; name: string; city: string } }>;
+    isTrainer?: boolean;
+    trainerHeadline?: string | null;
+    trainerBio?: string | null;
+    trainerExperienceYears?: number | null;
+    trainerSpecializations?: string[];
+    trainerFormats?: string[];
+    trainerPriceFrom?: number | null;
+    trainerContacts?: string | null;
   };
   comments: Comment[];
+  trainerReviews: Array<{
+    id: string;
+    specialization: string;
+    rating: number;
+    text: string;
+    createdAt: string;
+    author: { id: string; name: string; photos: string[] };
+  }>;
 };
-
-function normalizePhotoUrl(url: string) {
-  const value = url.trim();
-  if (!value) return value;
-  if (value.startsWith("blob:") || value.startsWith("data:")) return value;
-  if (value.startsWith("uploads/")) return `${window.location.origin}/${value}`;
-  if (value.startsWith("/")) return `${window.location.origin}${value}`;
-  if (/^https?:\/\//i.test(value)) {
-    try {
-      const parsed = new URL(value);
-      if (parsed.pathname.startsWith("/uploads/")) {
-        return `${window.location.origin}${parsed.pathname}`;
-      }
-    } catch {
-      // Keep original URL if parse fails.
-    }
-  }
-  const uploadMatch = value.match(/(\/uploads\/[^?#]+)/i);
-  if (uploadMatch?.[1]) return `${window.location.origin}${uploadMatch[1]}`;
-  return value;
-}
 
 export function ProfileViewPage() {
   const { userId = "" } = useParams();
@@ -55,6 +51,9 @@ export function ProfileViewPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [reviewText, setReviewText] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewSpecialization, setReviewSpecialization] = useState("");
   const [activePhoto, setActivePhoto] = useState(0);
   const [commentTarget, setCommentTarget] = useState<"profile" | "photo">("profile");
 
@@ -70,6 +69,12 @@ export function ProfileViewPage() {
     return all.filter((c) => c.photoIndex === activePhoto);
   }, [data?.comments, commentTarget, activePhoto]);
   const primaryGym = data?.profile.memberships.find((m) => m.isPrimary)?.gym;
+  const trainerRatingStats = useMemo(() => {
+    const rows = data?.trainerReviews || [];
+    if (!rows.length) return null;
+    const avg = rows.reduce((sum, r) => sum + r.rating, 0) / rows.length;
+    return { avg, count: rows.length };
+  }, [data?.trainerReviews]);
 
   useEffect(() => {
     if (!userId) return;
@@ -89,6 +94,11 @@ export function ProfileViewPage() {
       setMyUserId(String(meRes.data?.id || ""));
       setActivePhoto(0);
       setCommentTarget("profile");
+      setReviewText("");
+      setReviewRating(5);
+      setReviewSpecialization(
+        payload?.profile?.trainerSpecializations?.[0] || ""
+      );
     } catch (err: unknown) {
       const ax = err as { response?: { data?: { error?: string } } };
       setError(ax.response?.data?.error || "Не удалось открыть анкету");
@@ -134,23 +144,55 @@ export function ProfileViewPage() {
     }
   }
 
+  async function postTrainerReview(e: FormEvent) {
+    e.preventDefault();
+    if (!userId || !reviewText.trim() || !reviewSpecialization.trim()) return;
+    try {
+      await api.post(`/api/profiles/${userId}/trainer-reviews`, {
+        specialization: reviewSpecialization.trim(),
+        rating: reviewRating,
+        text: reviewText.trim()
+      });
+      setReviewText("");
+      await load();
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setError(ax.response?.data?.error || "Не удалось отправить отзыв");
+    }
+  }
+
+  async function deleteTrainerReview(reviewId: string) {
+    try {
+      await api.delete(`/api/profiles/trainer-reviews/${reviewId}`);
+      await load();
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { error?: string } } };
+      setError(ax.response?.data?.error || "Не удалось удалить отзыв");
+    }
+  }
+
   return (
-    <div className="grid">
-      <section className="card">
-        <Link to="/" className="ghost-btn" style={{ width: "fit-content" }}>
-          Назад в ленту
-        </Link>
-        {loading ? <p className="page-sub">Загружаем анкету...</p> : null}
-        {error ? <div className="error">{error}</div> : null}
-        {data ? (
-          <div className="grid">
-            <div className="profile-view-photo">
-              <img
-                className="profile-view-photo-main"
-                src={normalizePhotoUrl(photos[activePhoto])}
-                alt={`${data.profile.name} фото ${activePhoto + 1}`}
-              />
-              <div className="profile-view-photo-controls">
+    <div className="grid profile-view-page">
+      <section className="card profile-view-main-card">
+        <div className="profile-view-main-toolbar">
+          <Link to="/" className="ghost-btn" style={{ width: "fit-content" }}>
+            Назад в ленту
+          </Link>
+        </div>
+        <div className="profile-view-scroll">
+          {loading ? <p className="page-sub">Загружаем анкету...</p> : null}
+          {error ? <div className="error">{error}</div> : null}
+          {data ? (
+            <div className="grid profile-view-inner">
+              <div className="profile-view-photo">
+                <div className="profile-view-photo-frame">
+                  <img
+                    className="profile-view-photo-main"
+                    src={normalizePhotoUrl(photos[activePhoto])}
+                    alt={`${data.profile.name} фото ${activePhoto + 1}`}
+                  />
+                </div>
+                <div className="profile-view-photo-controls">
                 <button
                   className="ghost-btn"
                   type="button"
@@ -170,9 +212,9 @@ export function ProfileViewPage() {
                 >
                   Вперед
                 </button>
+                </div>
               </div>
-            </div>
-            <div>
+              <div>
               <h2 className="page-title">
                 {data.profile.name}, {data.profile.age}
               </h2>
@@ -189,10 +231,120 @@ export function ProfileViewPage() {
                 {primaryGym ? ` · ${primaryGym.name}` : ""}
               </p>
               <p>{data.profile.description || "Пользователь пока не добавил описание."}</p>
+              {data.profile.isTrainer ? (
+                <div className="grid" style={{ marginTop: 12 }}>
+                  <h3 className="page-title page-title--sm">Профиль тренера</h3>
+                  {data.profile.trainerHeadline ? <p>{data.profile.trainerHeadline}</p> : null}
+                  {data.profile.trainerBio ? <p className="page-sub">{data.profile.trainerBio}</p> : null}
+                  <div className="chips">
+                    {data.profile.trainerExperienceYears ? (
+                      <span className="chip">Стаж: {data.profile.trainerExperienceYears} лет</span>
+                    ) : null}
+                    {data.profile.trainerPriceFrom ? (
+                      <span className="chip">Цена от: {data.profile.trainerPriceFrom} ₽</span>
+                    ) : null}
+                    {trainerRatingStats ? (
+                      <span className="chip">
+                        Рейтинг: {trainerRatingStats.avg.toFixed(1)} ({trainerRatingStats.count})
+                      </span>
+                    ) : null}
+                  </div>
+                  {data.profile.trainerSpecializations?.length ? (
+                    <p className="page-sub">
+                      Специализации: {data.profile.trainerSpecializations.join(" · ")}
+                    </p>
+                  ) : null}
+                  {data.profile.trainerFormats?.length ? (
+                    <p className="page-sub">
+                      Форматы: {data.profile.trainerFormats.join(" · ")}
+                    </p>
+                  ) : null}
+                  {data.profile.trainerContacts ? (
+                    <p className="page-sub">Контакты: {data.profile.trainerContacts}</p>
+                  ) : null}
+                </div>
+              ) : null}
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
+        </div>
       </section>
+
+      {data?.profile.isTrainer ? (
+        <section className="card">
+          <h3 className="page-title page-title--sm">Отзывы о тренере</h3>
+          <form onSubmit={postTrainerReview} className="grid">
+            <div className="grid two-col">
+              <label className="field">
+                <span className="field-label">Специализация</span>
+                <select
+                  value={reviewSpecialization}
+                  onChange={(e) => setReviewSpecialization(e.target.value)}
+                >
+                  <option value="">Выбери специализацию</option>
+                  {(data.profile.trainerSpecializations || []).map((spec) => (
+                    <option key={spec} value={spec}>
+                      {spec}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="field">
+                <span className="field-label">Оценка</span>
+                <select
+                  value={String(reviewRating)}
+                  onChange={(e) => setReviewRating(Number(e.target.value))}
+                >
+                  {[5, 4, 3, 2, 1].map((rate) => (
+                    <option key={rate} value={rate}>
+                      {rate} / 5
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <textarea
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Опиши опыт работы с тренером по выбранной специализации..."
+              maxLength={800}
+            />
+            <button
+              className="primary-btn"
+              type="submit"
+              disabled={!reviewText.trim() || !reviewSpecialization.trim()}
+            >
+              Оставить отзыв
+            </button>
+          </form>
+          <div className="list">
+            {(data.trainerReviews || []).map((review) => (
+              <div key={review.id} className="list-item">
+                <div className="chat-list-head">
+                  <span className="chat-list-name">{review.author.name}</span>
+                  <span className="chat-list-sub">★ {review.rating}/5</span>
+                </div>
+                <span className="chip">{review.specialization}</span>
+                <span className="chat-list-preview" style={{ whiteSpace: "normal" }}>
+                  {review.text}
+                </span>
+                {myUserId === review.author.id || myUserId === data.profile.id ? (
+                  <button
+                    className="ghost-btn"
+                    type="button"
+                    onClick={() => void deleteTrainerReview(review.id)}
+                  >
+                    Удалить отзыв
+                  </button>
+                ) : null}
+              </div>
+            ))}
+            {!(data.trainerReviews || []).length ? (
+              <p className="page-sub">Пока отзывов нет.</p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
 
       <section className="card">
         <h3 className="page-title page-title--sm">

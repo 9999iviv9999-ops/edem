@@ -1,7 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BackHandler, FlatList, Image, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { apiRequest } from "../api";
+import {
+  Alert,
+  BackHandler,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from "react-native";
+import { apiRequest, uploadChatAttachment, type ChatUploadedFile } from "../api";
 import { ProfileDetailModal } from "../components/ProfileDetailModal";
 import { normalizePhotoUrl } from "../lib/photo";
 import { Match, Message } from "../types";
@@ -21,6 +36,17 @@ type MessagesScreenProps = {
   onInboxUpdated?: () => void;
 };
 
+const CHAT_FILE_MAX = 12 * 1024 * 1024;
+
+function formatThreadPreview(m?: Message): string {
+  if (!m) return "Напиши первым";
+  const has = Boolean(m.attachmentUrl || m.attachmentFilename);
+  const t = (m.text || "").trim();
+  if (has && !t) return `📎 ${m.attachmentFilename || "Файл"}`;
+  if (has && t) return `${t.length > 48 ? `${t.slice(0, 48)}…` : t} · 📎`;
+  return t || "Сообщение";
+}
+
 export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInboxUpdated }: MessagesScreenProps) {
   const onConsumedRef = useRef(onOpenMatchConsumed);
   onConsumedRef.current = onOpenMatchConsumed;
@@ -34,6 +60,8 @@ export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInbo
   const [text, setText] = useState("");
   const [error, setError] = useState("");
   const [detailUserId, setDetailUserId] = useState<string | null>(null);
+  const [pendingAttachment, setPendingAttachment] = useState<ChatUploadedFile | null>(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
 
   async function loadMatches() {
     const [me, dialogs] = await Promise.all([
@@ -73,6 +101,10 @@ export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInbo
     setSelectedMatchId(openMatchId);
     onConsumedRef.current?.();
   }, [openMatchId]);
+
+  useEffect(() => {
+    setPendingAttachment(null);
+  }, [selectedMatchId]);
 
   useEffect(() => {
     if (!selectedMatchId) return;
@@ -117,7 +149,7 @@ export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInbo
           peerUserId: peer?.id || "",
           name: peer?.name || "Пользователь",
           photoUrl: normalizePhotoUrl(peer?.photos?.[0]),
-          preview: m.messages?.[0]?.text || "Напиши первым",
+          preview: formatThreadPreview(m.messages?.[0]),
           unread: m.unreadCount ?? 0
         };
       }),
@@ -129,18 +161,90 @@ export function MessagesScreen({ openMatchId = null, onOpenMatchConsumed, onInbo
   const totalUnread = useMemo(() => threads.reduce((a, t) => a + t.unread, 0), [threads]);
 
   async function onSend() {
-    if (!selectedMatchId || !text.trim()) return;
+    if (!selectedMatchId || (!text.trim() && !pendingAttachment) || uploadBusy) return;
     try {
       setError("");
       await apiRequest("/api/messages", {
         method: "POST",
-        body: { matchId: selectedMatchId, text: text.trim() }
+        body: {
+          matchId: selectedMatchId,
+          text: text.trim(),
+          ...(pendingAttachment
+            ? {
+                attachmentUrl: pendingAttachment.url,
+                attachmentMime: pendingAttachment.mimeType,
+                attachmentFilename: pendingAttachment.filename,
+                attachmentSize: pendingAttachment.size
+              }
+            : {})
+        }
       });
       setText("");
+      setPendingAttachment(null);
       await Promise.all([loadMessages(selectedMatchId), loadMatches()]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось отправить сообщение");
     }
+  }
+
+  async function pickPhoto() {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (perm.status !== "granted") {
+        setError("Нет доступа к галерее");
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.88
+      });
+      if (res.canceled || !res.assets?.[0]) return;
+      const a = res.assets[0];
+      if (a.fileSize && a.fileSize > CHAT_FILE_MAX) {
+        setError("Файл больше 12 МБ");
+        return;
+      }
+      const uri = a.uri;
+      const mime = a.mimeType || "image/jpeg";
+      const name = a.fileName || `photo-${Date.now()}.jpg`;
+      setUploadBusy(true);
+      setError("");
+      const up = await uploadChatAttachment(uri, mime, name);
+      setPendingAttachment(up);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось загрузить фото");
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
+  async function pickDocument() {
+    try {
+      const res = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false });
+      if (res.canceled || !res.assets?.[0]) return;
+      const f = res.assets[0];
+      if (f.size && f.size > CHAT_FILE_MAX) {
+        setError("Файл больше 12 МБ");
+        return;
+      }
+      const mime = f.mimeType || "application/octet-stream";
+      setUploadBusy(true);
+      setError("");
+      const up = await uploadChatAttachment(f.uri, mime, f.name || "document");
+      setPendingAttachment(up);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Не удалось загрузить файл");
+    } finally {
+      setUploadBusy(false);
+    }
+  }
+
+  function openAttachMenu() {
+    Alert.alert("Вложение", undefined, [
+      { text: "Отмена", style: "cancel" },
+      { text: "Фото", onPress: () => void pickPhoto() },
+      { text: "Документ", onPress: () => void pickDocument() }
+    ]);
   }
 
   if (!selectedMatchId) {
@@ -421,6 +525,57 @@ const styles = StyleSheet.create({
     color: "#f4f7ff",
     fontSize: 16,
     lineHeight: 22
+  },
+  bubbleAttachImg: {
+    width: 220,
+    maxWidth: "100%",
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: "#0f1a2d"
+  },
+  bubbleAttachLink: {
+    color: "#b8d0ff",
+    fontSize: 15,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+    marginBottom: 6
+  },
+  attachChipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderTopWidth: 1,
+    borderTopColor: "#243553",
+    backgroundColor: "#0d1524"
+  },
+  attachChipText: {
+    flex: 1,
+    color: "#dce9ff",
+    fontSize: 14
+  },
+  attachChipRemove: {
+    color: "#c8d8ff",
+    fontSize: 22,
+    fontWeight: "700",
+    paddingHorizontal: 8
+  },
+  attachFab: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2a3f63",
+    backgroundColor: "#0f1a2d",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2
+  },
+  attachFabDisabled: {
+    opacity: 0.45
   },
   composer: {
     flexDirection: "row",

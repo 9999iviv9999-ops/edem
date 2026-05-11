@@ -78,6 +78,16 @@ model User {
   profileBadge      String?
   /** Пользователь вручную включил статус "Я в зале" */
   inGymAt           DateTime?
+  /** Режим "Я тренер" для поиска клиентов внутри EDEM */
+  isTrainer         Boolean             @default(false)
+  trainerHeadline   String?
+  trainerBio        String?
+  trainerExperienceYears Int?
+  trainerSpecializations String[]
+  trainerFormats    String[]
+  trainerPriceFrom  Int?
+  trainerContacts   String?
+  trainerVisible    Boolean             @default(false)
   banReason         String?
   companyMemberships CompanyMember[]
   vprokOrders       VprokOrder[]
@@ -87,7 +97,12 @@ model User {
   adminAuditLogs    AdminAuditLog[]
   profileCommentsWritten  ProfileComment[] @relation("ProfileCommentAuthor")
   profileCommentsReceived ProfileComment[] @relation("ProfileCommentTarget")
+  trainerReviewsWritten   TrainerReview[]  @relation("TrainerReviewAuthor")
+  trainerReviewsReceived  TrainerReview[]  @relation("TrainerReviewTrainer")
   pushDevices             PushDevice[]
+
+  @@index([isTrainer, trainerVisible, city])
+  @@index([trainerVisible, updatedAt])
 }
 
 /** Токен Expo Push / FCM для мобильных уведомлений */
@@ -234,9 +249,15 @@ model Message {
   id        String   @id @default(cuid())
   matchId   String
   fromUserId String
-  text      String
+  /** Подпись к сообщению; может быть пустой строкой, если есть только вложение. */
+  text      String   @default("")
   createdAt DateTime @default(now())
   readAt    DateTime?
+  /** URL вложения (тот же хостинг, что и фото профиля: /uploads/... или S3). */
+  attachmentUrl      String?
+  attachmentMime     String?
+  attachmentFilename String?
+  attachmentSize     Int?
   match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
   fromUser  User     @relation(fields: [fromUserId], references: [id], onDelete: Cascade)
 
@@ -256,6 +277,24 @@ model ProfileComment {
 
   @@index([targetUserId, createdAt])
   @@index([authorId, createdAt])
+  @@index([targetUserId, photoIndex, createdAt])
+}
+
+model TrainerReview {
+  id             String   @id @default(cuid())
+  trainerUserId  String
+  authorUserId   String
+  specialization String
+  rating         Int
+  text           String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  trainer        User     @relation("TrainerReviewTrainer", fields: [trainerUserId], references: [id], onDelete: Cascade)
+  author         User     @relation("TrainerReviewAuthor", fields: [authorUserId], references: [id], onDelete: Cascade)
+
+  @@unique([trainerUserId, authorUserId, specialization])
+  @@index([trainerUserId, specialization, createdAt])
+  @@index([authorUserId, createdAt])
 }
 
 model RefreshSession {

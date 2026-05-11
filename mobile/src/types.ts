@@ -1,4 +1,4 @@
-export type TabKey = "feed" | "likes" | "messages" | "safety" | "profile";
+export type TabKey = "feed" | "likes" | "messages" | "trainers" | "profile";
 
 export type Gym = {
   id: string;
@@ -35,4 +35,8 @@ export type Message = {
   createdAt: string;
   fromUserId: string;
   readAt?: string | null;
+  attachmentUrl?: string | null;
+  attachmentMime?: string | null;
+  attachmentFilename?: string | null;
+  attachmentSize?: number | null;
 };

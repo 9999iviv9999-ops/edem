@@ -3,6 +3,7 @@ import { Goal, TrainingTimeSlot, TrainingType } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { env } from "../lib/env";
+import { TRAINER_SPECIALIZATIONS } from "../lib/trainer-specializations";
 import { requireAuth } from "../middleware/auth";
 import { zCommaList, zCuid } from "../lib/validation";
 
@@ -10,7 +11,7 @@ const photoUrlSchema = z
   .string()
   .trim()
   .max(2048)
-  .refine((value) => /^https?:\/\//i.test(value) || value.startsWith("/uploads/"), {
+  .refine((value) => /^https?:\/\//i.test(value) || value.toLowerCase().startsWith("/uploads/"), {
     message: "Photo must be an absolute URL or local /uploads path"
   });
 
@@ -52,6 +53,17 @@ const patchPhotosSchema = z.object({
 const patchInGymSchema = z.object({
   inGym: z.boolean()
 });
+const patchTrainerProfileSchema = z.object({
+  isTrainer: z.boolean().default(false),
+  trainerHeadline: z.string().trim().max(120).optional().default(""),
+  trainerBio: z.string().trim().max(1200).optional().default(""),
+  trainerExperienceYears: z.number().int().min(0).max(60).nullable().optional(),
+  trainerSpecializations: z.array(z.enum(TRAINER_SPECIALIZATIONS)).max(20).default([]),
+  trainerFormats: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
+  trainerPriceFrom: z.number().int().min(0).max(1000000).nullable().optional(),
+  trainerContacts: z.string().trim().max(500).optional().default(""),
+  trainerVisible: z.boolean().optional()
+});
 
 const filterSchema = z.object({
   minAge: z.coerce.number().int().optional(),
@@ -63,6 +75,11 @@ const filterSchema = z.object({
 const createProfileCommentSchema = z.object({
   text: z.string().trim().min(1).max(400),
   photoIndex: z.number().int().min(0).max(5).nullable().optional()
+});
+const createTrainerReviewSchema = z.object({
+  specialization: z.enum(TRAINER_SPECIALIZATIONS),
+  rating: z.number().int().min(1).max(5),
+  text: z.string().trim().min(3).max(800)
 });
 
 const IN_GYM_ACTIVE_MS = Math.max(5, env.IN_GYM_ACTIVE_MINUTES) * 60 * 1000;
@@ -273,6 +290,52 @@ profilesRouter.patch("/me/in-gym", requireAuth, async (req, res, next) => {
   }
 });
 
+profilesRouter.patch("/me/trainer", requireAuth, async (req, res, next) => {
+  try {
+    const data = patchTrainerProfileSchema.parse(req.body);
+    const isTrainer = Boolean(data.isTrainer);
+    const trainerHeadline = data.trainerHeadline.trim() || null;
+    const trainerBio = data.trainerBio.trim() || null;
+    const trainerContacts = data.trainerContacts.trim() || null;
+    const trainerExperienceYears =
+      typeof data.trainerExperienceYears === "number" ? data.trainerExperienceYears : null;
+    const trainerPriceFrom = typeof data.trainerPriceFrom === "number" ? data.trainerPriceFrom : null;
+    const trainerSpecializations = data.trainerSpecializations
+      .map((item) => item.trim())
+      .filter(Boolean);
+    const trainerFormats = data.trainerFormats.map((item) => item.trim()).filter(Boolean);
+
+    const updated = await prisma.user.update({
+      where: { id: req.userId! },
+      data: {
+        isTrainer,
+        trainerHeadline,
+        trainerBio,
+        trainerExperienceYears,
+        trainerSpecializations,
+        trainerFormats,
+        trainerPriceFrom,
+        trainerContacts,
+        trainerVisible: data.trainerVisible ?? isTrainer
+      },
+      select: {
+        isTrainer: true,
+        trainerHeadline: true,
+        trainerBio: true,
+        trainerExperienceYears: true,
+        trainerSpecializations: true,
+        trainerFormats: true,
+        trainerPriceFrom: true,
+        trainerContacts: true,
+        trainerVisible: true
+      }
+    });
+    return res.json(updated);
+  } catch (err) {
+    return next(err);
+  }
+});
+
 profilesRouter.put("/me", requireAuth, async (req, res, next) => {
   try {
     const data = updateProfileSchema.parse(req.body);
@@ -438,6 +501,15 @@ profilesRouter.get("/:userId", requireAuth, async (req, res, next) => {
         isVerified: true,
         profileBadge: true,
         inGymAt: true,
+        isTrainer: true,
+        trainerHeadline: true,
+        trainerBio: true,
+        trainerExperienceYears: true,
+        trainerSpecializations: true,
+        trainerFormats: true,
+        trainerPriceFrom: true,
+        trainerContacts: true,
+        trainerVisible: true,
         memberships: {
           select: {
             isPrimary: true,
@@ -459,6 +531,18 @@ profilesRouter.get("/:userId", requireAuth, async (req, res, next) => {
       orderBy: { createdAt: "desc" },
       take: 100
     });
+    const trainerReviews = user.isTrainer
+      ? await prisma.trainerReview.findMany({
+          where: { trainerUserId: userId },
+          include: {
+            author: {
+              select: { id: true, name: true, photos: true }
+            }
+          },
+          orderBy: { createdAt: "desc" },
+          take: 200
+        })
+      : [];
 
     const gymState = inGymState(user.inGymAt);
     if (gymState.expired && user.inGymAt) {
@@ -475,8 +559,79 @@ profilesRouter.get("/:userId", requireAuth, async (req, res, next) => {
         inGymAt: gymState.inGymAt,
         inGymMinutes: gymState.inGymMinutes
       },
-      comments
+      comments,
+      trainerReviews
     });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+profilesRouter.post("/:userId/trainer-reviews", requireAuth, async (req, res, next) => {
+  try {
+    const trainerUserId = req.params.userId;
+    if (trainerUserId === req.userId) {
+      return res.status(400).json({ error: "Cannot review yourself" });
+    }
+    const body = createTrainerReviewSchema.parse(req.body);
+    const trainer = await prisma.user.findUnique({
+      where: { id: trainerUserId },
+      select: { id: true, isTrainer: true, trainerSpecializations: true }
+    });
+    if (!trainer || !trainer.isTrainer) {
+      return res.status(404).json({ error: "Trainer not found" });
+    }
+
+    const specialization = body.specialization.trim();
+    if (
+      trainer.trainerSpecializations.length > 0 &&
+      !trainer.trainerSpecializations.some((s) => s.toLowerCase() === specialization.toLowerCase())
+    ) {
+      return res.status(400).json({ error: "Specialization is not available for this trainer" });
+    }
+
+    const review = await prisma.trainerReview.upsert({
+      where: {
+        trainerUserId_authorUserId_specialization: {
+          trainerUserId,
+          authorUserId: req.userId!,
+          specialization
+        }
+      },
+      create: {
+        trainerUserId,
+        authorUserId: req.userId!,
+        specialization,
+        rating: body.rating,
+        text: body.text
+      },
+      update: {
+        rating: body.rating,
+        text: body.text
+      },
+      include: {
+        author: { select: { id: true, name: true, photos: true } }
+      }
+    });
+
+    return res.status(201).json(review);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+profilesRouter.delete("/trainer-reviews/:reviewId", requireAuth, async (req, res, next) => {
+  try {
+    const review = await prisma.trainerReview.findUnique({
+      where: { id: req.params.reviewId },
+      select: { id: true, authorUserId: true, trainerUserId: true }
+    });
+    if (!review) return res.status(404).json({ error: "Review not found" });
+    if (review.authorUserId !== req.userId && review.trainerUserId !== req.userId) {
+      return res.status(403).json({ error: "Not allowed to delete this review" });
+    }
+    await prisma.trainerReview.delete({ where: { id: review.id } });
+    return res.json({ ok: true });
   } catch (err) {
     return next(err);
   }

@@ -18,3 +18,6 @@ scripts/russia-cities-full.json
 scripts/_fetch_gyms_batch_progress.json
 
 .vercel
+
+# Выгрузки ПДн (тренеры и т.п.) — не коммитить
+scripts/data/generated/

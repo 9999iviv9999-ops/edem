@@ -34,6 +34,9 @@ jobs:
       - name: Build API
         run: npm run build
 
+      - name: Verify gym-catalog in dist (ЭДЕМ whitelist)
+        run: npm run verify:gym-catalog-build
+
       - name: Install & build edem-web
         run: |
           npm --prefix edem-web ci

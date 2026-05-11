@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
 import { api } from "../lib/api";
+import { normalizePhotoUrl } from "../lib/photoUrl";
 
 type Gym = { id: string; name: string; city: string; address?: string | null; chainName?: string | null };
 type Profile = {
@@ -13,26 +14,6 @@ type Profile = {
   photos: string[];
   profileBadge?: string | null;
 };
-
-function normalizePhotoUrl(url?: string) {
-  const value = (url || "").trim();
-  if (!value) return "";
-  if (value.startsWith("/")) return `${window.location.origin}${value}`;
-  if (value.startsWith("uploads/")) return `${window.location.origin}/${value}`;
-  if (/^https?:\/\//i.test(value)) {
-    try {
-      const parsed = new URL(value);
-      if (parsed.pathname.startsWith("/uploads/")) {
-        return `${window.location.origin}${parsed.pathname}`;
-      }
-    } catch {
-      // Keep original URL if parse fails.
-    }
-  }
-  const uploadMatch = value.match(/(\/uploads\/[^?#]+)/i);
-  if (uploadMatch?.[1]) return `${window.location.origin}${uploadMatch[1]}`;
-  return value;
-}
 
 export function FeedPage() {
   const navigate = useNavigate();

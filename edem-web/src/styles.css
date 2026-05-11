@@ -130,6 +130,82 @@ button {
   min-height: 100vh;
 }
 
+/*
+ * /messages: жёсткая высота окна + overflow:hidden — иначе скроллится document
+ * и «гуляет» поле ввода; крутится только .tg-chat-box / .list внутри карточек.
+ */
+.layout.layout--messages {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.layout.layout--messages > .topbar {
+  flex-shrink: 0;
+}
+
+.layout.layout--messages > main.container {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* margin/padding у .container иначе сумма > 100dvh → скролл body */
+  margin: 0 auto;
+  padding-top: 8px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+.layout.layout--messages > .logout-bottom {
+  flex-shrink: 0;
+}
+
+.layout.layout--messages > .bottom-nav {
+  flex-shrink: 0;
+}
+
+.layout.layout--messages .match-layout.tg-layout {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  align-items: stretch;
+  grid-template-columns: 1fr;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.layout.layout--messages .tg-chat-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@supports selector(:has(*)) {
+  body:has(.layout.layout--messages) {
+    overflow: hidden;
+    height: 100dvh;
+    max-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+}
+
+@media (min-width: 921px) {
+  .layout.layout--messages .match-layout.tg-layout {
+    grid-template-columns: minmax(280px, 33%) 1fr;
+  }
+
+  .layout.layout--messages .tg-sidebar,
+  .layout.layout--messages .tg-chat-card {
+    height: 100%;
+    max-height: none;
+  }
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -463,8 +539,10 @@ label.field select:not(.multi) {
 .photo-card-image {
   width: 100%;
   height: 160px;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center center;
   display: block;
+  background: rgba(6, 10, 18, 0.65);
 }
 
 .photo-card-actions {
@@ -938,6 +1016,8 @@ label.field select:not(.multi) {
   height: min(78vh, 860px);
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Без класса .card: иначе остаётся «старый» зелёный фрейм Eden (border + --eden-shadow) вокруг переписки. */
@@ -970,11 +1050,16 @@ label.field select:not(.multi) {
 }
 
 .tg-sidebar .list {
+  flex: 1 1 auto;
+  min-height: 0;
   margin-top: 4px;
   padding: 4px 2px 2px;
   border-radius: 12px;
   border: 1px solid rgba(127, 156, 207, 0.2);
   background: rgba(8, 14, 24, 0.38);
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
 }
 
 .messages-search {
@@ -1160,9 +1245,14 @@ label.field select:not(.multi) {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
   padding-bottom: 10px;
   margin-bottom: 8px;
   border-bottom: 1px solid var(--ui-border);
+}
+
+.tg-chat-card > h3 {
+  flex-shrink: 0;
 }
 
 a.tg-chat-header-profile {
@@ -1282,23 +1372,33 @@ a.tg-chat-header-profile:focus-visible {
 }
 
 .tg-chat-box {
-  flex: 1 1 auto;
+  /* flex-basis 0: лента сжимается в оставшуюся высоту карточки, скролл только здесь (как в Telegram). */
+  flex: 1 1 0;
   max-height: none;
   min-height: 0;
   margin-bottom: 0;
-  overflow: auto;
+  /* scroll, не auto: иначе при появлении 2-го сообщения полоса прокрутки сужает ленту — визуально «съезжает» поле ввода относительно пузырей. */
+  overflow-x: hidden;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
   padding: 12px 14px;
   display: grid;
   gap: 10px;
   align-content: start;
   border: none;
-  border-radius: 16px;
+  border-radius: 14px;
   box-shadow: none;
   background:
-    radial-gradient(ellipse at 80% -30%, rgba(124, 156, 255, 0.1), transparent 42%),
-    radial-gradient(ellipse at 10% 120%, rgba(94, 234, 212, 0.06), transparent 45%),
-    rgba(10, 18, 30, 0.82);
-  scroll-behavior: smooth;
+    radial-gradient(ellipse at 80% -30%, rgba(124, 156, 255, 0.08), transparent 44%),
+    radial-gradient(ellipse at 10% 120%, rgba(94, 234, 212, 0.05), transparent 46%),
+    rgba(10, 18, 30, 0.78);
+  /* smooth + программный scrollTop конфликтуют с жестом; мессенджеры держат инерцию внутри области. */
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+  /* Меньше скачков при подгрузке/опросе сообщений над видимой областью. */
+  overflow-anchor: none;
 }
 
 .bubble {
@@ -1334,20 +1434,20 @@ a.tg-chat-header-profile:focus-visible {
   align-items: flex-end;
   flex-shrink: 0;
   margin-left: 2px;
-  color: rgba(200, 214, 245, 0.5);
+  color: rgba(190, 200, 228, 0.52);
   line-height: 1;
 }
 
 .tg-read-ticks--read {
-  color: rgba(125, 211, 252, 0.95);
+  color: #c4b5fd;
 }
 
 .bubble.own .tg-read-ticks {
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .bubble.own .tg-read-ticks--read {
-  color: rgba(186, 240, 255, 0.95);
+  color: #e9d5ff;
 }
 
 .tg-read-svg {
@@ -1365,18 +1465,279 @@ a.tg-chat-header-profile:focus-visible {
   color: var(--ui-text-muted);
 }
 
+/* Горизонтальный padding = у .tg-chat-box, иначе поле ввода шире ленты пузырей и «съезжает». */
+.tg-composer-shell {
+  flex-shrink: 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--ui-border);
+  position: relative;
+}
+
+.tg-composer-shell .tg-composer {
+  margin-top: 0;
+  border-top: none;
+  /* Sticky внутри overflow даёт «плавание»; низ карточки держит flex-колонка .tg-chat-card. */
+  position: static;
+  bottom: auto;
+  z-index: auto;
+}
+
+/* Вне потока композера — иначе absolute внутри shell перекрывал кнопки слева. */
+.tg-attach-input-hidden {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+  overflow: hidden;
+  border: 0;
+}
+
+.tg-composer-pending {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 14px 6px;
+  background: rgba(88, 119, 205, 0.1);
+  border-bottom: 1px solid rgba(130, 162, 220, 0.22);
+}
+
+.tg-composer-pending-name {
+  font-size: 0.82rem;
+  color: #dce9ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tg-composer-pending-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(24, 38, 62, 0.75);
+  color: #c8d8ff;
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tg-composer-pending-remove:hover:not(:disabled) {
+  background: rgba(88, 119, 205, 0.35);
+}
+
+.tg-composer-pending-remove:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.tg-attach-img-wrap {
+  display: block;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: min(260px, 72vw);
+}
+
+.tg-attach-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.tg-attach-link {
+  display: inline-block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #b8d0ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-word;
+}
+
+.tg-attach-link:hover {
+  color: #e8f0ff;
+}
+
+.tg-bubble-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .tg-composer {
   display: flex;
   flex-direction: row;
   align-items: flex-end;
   gap: 10px;
+  flex-shrink: 0;
   margin-top: 10px;
-  padding-top: 10px;
+  padding: 10px 14px 2px;
+  border: none;
+  border-radius: 0;
   border-top: 1px solid var(--ui-border);
-  background: var(--ui-surface);
-  position: sticky;
-  bottom: 0;
+  background: transparent;
+  box-shadow: none;
+  position: relative;
   z-index: 2;
+}
+
+.tg-composer-tools {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+.tg-composer-icon-btn {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(90, 115, 160, 0.45);
+  background: rgba(15, 26, 45, 0.88);
+  color: #dce9ff;
+  font-size: 1.15rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.tg-composer-icon-btn:hover {
+  border-color: rgba(124, 156, 255, 0.5);
+  background: rgba(22, 36, 58, 0.95);
+}
+
+.tg-composer-icon-btn[aria-expanded="true"] {
+  border-color: rgba(124, 156, 255, 0.65);
+  background: rgba(88, 119, 205, 0.22);
+}
+
+.tg-attach-svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.tg-composer-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  min-width: 220px;
+  max-width: min(92vw, 320px);
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(130, 162, 220, 0.35);
+  background: rgba(12, 20, 36, 0.96);
+  box-shadow: 0 12px 36px rgba(4, 8, 18, 0.55);
+  backdrop-filter: blur(12px);
+}
+
+.tg-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 4px;
+}
+
+.tg-emoji-cell {
+  min-height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.tg-emoji-cell:hover {
+  background: rgba(124, 156, 255, 0.18);
+}
+
+.tg-wallpaper-list {
+  display: grid;
+  gap: 8px;
+}
+
+.tg-wallpaper-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(90, 115, 160, 0.35);
+  background: rgba(15, 24, 40, 0.75);
+  color: #e8f0ff;
+  font-size: 0.88rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.tg-wallpaper-option:hover {
+  border-color: rgba(124, 156, 255, 0.45);
+  background: rgba(22, 34, 54, 0.88);
+}
+
+.tg-wallpaper-option--active {
+  border-color: rgba(94, 234, 212, 0.55);
+  box-shadow: 0 0 0 1px rgba(94, 234, 212, 0.2);
+}
+
+.tg-wallpaper-swatch {
+  width: 36px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.tg-wallpaper-swatch--default {
+  background:
+    radial-gradient(ellipse at 80% -30%, rgba(124, 156, 255, 0.2), transparent 44%),
+    rgba(10, 18, 30, 0.85);
+}
+
+.tg-wallpaper-swatch--aurora {
+  background: linear-gradient(135deg, #6a5acd, #20b2aa);
+}
+
+.tg-wallpaper-swatch--ember {
+  background: linear-gradient(135deg, #c04020, #ff8c42);
+}
+
+.tg-wallpaper-swatch--ocean {
+  background: linear-gradient(135deg, #0a4a6e, #2a9db8);
+}
+
+.tg-wallpaper-swatch--rose {
+  background: linear-gradient(135deg, #6b2d5c, #c94b9e);
+}
+
+.tg-wallpaper-swatch--midnight {
+  background: linear-gradient(135deg, #0a0a14, #1a2240);
+}
+
+.tg-composer-popover-hint {
+  margin: 0 0 8px;
+  font-size: 0.72rem;
+  color: var(--ui-text-muted);
+  line-height: 1.35;
 }
 
 .tg-composer-input {
@@ -1459,17 +1820,61 @@ a.tg-chat-header-profile:focus-visible {
   border: 0;
 }
 
+.profile-view-page {
+  align-content: start;
+}
+
+.profile-view-main-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(100dvh - 100px);
+  overflow: hidden;
+  min-height: 0;
+}
+
+.profile-view-main-toolbar {
+  flex-shrink: 0;
+}
+
+.profile-view-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.profile-view-inner {
+  align-items: start;
+}
+
 .profile-view-photo {
   display: grid;
   gap: 10px;
 }
 
-.profile-view-photo-main {
+.profile-view-photo-frame {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  max-height: 520px;
-  object-fit: cover;
+  max-height: min(58vh, 520px);
+  background: rgba(8, 14, 24, 0.55);
   border-radius: 14px;
   border: 1px solid var(--ui-border);
+  overflow: hidden;
+}
+
+.profile-view-photo-main {
+  display: block;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  max-height: min(58vh, 520px);
+  object-fit: contain;
+  object-position: center center;
 }
 
 .profile-view-photo-controls {
@@ -1595,6 +2000,28 @@ textarea {
     max-height: none;
   }
 
+  /* Список диалогов (/messages, ≤920): ячейка grid с ограниченной высотой; скролл внутри .list. */
+  .layout.layout--messages .tg-sidebar {
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+    align-self: stretch;
+  }
+
+  /*
+   * Карточка чата: без height:auto — иначе блок растягивается на все сообщения,
+   * .tg-chat-box не получает overflow и нельзя пролистать историю снизу вверх.
+   */
+  .layout.layout--messages .tg-chat-card {
+    min-height: 0;
+    max-height: none;
+    height: 100%;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
   .tg-layout.mobile-chat-active .tg-sidebar {
     display: none;
   }
@@ -1617,23 +2044,49 @@ textarea {
     display: none;
   }
 
+  /* Совпадает с горизонтальным padding .tg-sidebar (12px) — иначе «съезжает» поле при смене список ↔ чат. */
+  .tg-sidebar {
+    padding: 12px 12px 14px;
+  }
+
   .tg-chat-card {
-    padding: 10px 10px 6px;
+    padding: 10px 12px 8px;
     border-radius: 14px;
   }
 
   .tg-chat-box {
     min-height: 0;
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 10px 12px;
     gap: 8px;
+    border: none;
   }
 
+  .tg-composer-shell {
+    margin-top: 8px;
+  }
+
+  .tg-composer-pending {
+    padding: 8px 12px 6px;
+  }
+
+  /* Без sticky+bottom: иначе поле ввода «вылезает»/плавает относительно нижней навигации (достаточно flex-колонки + padding у .container). */
   .tg-composer {
-    bottom: calc(70px + env(safe-area-inset-bottom));
-    background: rgba(10, 18, 30, 0.88);
+    position: relative;
+    bottom: auto;
+    flex-shrink: 0;
+    margin-top: 8px;
+    padding: 8px 12px 2px;
+    border: none;
+    border-radius: 0;
     border-top: 1px solid var(--ui-border);
-    padding-top: 8px;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .tg-composer-shell .tg-composer {
+    margin-top: 0;
+    border-top: none;
   }
 
   .three-prefs {
@@ -1662,10 +2115,6 @@ textarea {
     justify-content: space-between;
     border-top: 1px solid var(--eden-border);
     padding-top: 10px;
-  }
-
-  .container {
-    padding-bottom: calc(76px + max(16px, env(safe-area-inset-bottom)));
   }
 
   .ghost-btn {
@@ -2005,6 +2454,20 @@ textarea:focus {
 
   .bottom-nav {
     display: flex;
+  }
+
+  /* Как у .container: запас над фиксированной нижней навигацией, иначе композер уезжает под таб-бар. */
+  .layout.layout--messages > main.container {
+    padding-bottom: calc(92px + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  /* Совпадает с моментом показа .bottom-nav (≤760px), иначе 521–760px контент уезжает под фикс-панель. */
+  .container {
+    padding-bottom: calc(92px + max(12px, env(safe-area-inset-bottom)));
+  }
+
+  .profile-view-main-card {
+    max-height: calc(100dvh - 208px);
   }
 }
 

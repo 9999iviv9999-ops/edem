@@ -7,6 +7,7 @@ import { createRequestThrottle } from "../middleware/request-throttle";
 import { evaluateAutoBanForReportedUser } from "../services/auto-moderation";
 import { zCuid } from "../lib/validation";
 import { notifyUserDevices } from "../lib/push-notify";
+import { isAllowedMessageAttachmentUrl } from "../lib/chat-attachments";
 
 const likeSchema = z.object({
   toUserId: zCuid,
@@ -293,7 +294,17 @@ interactionsRouter.get("/matches", requireAuth, async (req, res, next) => {
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: { id: true, text: true, createdAt: true, fromUserId: true, readAt: true }
+          select: {
+            id: true,
+            text: true,
+            createdAt: true,
+            fromUserId: true,
+            readAt: true,
+            attachmentUrl: true,
+            attachmentMime: true,
+            attachmentFilename: true,
+            attachmentSize: true
+          }
         }
       },
       orderBy: { createdAt: "desc" }
@@ -356,16 +367,37 @@ interactionsRouter.post("/messages/start", requireAuth, async (req, res, next) =
   }
 });
 
+const CHAT_ATTACH_MAX = 12 * 1024 * 1024;
+
+const postMessageSchema = z
+  .object({
+    text: z.string().max(1000).optional().default(""),
+    matchId: z.string().min(1).optional(),
+    toUserId: z.string().min(1).optional(),
+    gymId: z.string().min(1).optional(),
+    attachmentUrl: z.string().min(1).max(2000).optional(),
+    attachmentMime: z.string().min(1).max(200).optional(),
+    attachmentFilename: z.string().max(240).optional(),
+    attachmentSize: z.number().int().min(0).max(CHAT_ATTACH_MAX).optional()
+  })
+  .superRefine((d, ctx) => {
+    const t = (d.text ?? "").trim();
+    const hasAtt = !!(d.attachmentUrl && d.attachmentUrl.trim());
+    if (t.length === 0 && !hasAtt) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "text or attachment required", path: ["text"] });
+    }
+    if (hasAtt && !(d.attachmentMime && d.attachmentMime.trim())) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "attachmentMime required with attachment",
+        path: ["attachmentMime"]
+      });
+    }
+  });
+
 interactionsRouter.post("/messages", requireAuth, messagesThrottle, async (req, res, next) => {
   try {
-    const data = z
-      .object({
-        text: z.string().min(1).max(1000),
-        matchId: z.string().min(1).optional(),
-        toUserId: z.string().min(1).optional(),
-        gymId: z.string().min(1).optional()
-      })
-      .parse(req.body);
+    const data = postMessageSchema.parse(req.body);
 
     let matchId = data.matchId;
     if (!matchId) {
@@ -384,11 +416,32 @@ interactionsRouter.post("/messages", requireAuth, messagesThrottle, async (req, 
       return res.status(access.error.status).json(access.error.body);
     }
 
+    const trimmedText = (data.text ?? "").trim();
+    const attUrl = data.attachmentUrl?.trim();
+    if (attUrl) {
+      if (!isAllowedMessageAttachmentUrl(req.userId!, attUrl)) {
+        return res.status(400).json({ error: "Invalid attachment URL" });
+      }
+    }
+
     const message = await prisma.message.create({
       data: {
         matchId,
         fromUserId: req.userId!,
-        text: data.text.trim()
+        text: trimmedText,
+        ...(attUrl
+          ? {
+              attachmentUrl: attUrl,
+              attachmentMime: data.attachmentMime!.trim(),
+              attachmentFilename: data.attachmentFilename?.trim() || null,
+              attachmentSize: typeof data.attachmentSize === "number" ? data.attachmentSize : null
+            }
+          : {
+              attachmentUrl: null,
+              attachmentMime: null,
+              attachmentFilename: null,
+              attachmentSize: null
+            })
       }
     });
 
@@ -397,7 +450,14 @@ interactionsRouter.post("/messages", requireAuth, messagesThrottle, async (req, 
       where: { id: req.userId! },
       select: { name: true }
     });
-    const preview = data.text.trim().replace(/\s+/g, " ").slice(0, 120);
+    const fname = data.attachmentFilename?.trim();
+    const preview = attUrl
+      ? trimmedText
+        ? `${trimmedText.replace(/\s+/g, " ").slice(0, 80)} · ${fname ? `📎 ${fname}` : "📎"}`
+        : fname
+          ? `📎 ${fname}`
+          : "📎 Вложение"
+      : trimmedText.replace(/\s+/g, " ").slice(0, 120);
     const titleBase = (fromUser?.name || "").trim();
     void notifyUserDevices(otherUserId, {
       title: titleBase ? `Сообщение: ${titleBase}` : "Новое сообщение",
@@ -415,7 +475,7 @@ interactionsRouter.patch("/messages/:messageId", requireAuth, messagesThrottle, 
   try {
     const data = z
       .object({
-        text: z.string().min(1).max(1000)
+        text: z.string().max(1000)
       })
       .parse(req.body);
 
@@ -436,7 +496,7 @@ interactionsRouter.patch("/messages/:messageId", requireAuth, messagesThrottle, 
     }
 
     const trimmedText = data.text.trim();
-    if (!trimmedText) {
+    if (!trimmedText && !existing.attachmentUrl) {
       return res.status(400).json({ error: "Message text is required" });
     }
     if (trimmedText === existing.text) {

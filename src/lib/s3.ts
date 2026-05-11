@@ -16,7 +16,7 @@ export const s3Client = hasS3Config
     })
   : null;
 
-export async function uploadImageToS3(
+export async function uploadObjectToS3(
   key: string,
   body: Buffer,
   contentType: string
@@ -44,3 +44,6 @@ export async function uploadImageToS3(
 
   return `https://${env.S3_BUCKET}.s3.${env.S3_REGION}.amazonaws.com/${key}`;
 }
+
+/** @deprecated Используйте uploadObjectToS3 — то же поведение для любого Content-Type. */
+export const uploadImageToS3 = uploadObjectToS3;

@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosHeaders } from "axios";
 import { clearTokens, getAccessToken, getRefreshToken, setTokens } from "./auth";
 
 // Пустой baseURL = запросы на тот же origin (/api/...).
@@ -23,6 +23,20 @@ api.interceptors.request.use((config) => {
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Иначе axios может оставить application/json — загрузка фото (multipart) падает.
+api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    const h = config.headers;
+    if (h instanceof AxiosHeaders) {
+      h.delete("Content-Type");
+    } else if (h && typeof h === "object") {
+      delete (h as Record<string, unknown>)["Content-Type"];
+      delete (h as Record<string, unknown>)["content-type"];
+    }
   }
   return config;
 });

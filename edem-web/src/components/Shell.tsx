@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useMatch, useNavigate } from "react-router-dom";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
 
@@ -11,13 +11,13 @@ type Props = {
   children: React.ReactNode;
 };
 
-function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profile" | "safety" | "admin" }) {
+function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profile" | "trainers" | "admin" }) {
   const paths: Record<string, string> = {
     feed: "M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
     likes: "M12 21s-7.2-4.3-9.4-8.6C.7 8.8 2.1 5 5.8 5c2 0 3.2 1 4.2 2.4C11 6 12.2 5 14.2 5 17.9 5 19.3 8.8 21.4 12.4 19.2 16.7 12 21 12 21z",
     messages: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
     profile: "M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.5 0-8 2.3-8 5.2V21h16v-1.8C20 16.3 16.5 14 12 14z",
-    safety: "M12 3l7 3v5c0 5.2-3.4 8.9-7 10-3.6-1.1-7-4.8-7-10V6z",
+    trainers: "M4 20h16v-1.6c0-2.6-2.2-4.7-5-4.7h-6c-2.8 0-5 2.1-5 4.7zM9 8.5A3 3 0 1 0 9 2.5a3 3 0 0 0 0 6zm6 2.5 2.2-2.2L19 10.6l-2.2 2.2L14.6 10.6l-1.8 1.8 2.2 2.2-2.2 2.2 1.8 1.8 2.2-2.2 2.2 2.2 1.8-1.8z",
     admin: "M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5zm0-4 1.2 2.4 2.6.3-1.8 1.9.4 2.7L12 9.2 9.6 10.3l.4-2.7L8.2 5.7l2.6-.3z"
   };
   return (
@@ -31,6 +31,8 @@ function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profil
 
 export function Shell({ children }: Props) {
   const navigate = useNavigate();
+  /** Не matchPath(pathname): при basename (/stg) и trailing slash класс не вешался — ломался flex и «пропадал» чат. */
+  const isMessagesRoute = useMatch({ path: "/messages", end: true }) != null;
   const [isAdmin, setIsAdmin] = useState(() => localStorage.getItem("edem_is_admin") === "1");
   const [messagesUnread, setMessagesUnread] = useState(0);
 
@@ -96,7 +98,7 @@ export function Shell({ children }: Props) {
   }
 
   return (
-    <div className="layout">
+    <div className={`layout${isMessagesRoute ? " layout--messages" : ""}`}>
       <header className="topbar">
         <div className="brand-lockup">
           <img className="brand-hero-logo" src="/edem-logo-v2.png" alt="ЭДЕМ" />
@@ -123,8 +125,8 @@ export function Shell({ children }: Props) {
               Каталог
             </NavLink>
           ) : null}
-          <NavLink className={navClass} to="/safety">
-            Безопасность
+          <NavLink className={navClass} to="/trainers">
+            Тренеры
           </NavLink>
           {isAdmin ? (
             <NavLink className={navClass} to="/admin">
@@ -165,9 +167,9 @@ export function Shell({ children }: Props) {
           <BottomNavIcon name="profile" />
           <span className="bottom-nav-label">Профиль</span>
         </NavLink>
-        <NavLink className={navClass} to="/safety">
-          <BottomNavIcon name="safety" />
-          <span className="bottom-nav-label">Безопасно</span>
+        <NavLink className={navClass} to="/trainers">
+          <BottomNavIcon name="trainers" />
+          <span className="bottom-nav-label">Тренеры</span>
         </NavLink>
         {isAdmin ? (
           <NavLink className={navClass} to="/admin">

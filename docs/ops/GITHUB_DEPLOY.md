@@ -41,6 +41,15 @@
 
 Ручной деплой на том же хосте, что и vprok: из корня репозитория выполни **`bash ops/vps-up.sh`** (скрипт сам подключит `ops/docker-compose.vprok-db-network.yml`, если существует Docker-сеть **`edem-backend_default`**). Workflow **Deploy EDEM (VPS via SSH)** после `git pull` вызывает этот же скрипт.
 
+### ЭДЕМ и vprok: две схемы `.env`
+
+**A) Отдельный Postgres только для ЭДЕМ** (как в `docker-compose.yml`): `DATABASE_URL` → **`db:5432`**, база **`edem`**, пользователь **`edem_app`** (шаблон: [`.env.docker.example`](../../.env.docker.example)). Данные живут в томе `edem_edem_pgdata`.
+
+**B) Общий Postgres vprok** (на одном VPS уже есть `vprok-db` и в базе **`vprok`** лежат таблицы ЭДЕМ — `User`, `Match`, …): `DATABASE_URL` → **`postgresql://edem_app:<пароль>@vprok-db:5432/vprok?schema=public`**, обязательно **`bash ops/vps-up.sh`**, чтобы подключился overlay к сети **`edem-backend_default`** (иначе `vprok-db` не резолвится из контейнера `edem-api`).
+
+- **Не подменяй** `.env` ЭДЕМ чужим файлом без проверки строки `DATABASE_URL`: неверный хост/БД даёт 502 или «пустых» пользователей.
+- Скрипт **`ops/vps-up.sh`** не даст поднять вариант B без сети `edem-backend_default` / файла overlay. Восстановление URL для варианта B: **`bash ops/vps-restore-edem-shared-db-url.sh`** (в репозитории), затем снова **`bash ops/vps-up.sh`**.
+
 Триггеры: push в `main` при изменениях в `edem-web/`, `src/`, `prisma/`, `Dockerfile`, `docker-compose.yml`, `ops/docker-compose.vprok-db-network.yml`, `ops/vps-up.sh`, `package.json`, `package-lock.json`, или кнопка **Run workflow** в GitHub Actions.
 
 ## Проверка
