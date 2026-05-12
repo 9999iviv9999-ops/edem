@@ -567,16 +567,14 @@ export function MatchesPage() {
         <div className="tg-dialog-main">
           <div className="chat-list-head">
             <span className="chat-list-name">
-              {peer.name}
+              <span className="chat-list-name-text">{peer.name}</span>
               {isPinned ? <span className="chat-pin" aria-label="Закреплен">📌</span> : null}
             </span>
             <span className="tg-dialog-time">{formatDialogTime(m.lastActivityAt || lastMessage?.createdAt)}</span>
           </div>
           <div className="tg-dialog-subrow">
             {peer.profileBadge?.trim() ? (
-              <span className="profile-badge-chip" style={{ marginTop: 4, marginBottom: 2 }}>
-                {peer.profileBadge.trim()}
-              </span>
+              <span className="profile-badge-chip tg-dialog-profile-badge">{peer.profileBadge.trim()}</span>
             ) : null}
             <span className="chat-list-preview">
               {preview}

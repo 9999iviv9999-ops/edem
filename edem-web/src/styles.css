@@ -187,6 +187,16 @@ button {
   min-height: 0;
 }
 
+.layout.layout--messages .tg-sidebar,
+.layout.layout--messages .tg-sidebar .list {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.layout.layout--messages .tg-sidebar .list {
+  overflow-y: auto;
+}
+
 @media (min-width: 921px) {
   .layout.layout--messages .match-layout.tg-layout {
     grid-template-columns: minmax(280px, 33%) 1fr;
@@ -1145,13 +1155,11 @@ label.field select:not(.multi) {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
 }
 
-.tg-dialog-subrow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.tg-dialog-profile-badge {
+  margin: 2px 0 0;
 }
 
 .tg-dialog-time {
@@ -1191,9 +1199,18 @@ label.field select:not(.multi) {
   font-weight: 600;
   font-size: 0.94rem;
   color: var(--ui-text);
-  display: inline-flex;
+  display: flex;
   gap: 6px;
   align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.chat-list-name-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-list-sub {
@@ -2120,13 +2137,35 @@ textarea {
     border-radius: 7px;
   }
 
-  /* Компактнее как в Telegram: плотнее список диалогов */
-  .layout.layout--messages .tg-sidebar .list {
-    gap: 6px;
+  /* Компактнее как в Telegram: плотнее список диалогов, без горизонтального скролла */
+  .layout.layout--messages .tg-sidebar {
+    padding: 10px 8px 10px;
+    overflow-x: hidden;
+    max-width: 100%;
   }
 
-  /* Похожий на Telegram вид: полосу прокрутки лучше не показывать, но скролл оставить */
+  .layout.layout--messages .tg-sidebar-title {
+    margin-bottom: 6px;
+  }
+
+  .layout.layout--messages .tg-filter-tabs {
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .layout.layout--messages .tg-filter-tab {
+    min-height: 30px;
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
   .layout.layout--messages .tg-sidebar .list {
+    gap: 4px;
+    margin-top: 2px;
+    padding: 3px 4px 2px;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
     scrollbar-gutter: auto;
     scrollbar-width: none;
   }
@@ -2136,24 +2175,58 @@ textarea {
     height: 0;
   }
 
+  .layout.layout--messages .list-group-title {
+    padding: 4px 4px 1px;
+    font-size: 0.68rem;
+  }
+
   .layout.layout--messages .list-item {
-    padding: 8px 10px;
+    padding: 6px 6px;
   }
 
   .layout.layout--messages .tg-dialog-item {
-    grid-template-columns: 38px 1fr;
-    gap: 6px;
-    min-height: 48px;
-    padding: 5px 6px;
+    grid-template-columns: 34px 1fr;
+    gap: 5px;
+    min-height: 44px;
+    padding: 4px 5px;
+    border-radius: 9px;
   }
 
   .layout.layout--messages .tg-dialog-avatar {
-    width: 38px;
-    height: 38px;
+    width: 34px;
+    height: 34px;
   }
 
   .layout.layout--messages .tg-dialog-subrow {
-    gap: 6px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 4px 6px;
+    row-gap: 3px;
+    min-width: 0;
+  }
+
+  .layout.layout--messages .tg-dialog-subrow .profile-badge-chip {
+    flex: 1 1 100%;
+    max-width: 100%;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .layout.layout--messages .chat-list-preview {
+    flex: 1 1 0;
+    min-width: 0;
+    font-size: 0.72rem;
+  }
+
+  .layout.layout--messages .chat-unread-badge {
+    flex-shrink: 0;
+    margin-left: auto;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 0.64rem;
   }
 
   .layout.layout--messages .tg-dialog-time {
@@ -2161,18 +2234,7 @@ textarea {
   }
 
   .layout.layout--messages .chat-list-name {
-    font-size: 0.88rem;
-  }
-
-  .layout.layout--messages .chat-list-preview {
-    font-size: 0.76rem;
-  }
-
-  .layout.layout--messages .chat-unread-badge {
-    min-width: 20px;
-    height: 20px;
-    padding: 0 6px;
-    font-size: 0.68rem;
+    font-size: 0.86rem;
   }
 
   .three-prefs {
