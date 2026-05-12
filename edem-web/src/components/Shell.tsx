@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { clearTokens, getRefreshToken } from "../lib/auth";
 import { api } from "../lib/api";
@@ -11,14 +11,14 @@ type Props = {
   children: React.ReactNode;
 };
 
-function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profile" | "search" }) {
+function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profile" | "trainers" | "admin" }) {
   const paths: Record<string, string> = {
     feed: "M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z",
-    search:
-      "M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 4 11.99 4 9.5S7.01 5 9.5 5 15 7.01 15 9.5 12.99 14 9.5 14z",
     likes: "M12 21s-7.2-4.3-9.4-8.6C.7 8.8 2.1 5 5.8 5c2 0 3.2 1 4.2 2.4C11 6 12.2 5 14.2 5 17.9 5 19.3 8.8 21.4 12.4 19.2 16.7 12 21 12 21z",
     messages: "M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
-    profile: "M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.5 0-8 2.3-8 5.2V21h16v-1.8C20 16.3 16.5 14 12 14z"
+    profile: "M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4.5 0-8 2.3-8 5.2V21h16v-1.8C20 16.3 16.5 14 12 14z",
+    trainers: "M4 20h16v-1.6c0-2.6-2.2-4.7-5-4.7h-6c-2.8 0-5 2.1-5 4.7zM9 8.5A3 3 0 1 0 9 2.5a3 3 0 0 0 0 6zm6 2.5 2.2-2.2L19 10.6l-2.2 2.2L14.6 10.6l-1.8 1.8 2.2 2.2-2.2 2.2 1.8 1.8 2.2-2.2 2.2 2.2 1.8-1.8z",
+    admin: "M12 7a5 5 0 1 1-5 5 5 5 0 0 1 5-5zm0-4 1.2 2.4 2.6.3-1.8 1.9.4 2.7L12 9.2 9.6 10.3l.4-2.7L8.2 5.7l2.6-.3z"
   };
   return (
     <span aria-hidden className="bottom-nav-icon-svg-wrap">
@@ -31,7 +31,6 @@ function BottomNavIcon({ name }: { name: "feed" | "likes" | "messages" | "profil
 
 export function Shell({ children }: Props) {
   const navigate = useNavigate();
-  const drawerRef = useRef<HTMLDetailsElement>(null);
   /** Pathname без basename; trailing slash не должен снимать layout--messages. */
   const { pathname } = useLocation();
   const pathNorm = pathname.replace(/\/+$/, "") || "/";
@@ -94,15 +93,10 @@ export function Shell({ children }: Props) {
     } catch {
       // no-op
     } finally {
-      if (drawerRef.current) drawerRef.current.open = false;
       clearTokens();
       localStorage.removeItem("edem_is_admin");
       navigate("/login");
     }
-  }
-
-  function closeDrawer() {
-    if (drawerRef.current) drawerRef.current.open = false;
   }
 
   return (
@@ -115,44 +109,9 @@ export function Shell({ children }: Props) {
             <div className="brand">ЭДЕМ</div>
           </div>
         </div>
-        <details ref={drawerRef} className="topbar-drawer">
-          <summary className="topbar-drawer-btn" aria-label="Открыть меню">
-            <span className="topbar-drawer-icon" aria-hidden>
-              ☰
-            </span>
-          </summary>
-          <div className="topbar-drawer-panel">
-            <NavLink className="topbar-drawer-link" to="/trainers" onClick={closeDrawer}>
-              Тренеры
-            </NavLink>
-            {isAdmin ? (
-              <NavLink className="topbar-drawer-link" to="/catalog-import" onClick={closeDrawer}>
-                Каталог
-              </NavLink>
-            ) : null}
-            {isAdmin ? (
-              <NavLink className="topbar-drawer-link" to="/admin" onClick={closeDrawer}>
-                Админка
-              </NavLink>
-            ) : null}
-            <div className="topbar-drawer-divider" role="presentation" />
-            <a className="topbar-drawer-link" href="https://t.me/edem_press" target="_blank" rel="noreferrer">
-              Telegram
-            </a>
-            <a className="topbar-drawer-link" href="https://vk.com/edem_press" target="_blank" rel="noreferrer">
-              VK
-            </a>
-            <button type="button" className="topbar-drawer-logout ghost-btn" onClick={() => void onLogout()}>
-              Выйти
-            </button>
-          </div>
-        </details>
         <nav className="nav">
           <NavLink className={navClass} end to="/">
             Лента
-          </NavLink>
-          <NavLink className={navClass} to="/search">
-            Поиск
           </NavLink>
           <NavLink className={navClass} to="/likes">
             Лайки
@@ -189,7 +148,7 @@ export function Shell({ children }: Props) {
             VK
           </a>
         </div>
-        <button className="ghost-btn" onClick={() => void onLogout()}>
+        <button className="ghost-btn" onClick={onLogout}>
           Выйти
         </button>
       </div>
@@ -198,10 +157,6 @@ export function Shell({ children }: Props) {
       <NavLink className={navClass} end to="/">
         <BottomNavIcon name="feed" />
         <span className="bottom-nav-label">Лента</span>
-      </NavLink>
-      <NavLink className={navClass} to="/search">
-        <BottomNavIcon name="search" />
-        <span className="bottom-nav-label">Поиск</span>
       </NavLink>
       <NavLink className={navClass} to="/likes">
         <BottomNavIcon name="likes" />
@@ -216,6 +171,16 @@ export function Shell({ children }: Props) {
         <BottomNavIcon name="profile" />
         <span className="bottom-nav-label">Профиль</span>
       </NavLink>
+      <NavLink className={navClass} to="/trainers">
+        <BottomNavIcon name="trainers" />
+        <span className="bottom-nav-label">Тренеры</span>
+      </NavLink>
+      {isAdmin ? (
+        <NavLink className={navClass} to="/admin">
+          <BottomNavIcon name="admin" />
+          <span className="bottom-nav-label">Админ</span>
+        </NavLink>
+      ) : null}
     </nav>
     </>
   );
