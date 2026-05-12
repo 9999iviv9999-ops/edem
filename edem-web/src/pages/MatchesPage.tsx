@@ -146,10 +146,9 @@ function formatDialogListPreview(msg: {
 }): string {
   const has = Boolean(msg.attachmentUrl || msg.attachmentFilename);
   const t = (msg.text || "").trim();
-  const cap = (s: string, n: number) => (s.length > n ? `${s.slice(0, n)}…` : s);
-  if (has && !t) return `📎 ${cap(msg.attachmentFilename || "Файл", 28)}`;
-  if (has && t) return `${cap(t, 36)} · 📎`;
-  if (t) return cap(t, 72);
+  if (has && !t) return `📎 ${msg.attachmentFilename || "Файл"}`;
+  if (has && t) return `${t.length > 56 ? `${t.slice(0, 56)}…` : t} · 📎`;
+  if (t) return t;
   return "Сообщение";
 }
 
@@ -565,41 +564,34 @@ export function MatchesPage() {
             <div className="tg-dialog-avatar tg-dialog-avatar--fallback">{peer.name.slice(0, 1).toUpperCase()}</div>
           </Link>
         )}
-        <div className="tg-dialog-oneline-mid" title={`${peer.name}${gymLabel ? gymLabel : ""} — ${preview}`}>
-          <span className="tg-dialog-oneline-flow">
-            <span className="tg-dialog-oneline-name">{peer.name}</span>
-            {isPinned ? (
-              <span className="chat-pin" aria-label="Закреплен">
-                {" "}
-                📌
-              </span>
-            ) : null}
-            {peer.profileBadge?.trim() ? (
-              <span className="tg-dialog-oneline-badge" title={peer.profileBadge.trim()}>
-                {" "}
-                · {peer.profileBadge.trim().length > 16 ? `${peer.profileBadge.trim().slice(0, 16)}…` : peer.profileBadge.trim()}
-              </span>
-            ) : null}
-            <span className="tg-dialog-oneline-sep"> · </span>
-            <span className="tg-dialog-oneline-snippet">
-              {preview}
-              {gymLabel ? <span className="chat-list-sub compact">{gymLabel}</span> : null}
+        <div className="tg-dialog-main">
+          <div className="chat-list-head">
+            <span className="chat-list-name">
+              <span className="chat-list-name-text">{peer.name}</span>
+              {isPinned ? <span className="chat-pin" aria-label="Закреплен">📌</span> : null}
             </span>
-          </span>
-        </div>
-        <div className="tg-dialog-oneline-meta">
-          {m.unreadCount ? <span className="chat-unread-badge">{m.unreadCount > 99 ? "99+" : m.unreadCount}</span> : null}
-          <span className="tg-dialog-time">{formatDialogTime(m.lastActivityAt || lastMessage?.createdAt)}</span>
-          <button
-            className="tg-pin-btn"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePin(m.id);
-            }}
-          >
-            {isPinned ? "Открепить" : "Закрепить"}
-          </button>
+            <span className="tg-dialog-time">{formatDialogTime(m.lastActivityAt || lastMessage?.createdAt)}</span>
+          </div>
+          <div className="tg-dialog-subrow">
+            {peer.profileBadge?.trim() ? (
+              <span className="profile-badge-chip tg-dialog-profile-badge">{peer.profileBadge.trim()}</span>
+            ) : null}
+            <span className="chat-list-preview">
+              {preview}
+              <span className="chat-list-sub compact">{gymLabel}</span>
+            </span>
+            {m.unreadCount ? <span className="chat-unread-badge">{m.unreadCount}</span> : null}
+            <button
+              className="tg-pin-btn"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin(m.id);
+              }}
+            >
+              {isPinned ? "Открепить" : "Закрепить"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -678,8 +670,8 @@ export function MatchesPage() {
         <div
           className="tg-chat-box"
           ref={chatBoxRef}
-          data-bg={chatBgId}
           onScroll={updateStickToBottomFromScroll}
+          {...(chatBgId !== "default" ? { "data-bg": chatBgId } : {})}
         >
           {loadingMessages ? <div className="page-sub">Загрузка сообщений...</div> : null}
           {messages.map((m, idx) => {
