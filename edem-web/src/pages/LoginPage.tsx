@@ -1,9 +1,33 @@
+import axios from "axios";
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
 import { setTokens } from "../lib/auth";
 import { normalizePhoneRu } from "../lib/phone";
 import { useOAuthExchangeFromUrl } from "../lib/useOAuthExchangeFromUrl";
+
+function isUnauthorized(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response?.status === 401;
+}
+
+function loginFailureMessage(err: unknown): string {
+  if (axios.isAxiosError(err)) {
+    const raw = (err.response?.data as { error?: string })?.error;
+    if (typeof raw === "string" && raw.trim()) {
+      const msg = raw.trim();
+      if (msg === "Invalid credentials") return "Неверный номер или пароль";
+      if (msg.includes("Too many auth attempts"))
+        return "Слишком много попыток входа с этого адреса. Подождите несколько минут.";
+      if (msg.includes("Too many login attempts for this account"))
+        return "Слишком много попыток для этого номера. Попробуйте позже.";
+      if (msg === "Account is banned") return "Аккаунт заблокирован.";
+      return msg;
+    }
+    if (!err.response) return "Нет соединения с сервером. Проверьте интернет и попробуйте снова.";
+    if (err.response.status >= 500) return "Сервер временно недоступен. Попробуйте через минуту.";
+  }
+  return "Не удалось войти. Попробуйте ещё раз.";
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -15,18 +39,23 @@ export function LoginPage() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");
+    const withPlus = normalizePhoneRu(phone);
+    if (!withPlus || password.length < 6) {
+      setError("Введи номер и пароль (не короче 6 символов)");
+      return;
+    }
+
     try {
-      const withPlus = normalizePhoneRu(phone);
-      if (!withPlus || password.length < 6) {
-        setError("Введи номер и пароль (не короче 6 символов)");
-        return;
-      }
       try {
         const { data } = await api.post("/api/auth/login", { phone: withPlus, password });
         setTokens(data.accessToken, data.refreshToken);
         navigate("/");
         return;
-      } catch {
+      } catch (firstErr) {
+        if (!isUnauthorized(firstErr)) {
+          setError(loginFailureMessage(firstErr));
+          return;
+        }
         const digits = withPlus.replace(/\D+/g, "");
         const { data } = await api.post("/api/auth/login", {
           email: `${digits}@phone.local`,
@@ -35,8 +64,8 @@ export function LoginPage() {
         setTokens(data.accessToken, data.refreshToken);
         navigate("/");
       }
-    } catch {
-      setError("Неверный номер или пароль");
+    } catch (err) {
+      setError(loginFailureMessage(err));
     }
   }
 
