@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CitySelect } from "../components/CitySelect";
 import { GymPicker } from "../components/GymPicker";
@@ -14,12 +14,6 @@ type Profile = {
   photos: string[];
   profileBadge?: string | null;
 };
-
-function truncateText(text: string, max: number) {
-  const t = text.trim();
-  if (t.length <= max) return t;
-  return `${t.slice(0, max - 1)}…`;
-}
 
 export function FeedPage() {
   const navigate = useNavigate();
@@ -110,6 +104,7 @@ export function FeedPage() {
       if (main && gymIds.has(main)) {
         setHasPrimaryGym(true);
         setGymId(main);
+        await loadProfiles(main);
       } else {
         setHasPrimaryGym(false);
         setGymId("");
@@ -123,35 +118,9 @@ export function FeedPage() {
     }
   }
 
-  useEffect(() => {
-    if (!hasPrimaryGym || !gymId) {
-      setProfiles([]);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      try {
-        setErrorMessage("");
-        const { data } = await api.get(`/api/profiles/gyms/${gymId}`);
-        if (!cancelled) setProfiles(data);
-      } catch {
-        if (!cancelled) setErrorMessage("Не удалось загрузить анкеты для этого зала.");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [gymId, hasPrimaryGym]);
-
   async function loadProfiles(selectedGymId: string) {
-    try {
-      setErrorMessage("");
-      const { data } = await api.get(`/api/profiles/gyms/${selectedGymId}`);
-      setProfiles(data);
-      setMessage("");
-    } catch {
-      setErrorMessage("Не удалось обновить анкеты.");
-    }
+    const { data } = await api.get(`/api/profiles/gyms/${selectedGymId}`);
+    setProfiles(data);
   }
 
   async function like(toUserId: string) {
@@ -181,11 +150,13 @@ export function FeedPage() {
       });
     } catch {
       // Keep flow usable even if report endpoint throttles.
+    } finally {
+      snoozeProfile(targetUserId);
+      setMessage("Жалоба отправлена, анкета скрыта");
     }
-    snoozeProfile(targetUserId, "Жалоба отправлена, анкета скрыта");
   }
 
-  function snoozeProfile(targetUserId: string, feedback?: string) {
+  function snoozeProfile(targetUserId: string) {
     const until = Date.now() + 48 * 60 * 60 * 1000;
     setSnoozedUntilByUserId((prev) => {
       const next = { ...prev, [targetUserId]: until };
@@ -193,7 +164,7 @@ export function FeedPage() {
       return next;
     });
     setProfiles((s) => s.filter((p) => p.id !== targetUserId));
-    setMessage(feedback ?? "Анкета отложена на 48 часов");
+    setMessage("Анкета отложена на 48 часов");
     setErrorMessage("");
   }
 
@@ -210,150 +181,120 @@ export function FeedPage() {
     return !until || until <= Date.now();
   });
 
-  const current = visibleProfiles[0];
-
-  const gymLabel = useMemo(() => {
-    if (!gymId) return "";
-    const g = gyms.find((x) => x.id === gymId);
-    return g ? g.name : "";
-  }, [gymId, gyms]);
-
-  const photoUrl = current
-    ? normalizePhotoUrl(current.photos?.[0]) || "https://placehold.co/800x1000/e6e6e6/7a7a7a?text=Фото"
-    : "";
-
-  const bioText = current?.description?.trim() || "Люблю тренировки и активный образ жизни.";
-
   return (
-    <div className="feed-page">
-      <section className="card feed-toolbar">
-        <div className="feed-toolbar-head">
-          <h2 className="page-title feed-toolbar-title">Лента</h2>
-          <p className="page-sub feed-toolbar-sub">Зал и город — анкеты людей рядом с тобой.</p>
+    <div className="grid">
+      <section className="card feed-hero">
+        <div className="feed-hero-image-wrap">
+          <img
+            className="feed-hero-image"
+            src="/edem-logo-v2.png"
+            alt="ЭДЕМ — знакомства в зале"
+            loading="eager"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
         </div>
+      </section>
 
-        <div className="feed-toolbar-location">
-          <h3 className="feed-toolbar-label">Город</h3>
-          <CitySelect value={city} options={availableCities} showLabel={false} onChange={(c) => void onCityChange(c)} />
+      <div className="card">
+        <h2 className="page-title">Лента</h2>
+        <p className="page-sub">Выбери город и зал, смотри анкеты тех, кто тренируется рядом с тобой.</p>
+
+        <div className="full feed-location">
+          <h3 className="profile-section-title">Город</h3>
+          <div className="grid">
+            <div className="full">
+              <CitySelect
+                value={city}
+                options={availableCities}
+                showLabel={false}
+                onChange={(c) => void onCityChange(c)}
+              />
+            </div>
+          </div>
         </div>
 
         {!hasPrimaryGym ? (
-          <div className="feed-empty-gym">
+          <div className="full feed-empty-gym">
             <p className="page-sub" style={{ marginBottom: 8 }}>
-              Выбери основной зал в профиле, чтобы открыть ленту.
+              Чтобы открыть ленту анкет, сначала выбери основной зал в профиле.
             </p>
             <Link className="primary-btn" to="/profile">
-              Перейти в профиль
+              Перейти в профиль и выбрать зал
             </Link>
           </div>
         ) : (
-          <div className="feed-toolbar-controls">
-            <GymPicker gyms={gyms} value={gymId} onChange={setGymId} />
-            <div className="row feed-actions">
-              <button className="primary-btn" type="button" disabled={!gymId} onClick={() => void loadProfiles(gymId)}>
-                Обновить анкеты
-              </button>
-            </div>
-            {!gymId ? <p className="page-sub">Выбери зал.</p> : null}
+          <div className="full feed-controls">
+          <GymPicker
+            gyms={gyms}
+            value={gymId}
+            onChange={(id) => {
+              setGymId(id);
+              setProfiles([]);
+            }}
+          />
+          <div className="row feed-actions">
+            <button
+              className="primary-btn"
+              disabled={!gymId}
+              onClick={() => void loadProfiles(gymId)}
+            >
+              Показать анкеты
+            </button>
+          </div>
+          {!gymId && <p className="page-sub">Сначала выбери зал, затем нажми «Показать анкеты».</p>}
           </div>
         )}
+        {errorMessage && <div className="error">{errorMessage}</div>}
+        {message && <div className="success">{message}</div>}
+      </div>
 
-        {errorMessage ? <div className="error">{errorMessage}</div> : null}
-        {message ? <div className="success">{message}</div> : null}
-      </section>
-
-      {hasPrimaryGym && gymId && !current && !errorMessage ? (
-        <div className="card feed-empty-card">
-          <p className="feed-empty-title">Поблизости пока никого нет</p>
-          <p className="page-sub">Попробуй другой зал или зайди позже.</p>
+      {gymId && visibleProfiles.length === 0 && !errorMessage ? (
+        <div className="card">
+          <p className="page-sub" style={{ marginBottom: 0 }}>
+            Пока анкет в этом зале нет. Попробуй другой зал в этом же городе.
+          </p>
         </div>
       ) : null}
 
-      {current ? (
-        <article className="feed-swipe-card" aria-label={`Анкета: ${current.name}`}>
-          <div className="feed-swipe-media">
-            <img className="feed-swipe-photo" src={photoUrl} alt="" loading="lazy" />
-
-            <div className="feed-swipe-gradient" aria-hidden />
-
-            <div className="feed-swipe-info">
-              <div className="feed-swipe-name-row">
-                <h2 className="feed-swipe-name">
-                  {current.name}, {current.age}
-                </h2>
-                {current.profileBadge?.trim() ? (
-                  <span className="feed-swipe-badge">{current.profileBadge.trim()}</span>
-                ) : null}
-              </div>
-              {gymLabel ? <p className="feed-swipe-gym">{gymLabel}</p> : null}
-              <p className="feed-swipe-bio">{truncateText(bioText, 160)}</p>
-            </div>
-
-            <div className="feed-swipe-actions">
-              <button
-                type="button"
-                className="feed-action-circle feed-action-circle--skip"
-                aria-label="Позже"
-                onClick={() => snoozeProfile(current.id)}
-              >
-                <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
-                  <path
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    d="M6 6l12 12M18 6L6 18"
-                  />
-                </svg>
+      <div className="cards-grid">
+        {visibleProfiles.map((p) => (
+          <article className="profile-card" key={p.id}>
+            <img
+              src={normalizePhotoUrl(p.photos?.[0]) || "https://placehold.co/500x320?text=No+Photo"}
+              alt={p.name}
+            />
+            <div className="profile-body">
+              <h3>
+                {p.name}, {p.age}
+              </h3>
+              {p.profileBadge?.trim() ? (
+                <span className="profile-badge-chip">{p.profileBadge.trim()}</span>
+              ) : null}
+              <p>{p.description || "Люблю тренировки и активный образ жизни."}</p>
+              <button className="primary-btn" onClick={() => like(p.id)}>
+                Лайк
               </button>
-              <button
-                type="button"
-                className="feed-action-circle feed-action-circle--like"
-                aria-label="Лайк"
-                onClick={() => void like(current.id)}
-              >
-                <svg viewBox="0 0 24 24" width="34" height="34" aria-hidden>
-                  <path
-                    fill="currentColor"
-                    d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
-                  />
-                </svg>
+              <button className="ghost-btn" onClick={() => openDirectChat(p.id)}>
+                Написать
               </button>
-              <button
-                type="button"
-                className="feed-action-circle feed-action-circle--chat"
-                aria-label="Написать"
-                onClick={() => openDirectChat(current.id)}
-              >
-                <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden>
-                  <path
-                    fill="currentColor"
-                    d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
-                  />
-                </svg>
+              <button className="ghost-btn" onClick={() => snoozeProfile(p.id)}>
+                Позже
+              </button>
+              <button className="ghost-btn" onClick={() => void navigate(`/profiles/${p.id}`)}>
+                Смотреть анкету
+              </button>
+              <button className="ghost-btn" onClick={() => void blockUser(p.id)}>
+                Заблокировать
+              </button>
+              <button className="ghost-btn" onClick={() => void reportAndHide(p.id)}>
+                Пожаловаться + скрыть
               </button>
             </div>
-          </div>
-
-          <div className="feed-swipe-meta">
-            <button type="button" className="feed-meta-link" onClick={() => void navigate(`/profiles/${current.id}`)}>
-              Полный профиль
-            </button>
-            <span className="feed-meta-dot" aria-hidden>
-              ·
-            </span>
-            <button type="button" className="feed-meta-link feed-meta-link--danger" onClick={() => void blockUser(current.id)}>
-              Заблокировать
-            </button>
-            <span className="feed-meta-dot" aria-hidden>
-              ·
-            </span>
-            <button type="button" className="feed-meta-link feed-meta-link--danger" onClick={() => void reportAndHide(current.id)}>
-              Жалоба
-            </button>
-          </div>
-        </article>
-      ) : null}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }

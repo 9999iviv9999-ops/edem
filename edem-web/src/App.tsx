@@ -15,7 +15,6 @@ import { LikesPage } from "./pages/LikesPage";
 import { SafetyPage } from "./pages/SafetyPage";
 import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { TrainersPage } from "./pages/TrainersPage";
-import { SearchPage } from "./pages/SearchPage";
 
 function App() {
   const basename = (import.meta.env.BASE_URL || "/").replace(/\/$/, "") || "/";
@@ -72,16 +71,6 @@ function App() {
             <ProtectedRoute>
               <Shell>
                 <LikesPage />
-              </Shell>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/search"
-          element={
-            <ProtectedRoute>
-              <Shell>
-                <SearchPage />
               </Shell>
             </ProtectedRoute>
           }
